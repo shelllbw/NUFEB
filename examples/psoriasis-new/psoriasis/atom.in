@@ -1,0 +1,38 @@
+  Granular Flow Simulation
+
+       10 atoms
+       3 atom types
+       1 nutrients
+
+   0.000000e-04   1e-04  xlo xhi
+   0.000000e-04   0.4e-04  ylo yhi
+   0.000000e-04   1e-04  zlo zhi
+
+ Atoms
+
+     1 1 1.0e-6 150 0.5e-5 0.5e-5 1e-6 1.0e-6
+     2 1 1.0e-6 150 1.5e-5 0.5e-5 1e-6 1.0e-6
+     3 1 1.0e-6 150 2.5e-5 0.5e-5 1e-6 1.0e-6
+     4 1 1.0e-6 150 3.5e-5 0.5e-5 1e-6 1.0e-6
+     5 1 1.0e-6 150 4.5e-5 0.5e-5 1e-6 1.0e-6
+     6 1 1.0e-6 150 5.5e-5 0.5e-5 1e-6 1.0e-6
+     7 1 1.0e-6 150 6.5e-5 0.5e-5 1e-6 1.0e-6
+     8 1 1.0e-6 150 7.5e-5 0.5e-5 1e-6 1.0e-6
+     9 1 1.0e-6 150 8.5e-5 0.5e-5 1e-6 1.0e-6
+     10 1 1.0e-6 150 9.5e-5 0.5e-5 1e-6 1.0e-6
+
+ Nutrients
+
+     1 ca2 l 0 0 0 0 0 0 0
+
+ Type Name
+
+     1 stem
+     2 ta
+     3 diff
+
+ Division Counter
+
+     stem 5
+     ta 4
+     diff 3

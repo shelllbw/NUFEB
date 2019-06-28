@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="20" NumberOfCells="20">
+      <PointData>
+        <DataArray type="Int32" Name="id" format="ascii" RangeMin="1" RangeMax="39333">
+          7 39314 39316 3 1 39318
+          39320 9 4 39322 39325 5
+          39326 2 10 39328 6 39330
+          39333 8
+        </DataArray>
+        <DataArray type="Int32" Name="type" format="ascii" RangeMin="1" RangeMax="1">
+          1 1 1 1 1 1
+          1 1 1 1 1 1
+          1 1 1 1 1 1
+          1 1
+        </DataArray>
+        <DataArray type="Float64" Name="diameter" format="ascii" RangeMin="1e-06" RangeMax="1e-06">
+          1e-06 1e-06 1e-06 1e-06 1e-06 1e-06
+          1e-06 1e-06 1e-06 1e-06 1e-06 1e-06
+          1e-06 1e-06 1e-06 1e-06 1e-06 1e-06
+          1e-06 1e-06
+        </DataArray>
+      </PointData>
+      <CellData>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Points" NumberOfComponents="3" format="ascii" RangeMin="2.7169978003e-05" RangeMax="0.00011226784103">
+          7.6110489317e-05 3.1240750104e-05 1.1882138097e-05 7.4354938988e-05 3.1141156796e-05 1.2375241567e-05
+          2.2094272936e-05 9.3306980489e-06 1.2766709915e-05 2.2609396183e-05 9.4490505944e-06 1.4514757822e-05
+          1.0673353245e-05 2.0221803425e-05 2.2030901164e-05 1.1840087609e-05 1.9114615498e-05 2.2895712391e-05
+          8.6902145995e-05 1.1675378119e-05 3.4622393287e-05 8.5863699496e-05 1.1987197468e-05 3.609189298e-05
+          5.3025127272e-05 1.2702354979e-05 3.9966977056e-05 5.3032577853e-05 1.2637349755e-05 4.1792009142e-05
+          2.3687067369e-05 2.9424925742e-05 4.497635382e-05 2.2468577299e-05 3.0237479223e-05 4.6067256335e-05
+          3.6025481677e-05 3.7859597796e-05 5.5563636124e-05 3.4994318412e-05 3.7798352423e-05 5.7069617469e-05
+          7.6714852185e-05 1.7426034447e-06 6.4621890488e-05 7.5905729318e-05 9.0856030965e-07 6.5310152422e-05
+          3.5329565435e-05 3.8851248974e-05 6.7043212766e-05 3.4193504689e-05 3.8108584704e-05 6.8265027949e-05
+          7.0796719228e-05 3.664022006e-05 7.8570090409e-05 6.9669258664e-05 3.7674915802e-05 7.9566721979e-05
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int64" Name="connectivity" format="ascii" RangeMin="0" RangeMax="19">
+          0 1 2 3 4 5
+          6 7 8 9 10 11
+          12 13 14 15 16 17
+          18 19
+        </DataArray>
+        <DataArray type="Int64" Name="offsets" format="ascii" RangeMin="1" RangeMax="20">
+          1 2 3 4 5 6
+          7 8 9 10 11 12
+          13 14 15 16 17 18
+          19 20
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="ascii" RangeMin="1" RangeMax="1">
+          1 1 1 1 1 1
+          1 1 1 1 1 1
+          1 1 1 1 1 1
+          1 1
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>

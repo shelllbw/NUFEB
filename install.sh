@@ -40,6 +40,7 @@ echo "Installing required packages.."
 cd $currentDir/lammps/src
 make yes-user-nufeb
 make yes-granular
+#make yes-user-psoriasis
 
 for var in "$@"
 do 
