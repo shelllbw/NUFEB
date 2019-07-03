@@ -74,6 +74,13 @@ class AtomVecBio : public AtomVec {
   int type_eps;             // itype of EPS
   int type_dead;            // itype of DEAD
 
+  /*
+   * Dinika's edits
+   * */
+//  void division_counter(int); //function takes in an int
+//  void division_counter_reset();
+  int *d_counter; //division counter for each atom
+
   class BIO *bio;
 
  private:
@@ -84,6 +91,8 @@ class AtomVecBio : public AtomVec {
   double *radius,*rmass;
   double **omega,**torque;
   int radvary;
+  //dinika's edits
+  int *count;
 
   void set_group_mask();
 };

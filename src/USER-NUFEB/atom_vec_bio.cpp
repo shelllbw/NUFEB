@@ -38,9 +38,9 @@ AtomVecBio::AtomVecBio(LAMMPS *lmp) : AtomVec(lmp)
   radvary = 1;
   comm_x_only = 0;
   comm_f_only = 0;
-  size_forward = 7;
+  size_forward = 8;
   size_reverse = 6;
-  size_border = 10;
+  size_border = 11;
   size_velocity = 6;
   size_data_atom = 5;
   size_data_vel = 7;
@@ -51,6 +51,8 @@ AtomVecBio::AtomVecBio(LAMMPS *lmp) : AtomVec(lmp)
 
   outer_mass = memory->create(outer_mass,nmax,"atom:outerMass");
   outer_radius = memory->create(outer_radius,nmax,"atom:outerRadius");;
+  //dinika's edits
+  d_counter = memory->create(d_counter,nmax,"atom:divisionCounter");
   type_eps = 0;
   type_dead = 0;
   eps_mask = 0;
@@ -63,6 +65,8 @@ AtomVecBio::AtomVecBio(LAMMPS *lmp) : AtomVec(lmp)
   for (int i = 0; i < atom->nlocal; i++) {
     outer_radius[i] = 0;
     outer_mass[i] = 0;
+    //dinika's edits
+    d_counter[i] = 0;
   }
 }
 
@@ -72,6 +76,8 @@ AtomVecBio::~AtomVecBio()
 {
   memory->destroy(outer_mass);
   memory->destroy(outer_radius);
+  //dinika's edits
+  memory->destroy(d_counter);
 
   delete bio;
 }
@@ -86,6 +92,8 @@ void AtomVecBio::init()
   for (int i = 0; i < atom->nlocal; i++) {
     outer_radius[i] = atom->radius[i];
     outer_mass[i] = atom->rmass[i];
+    //dinika's edits
+    d_counter[i] = 0; //not read in file yet so initialise as 0
   }
 }
 
@@ -118,6 +126,9 @@ void AtomVecBio::grow(int n)
   omega = memory->grow(atom->omega,nmax,3,"atom:omega");
   torque = memory->grow(atom->torque,nmax*comm->nthreads,3,"atom:torque");
 
+  //dinika's edits
+  d_counter = memory->grow(d_counter,nmax,"atom:divisionCounter");
+
   if (atom->nextra_grow)
     for (int iextra = 0; iextra < atom->nextra_grow; iextra++)
       modify->fix[atom->extra_grow[iextra]]->grow_arrays(nmax);
@@ -134,6 +145,7 @@ void AtomVecBio::grow_reset()
   x = atom->x; v = atom->v; f = atom->f;
   radius = atom->radius; rmass = atom->rmass;
   omega = atom->omega; torque = atom->torque;
+  d_counter = this->d_counter;
 }
 
 /* ----------------------------------------------------------------------
@@ -161,6 +173,9 @@ void AtomVecBio::copy(int i, int j, int delflag)
   omega[j][1] = omega[i][1];
   omega[j][2] = omega[i][2];
 
+  //dinika's edits
+  d_counter[j] = d_counter[i];
+
   if (atom->nextra_grow)
     for (int iextra = 0; iextra < atom->nextra_grow; iextra++)
       modify->fix[atom->extra_grow[iextra]]->copy_arrays(i,j,delflag);
@@ -185,6 +200,8 @@ int AtomVecBio::pack_comm(int n, int *list, double *buf,
       buf[m++] = rmass[j];
       buf[m++] = outer_radius[j];
       buf[m++] = outer_mass[j];
+      //dinika's edits
+      buf[m++] = d_counter[j];
     }
   } else {
     if (domain->triclinic == 0) {
@@ -205,6 +222,8 @@ int AtomVecBio::pack_comm(int n, int *list, double *buf,
       buf[m++] = rmass[j];
       buf[m++] = outer_radius[j];
       buf[m++] = outer_mass[j];
+      //dinika's edits
+      buf[m++] = d_counter[j];
     }
   }
 
@@ -236,6 +255,8 @@ int AtomVecBio::pack_comm_vel(int n, int *list, double *buf,
       buf[m++] = omega[j][0];
       buf[m++] = omega[j][1];
       buf[m++] = omega[j][2];
+      //dinika's edits
+      buf[m++] = d_counter[j];
     }
   } else {
     if (domain->triclinic == 0) {
@@ -263,6 +284,8 @@ int AtomVecBio::pack_comm_vel(int n, int *list, double *buf,
 	buf[m++] = omega[j][0];
 	buf[m++] = omega[j][1];
 	buf[m++] = omega[j][2];
+    //dinika's edits
+    buf[m++] = d_counter[j];
       }
     } else {
       dvx = pbc[0]*h_rate[0] + pbc[5]*h_rate[5] + pbc[4]*h_rate[4];
@@ -277,6 +300,8 @@ int AtomVecBio::pack_comm_vel(int n, int *list, double *buf,
 	buf[m++] = rmass[j];
 	buf[m++] = outer_radius[j];
 	buf[m++] = outer_mass[j];
+    //dinika's edits
+    buf[m++] = d_counter[j];
 	if (mask[i] & deform_groupbit) {
 	  buf[m++] = v[j][0] + dvx;
 	  buf[m++] = v[j][1] + dvy;
@@ -309,6 +334,8 @@ int AtomVecBio::pack_comm_hybrid(int n, int *list, double *buf)
     buf[m++] = rmass[j];
     buf[m++] = outer_radius[j];
     buf[m++] = outer_mass[j];
+    //dinika's edits
+    buf[m++] = d_counter[j];
   }
   return m;
 }
@@ -329,6 +356,8 @@ void AtomVecBio::unpack_comm(int n, int first, double *buf)
     rmass[i] = buf[m++];
     outer_radius[i] = buf[m++];
     outer_mass[i] = buf[m++];
+    //dinika's edits
+    d_counter[i] = buf[m++];
   }
 }
 
@@ -354,6 +383,8 @@ void AtomVecBio::unpack_comm_vel(int n, int first, double *buf)
     omega[i][0] = buf[m++];
     omega[i][1] = buf[m++];
     omega[i][2] = buf[m++];
+    //dinika's edits
+    d_counter[i] = buf[m++];
   }
 }
 
@@ -370,6 +401,8 @@ int AtomVecBio::unpack_comm_hybrid(int n, int first, double *buf)
     rmass[i] = buf[m++];
     outer_radius[i] = buf[m++];
     outer_mass[i] = buf[m++];
+    //dinika's edits
+    d_counter[i] = buf[m++];
   }
   return m;
 }
@@ -465,6 +498,8 @@ int AtomVecBio::pack_border(int n, int *list, double *buf,
       buf[m++] = rmass[j];
       buf[m++] = outer_radius[j];
       buf[m++] = outer_mass[j];
+      //dinika's edits
+      buf[m++] = d_counter[j];
     }
   } else {
     if (domain->triclinic == 0) {
@@ -488,6 +523,8 @@ int AtomVecBio::pack_border(int n, int *list, double *buf,
       buf[m++] = rmass[j];
       buf[m++] = outer_radius[j];
       buf[m++] = outer_mass[j];
+      //dinika's edits
+      buf[m++] = d_counter[j];
     }
   }
 
@@ -526,6 +563,8 @@ int AtomVecBio::pack_border_vel(int n, int *list, double *buf,
       buf[m++] = omega[j][0];
       buf[m++] = omega[j][1];
       buf[m++] = omega[j][2];
+      //dinika's edits
+      buf[m++] = d_counter[j];
     }
   } else {
     if (domain->triclinic == 0) {
@@ -556,6 +595,8 @@ int AtomVecBio::pack_border_vel(int n, int *list, double *buf,
         buf[m++] = omega[j][0];
         buf[m++] = omega[j][1];
         buf[m++] = omega[j][2];
+        //dinika's edits
+        buf[m++] = d_counter[j];
       }
     } else {
       dvx = pbc[0]*h_rate[0] + pbc[5]*h_rate[5] + pbc[4]*h_rate[4];
@@ -573,6 +614,8 @@ int AtomVecBio::pack_border_vel(int n, int *list, double *buf,
         buf[m++] = rmass[j];
 	buf[m++] = outer_radius[j];
 	buf[m++] = outer_mass[j];
+    //dinika's edits
+    buf[m++] = d_counter[j];
         if (mask[i] & deform_groupbit) {
           buf[m++] = v[j][0] + dvx;
           buf[m++] = v[j][1] + dvy;
@@ -609,6 +652,8 @@ int AtomVecBio::pack_border_hybrid(int n, int *list, double *buf)
     buf[m++] = rmass[j];
     buf[m++] = outer_radius[j];
     buf[m++] = outer_mass[j];
+    //dinika's edits
+    buf[m++] = d_counter[j];
   }
   return m;
 }
@@ -633,6 +678,8 @@ void AtomVecBio::unpack_border(int n, int first, double *buf)
     rmass[i] = buf[m++];
     outer_radius[i] = buf[m++];
     outer_mass[i] = buf[m++];
+    //dinika's edits
+    d_counter[i] = buf[m++];
   }
 
   if (atom->nextra_border)
@@ -668,6 +715,8 @@ void AtomVecBio::unpack_border_vel(int n, int first, double *buf)
     omega[i][0] = buf[m++];
     omega[i][1] = buf[m++];
     omega[i][2] = buf[m++];
+    //dinika's edits
+    d_counter[i] = buf[m++];
   }
 
   if (atom->nextra_border)
@@ -689,6 +738,8 @@ int AtomVecBio::unpack_border_hybrid(int n, int first, double *buf)
     rmass[i] = buf[m++];
     outer_radius[i] = buf[m++];
     outer_mass[i] = buf[m++];
+    //dinika's edits
+    d_counter[i] = buf[m++];
   }
   return m;
 }
@@ -754,6 +805,8 @@ int AtomVecBio::unpack_exchange(double *buf)
   omega[nlocal][0] = buf[m++];
   omega[nlocal][1] = buf[m++];
   omega[nlocal][2] = buf[m++];
+  //dinika's edits
+  d_counter[nlocal] = buf[m++];
 
   if (atom->nextra_grow)
     for (int iextra = 0; iextra < atom->nextra_grow; iextra++)
@@ -811,6 +864,8 @@ int AtomVecBio::pack_restart(int i, double *buf)
   buf[m++] = omega[i][0];
   buf[m++] = omega[i][1];
   buf[m++] = omega[i][2];
+  //dinika's edits
+  buf[m++] = d_counter[i];
 
   if (atom->nextra_restart)
     for (int iextra = 0; iextra < atom->nextra_restart; iextra++)
@@ -852,6 +907,8 @@ int AtomVecBio::unpack_restart(double *buf)
   omega[nlocal][0] = buf[m++];
   omega[nlocal][1] = buf[m++];
   omega[nlocal][2] = buf[m++];
+  //dinika's edits
+  d_counter[nlocal] = buf[m++];
 
   double **extra = atom->extra;
   if (atom->nextra_store) {
@@ -893,6 +950,8 @@ void AtomVecBio::create_atom(int itype, double *coord)
 
   outer_radius[nlocal] = radius[nlocal];
   outer_mass[nlocal] = rmass[nlocal];
+  //dinika's edits
+  d_counter[nlocal] = count[nlocal];
 
   atom->nlocal++;
 }
@@ -1136,6 +1195,8 @@ bigint AtomVecBio::memory_usage()
   if (atom->memcheck("omega")) bytes += memory->usage(omega,nmax,3);
   if (atom->memcheck("torque"))
     bytes += memory->usage(torque,nmax*comm->nthreads,3);
+  //dinika's edit
+  //if (atom->memcheck("count")) bytes += memory->usage(d_counter,nmax);
 
   return bytes;
 }
@@ -1151,3 +1212,4 @@ void AtomVecBio::set_group_mask() {
     }
   }
 }
+

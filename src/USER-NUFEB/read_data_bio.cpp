@@ -53,7 +53,7 @@ using namespace LAMMPS_NS;
 #define MAXBODY 32         // max # of lines in one body
 
                            // customize for new sections
-#define NSECTIONS 42      // change when add to header::section_keywords
+#define NSECTIONS 43      // change when add to header::section_keywords
 
 enum{NONE,APPEND,VALUE,MERGE};
 
@@ -554,6 +554,14 @@ void ReadDataBIO::command(int narg, char **arg)
         if (atomflag == 0) error->all(FLERR,"Must read Atoms before Lines");
         if (firstpass) yield();
         else skip_lines(atom->ntypes);
+        /*
+         * Dinika's edits -> add division counter
+         * */
+      } else if (strcmp(keyword,"Division Counter") == 0) {
+          if (tnflag == 0) error->all(FLERR,"Must read Type Name before Lines");
+          if (atomflag == 0) error->all(FLERR,"Must read Atoms before Lines");
+          if (firstpass) division_counter();
+          else skip_lines(atom->ntypes);
       } else if (strcmp(keyword,"Electron Donor") == 0) {
         if (tnflag == 0) error->all(FLERR,"Must read Type Name before Lines");
         if (atomflag == 0) error->all(FLERR,"Must read Atoms before Lines");
@@ -985,7 +993,7 @@ void ReadDataBIO::header(int firstpass)
      "AngleAngleTorsion Coeffs","BondBond13 Coeffs","AngleAngle Coeffs",
      "Growth","Ks","Yield","Nutrients","Diffusion Coeffs","Catabolism Coeffs",
      "Anabolism Coeffs","Nutrient Energy","Type Energy", "Dissipation", "Nutrient Charge",
-     "Type Charge", "Maintenance", "Decay", "Decay Coeffs", "eD", "kLa"};
+     "Type Charge", "Maintenance", "Decay", "Decay Coeffs", "eD", "kLa", "Division Counter"};
 
   // skip 1st line of file
 
@@ -2673,3 +2681,26 @@ void ReadDataBIO::kla()
   delete [] original;
 }
 
+/* ---------------------------------------------------------------------- */
+
+void ReadDataBIO::division_counter()
+{
+  int i,m;
+  char *next;
+  char *buf = new char[atom->ntypes*MAXLINE];
+
+  int eof = comm->read_lines_from_file(fp,atom->ntypes,MAXLINE,buf);
+  if (eof) error->all(FLERR,"Unexpected end of data file");
+
+  bio->division_counter = memory->create(bio->division_counter,atom->ntypes+1,"bio:division_counter");
+
+  char *original = buf;
+  for (i = 0; i < atom->ntypes; i++) {
+    next = strchr(buf,'\n');
+    *next = '\0';
+    printf("buf = %s \n", buf);
+    bio->set_division_counter(buf);
+    buf = next + 1;
+  }
+  delete [] original;
+}

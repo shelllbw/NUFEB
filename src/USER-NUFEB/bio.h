@@ -54,6 +54,11 @@ class BIO : protected Pointers {
   int **nucharge;             // charge [nutrient][5charges]
   double *kla;                // mass Transfer Coefficient [nutrient]
 
+  /*
+   * Dinika's edits
+   * */
+  int *division_counter;   //division counter for TA cells
+
   BIO(class LAMMPS *);
   ~BIO();
 
@@ -80,6 +85,11 @@ class BIO : protected Pointers {
   void set_tcharge(int, char **);
   void set_kla(const char *);
   void set_group_mask();
+
+  /*
+   * Dinika's edits
+   * */
+  void set_division_counter(const char *);
 
   int find_typeid(char *name);
   int find_nuid(char *name);

@@ -136,6 +136,11 @@ class ReadDataBIO : protected Pointers {
   void nucharge();
   void tcharge();
   void kla();
+
+  /*
+   * Dinika's edits
+   * */
+  void division_counter();
 };
 
 }
