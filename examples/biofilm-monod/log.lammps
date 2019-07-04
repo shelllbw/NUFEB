@@ -1,0 +1,148 @@
+LAMMPS (5 Nov 2016)
+# NUFEB simulation
+
+atom_style	bio
+atom_modify	map array sort 100 5.0e-7
+boundary	pp pp ff
+newton		off
+processors  * * 1
+
+comm_modify	vel yes
+read_data_bio atom.in
+  orthogonal box = (0 0 0) to (0.0001 4e-05 0.0001)
+  2 by 1 by 1 MPI processor grid
+  reading atoms ...
+  41 atoms
+  5 nutrients
+
+group HET type 1
+40 atoms in group HET
+group EPS type 2
+1 atoms in group EPS
+
+neighbor	5e-7 bin
+neigh_modify	delay 0 one 5000
+
+##############Define DEM Variables&Commands##############
+
+pair_style  gran/hooke/history 1.e-4 NULL 1.e-5 NULL 0.0 1
+pair_coeff  * *
+
+timestep 10
+
+fix 1 all nve/limit 1e-8
+fix fv all viscous 1e-5
+
+fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  1e-04
+
+variable kanc equal 50
+
+fix zwa all walladh v_kanc zplane  0.0  1e-04
+
+variable ke equal 5e+10
+#fix j1 all epsadh 1 v_ke 1
+
+##############Define IBm Variables##############
+
+#variables used in fix eps_extract
+variable EPSdens equal 30
+variable EPSratio equal 1.3
+
+#variables used in fix division
+variable divDia equal 1.36e-6
+
+#variables used in fix kinetics
+variable diffT equal 1e-4
+variable tol equal 1e-6
+variable etaHET equal 0.6
+variable layer equal -1
+
+#variables used in fix death
+variable deadDia equal 9e-7
+
+
+##############Define IBm Commands##############
+
+fix k1 all kinetics 100 25 10 25 v_diffT v_layer niter 1
+fix kgm all kinetics/growth/monod v_EPSdens v_etaHET
+fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
+fix d1 all divide 100 v_EPSdens v_divDia 64564
+fix e1 HET eps_extract 100 v_EPSratio v_EPSdens 53453
+
+##############Define IBm Computes##############
+
+compute myNtypes all ntypes
+
+##############Simulation Output##############
+
+dump		id all custom 1000 output.lammmps id type diameter x y z
+dump		du1 all custom/vtk 1000 atom_*.vtu id type diameter x y z
+dump		du2 all grid 1000 grid_%_*.vti con
+thermo_style    custom step cpu atoms c_myNtypes[2] c_myNtypes[3]
+thermo		100
+thermo_modify	lost ignore
+
+
+run 80000
+Neighbor list info ...
+  2 neighbor list requests
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 5000, page size: 100000
+  master list distance cutoff = 1.5e-06
+  ghost atom cutoff = 1.5e-06
+  binsize = 7.5e-07 -> bins = 134 54 134
+Memory usage per processor = 5.91129 Mbytes
+Step CPU Atoms c_myNtypes[2] c_myNtypes[3] 
+       0            0       41           40            1 
+number of iterations: 1 
+     100   0.37466106       41           40            1 
+number of iterations: 1 
+     200   0.64549825       41           40            1 
+number of iterations: 1 
+     300   0.89388289       41           40            1 
+number of iterations: 1 
+     400    1.0846181       41           40            1 
+number of iterations: 1 
+     500    1.2567931       41           40            1 
+number of iterations: 1 
+     600    1.5061295       81           80            1 
+number of iterations: 1 
+     700    1.6732746      161           80           81 
+number of iterations: 1 
+     800    1.9349801      161           80           81 
+number of iterations: 1 
+     900    2.1727818      173           92           81 
+number of iterations: 1 
+    1000    2.8034665      219          138           81 
+number of iterations: 1 
+    1100    3.0640471      333          160          173 
+number of iterations: 1 
+    1200    3.5206048      417          168          249 
+number of iterations: 1 
+    1300    3.8640002      463          214          249 
+number of iterations: 1 
+    1400    4.1490144      537          288          249 
+number of iterations: 1 
+    1500    4.5744283      713          322          391 
+number of iterations: 1 
+    1600    5.2121839      951          374          577 
+number of iterations: 1 
+    1700    5.8552149     1074          469          605 
+number of iterations: 1 
+    1800    6.3078679     1201          592          609 
+number of iterations: 1 
+    1900    7.0946979     1531          677          854 
+number of iterations: 1 
+    2000    9.5002712     2037          793         1244 
+number of iterations: 1 
+    2100    11.131987     2391         1016         1375 
+number of iterations: 1 
+    2200    12.276631     2600         1219         1381 
+number of iterations: 1 
+    2300    14.276854     3228         1419         1809 
+number of iterations: 1 
+    2400    16.347713     4318         1727         2591 
+number of iterations: 1 
+    2500    18.792994     5148         2109         3039 
+number of iterations: 1 
+    2600    21.786208     5669         2544         3125 

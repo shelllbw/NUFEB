@@ -47,8 +47,8 @@ variable layer equal -1
 ##############Define IBm Commands##############
 
 fix k1 all kinetics 100 25 10 25 v_diffT v_layer niter 1
-fix d1 STEM psoriasis/divide_stem 100 v_EPSdens v_divDia 64564
-fix d2 TA psoriasis/divide_ta 100 v_EPSdens v_divDia 64564
+fix d1 STEM psoriasis/divide_stem 150 v_EPSdens v_divDia 64564
+fix d2 TA psoriasis/divide_ta 60 v_EPSdens v_divDia 64564
 
 
 ##############Define IBm Computes##############
