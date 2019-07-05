@@ -187,8 +187,6 @@ void FixPDivideStem::post_integrate() {
       // get type
       type_id = atom->type[i];
       type_name = bio->tname[type_id];
-      //check if the cell can divide
-      //bool canDivide = false;
 
       double parentMass = 0;
       double childMass = 0;
@@ -198,28 +196,32 @@ void FixPDivideStem::post_integrate() {
       //random generator to set probabilities of division
       std::default_random_engine generator;
       std::uniform_real_distribution<double>  distribution(0, 1);
+      //TODO RANDOM DIST DOESN'T CHANGE !!!
 
-      // stem cells
-      //if (can_divide == true) {
-        //set divsion criteria
+      //printf ("Random distribution is %f\n", distribution(generator));
+
         //if < 50 sc, 10% chance for self proliferation
-        if (atom->natoms < 50 && distribution(generator)  < 0.1){
-        	//set both parent and child type to be the same
-        	parentType = atom->type[i];
-        	childType = atom->type[i];
-        }else if (distribution(generator) < 0.8){
-        	//set parent as sc and child as ta
-        	parentType = atom->type[i];
-        	childType = atom->type[i] + 1;
-        }else {
-        	//set both parent and child type to be ta
-        	parentType = atom->type[i] + 1;
-        	childType = atom->type[i] + 1;
-        }
+        //if (atom->natoms < 50 && distribution(generator)  < 0.1){
+      if (type_id == 1) {
+          if (atom->natoms < 50){
+            	//set both parent and child type to be the same
+            parentType = atom->type[i];
+            childType = atom->type[i];
+            //}else if (distribution(generator) < 0.8){
+          }else if (atom->natoms < 200){
+            	//set parent as sc and child as ta
+            parentType = atom->type[i];
+            childType = atom->type[i] + 1;
+          }else {
+            	//set both parent and child type to be ta
+            parentType = atom->type[i] + 1;
+            childType = atom->type[i] + 1;
+          }
       //}
 
-		parentMass = atom->rmass[i];
-		childMass = atom->rmass[i];
+
+          parentMass = atom->rmass[i];
+          childMass = atom->rmass[i];
 
         //outer mass for parent and child
         double parentOuterMass = avec->outer_mass[i];
@@ -271,6 +273,7 @@ void FixPDivideStem::post_integrate() {
         atom->x[i][0] = newX;
         atom->x[i][1] = newY;
         atom->x[i][2] = newZ;
+        atom->type[i] = parentType;
 
         //create child
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
@@ -321,11 +324,13 @@ void FixPDivideStem::post_integrate() {
         atom->f[n][2] = childfz;
 
         atom->radius[n] = childRadius;
-        avec->d_counter[n] = 5;
+        //avec->d_counter[n] = 5;
+        atom->type[n] = childType;
 
         modify->create_attribute(n);
 
         delete[] coord;
+      }
     }
   }
 

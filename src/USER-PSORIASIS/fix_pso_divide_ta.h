@@ -53,7 +53,7 @@ class FixPDivideTa : public Fix {
    * */
   int type_id;
   char* type_name;
-  bool can_divide;
+  double division_counter;
 
   class RanPark *random;
   class AtomVecBio *avec;

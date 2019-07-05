@@ -155,13 +155,15 @@ void FixPDivideTa::init() {
   eps_density = input->variable->compute_equal(ivar[0]);
   div_dia = input->variable->compute_equal(ivar[1]);
 
+  //dinika's edits - adding division counter
   int nlocal = atom->nlocal;
   for (int i = 0; i < nlocal; i++) {
 	if (atom->mask[i] & groupbit) {
 	   avec->d_counter[i] = bio->division_counter[atom->type[i]];
-	   printf ("division counter  : %i \n", avec->d_counter[i]);
+	   //printf ("division counter  : %i \n", avec->d_counter[i]);
     }
   }
+  //division_counter = input->variable->compute_equal(ivar[4]);
 
 }
 
@@ -175,6 +177,7 @@ void FixPDivideTa::post_integrate() {
     return;
 
   int nlocal = atom->nlocal;
+  printf("nlocal is %i\n ", nlocal);
 
   for (int i = 0; i < nlocal; i++) {
     if (atom->mask[i] == avec->mask_dead)
@@ -188,8 +191,6 @@ void FixPDivideTa::post_integrate() {
       // get type
       int type_id = atom->type[i];
       char* type_name = bio->tname[type_id];
-      //check if the cell can divide
-      //bool canDivide = false;
 
       double parentMass = 0;
       double childMass = 0;
@@ -200,34 +201,24 @@ void FixPDivideTa::post_integrate() {
       std::default_random_engine generator;
       std::uniform_real_distribution<double>  distribution(0, 1);
 
-      //find a way to place this in input script instead
-      //int division_time = 0;
-      int max_division_time = 4;
+      division_counter = 4;
 
-      if (type_id == 2){
+      if (type_id == 2 && avec->d_counter[i] <= division_counter){
+    	  printf ("i am cell type %i\n ", atom->type[i]);
+    	  //printf ("division count  is %f\n", division_counter);
+    	  printf ("cell division count  is %i\n", avec->d_counter[i]);
       //within its maximum proliferative life
-      	// if (division_time < max_division_time){
-      	  if (distribution(generator) < 0.1){
+      	  if (avec->d_counter[i] < (division_counter - 3)){
       		  parentType = atom->type[i];
       		  childType = atom->type[i];
-      		 // division_time++;
-      		 // canDivide = true;
-      	  } else if (distribution(generator) < 0.8){
+      	  } else if (avec->d_counter[i] < (division_counter - 2)){
       		  parentType = atom->type[i];
       		  childType = atom->type[i] + 1;
-      		//  division_time++;
-      		 // canDivide = true;
-      	  } else {
+      	  } else if (avec->d_counter[i] == division_counter){
       		  parentType = atom->type[i] + 1;
       		  childType = atom->type[i] + 1;
-      		//  division_time++;
-      		 // canDivide = true;
       	  }
-      	 //} else {
-      	 // canDivide = false;
-      	 //}
-       //}
-      }
+      //}
 
 		parentMass = atom->rmass[i];
 		childMass = atom->rmass[i];
@@ -282,6 +273,7 @@ void FixPDivideTa::post_integrate() {
         atom->x[i][0] = newX;
         atom->x[i][1] = newY;
         atom->x[i][2] = newZ;
+        atom->type[i] = parentType;
 
         //create child
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
@@ -333,9 +325,12 @@ void FixPDivideTa::post_integrate() {
 
         atom->radius[n] = childRadius;
 
+        atom->type[n] = childType;
+
         modify->create_attribute(n);
 
         delete[] coord;
+      }
     }
   }
 
