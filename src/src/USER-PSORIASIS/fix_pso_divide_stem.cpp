@@ -55,7 +55,7 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 7)
+  if (narg < 7) // dinika mod - from 7 to 8
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
@@ -155,13 +155,13 @@ void FixPDivideStem::init() {
   eps_density = input->variable->compute_equal(ivar[0]);
   div_dia = input->variable->compute_equal(ivar[1]);
 
-  int nlocal = atom->nlocal;
-  for (int i = 0; i < nlocal; i++) {
-	if (atom->mask[i] & groupbit) {
-	   avec->d_counter[i] = bio->division_counter[atom->type[i]];
-	   //printf to check
-    }
-  }
+//  int nlocal = atom->nlocal;
+//  for (int i = 0; i < nlocal; i++) {
+//	if (atom->mask[i] & groupbit) {
+//	   avec->d_counter[i] = bio->division_counter[atom->type[i]];
+//	   printf ("division counter  : %i \n", avec->d_counter[i]);
+//    }
+//  }
 }
 
 void FixPDivideStem::post_integrate() {
@@ -198,16 +198,22 @@ void FixPDivideStem::post_integrate() {
       //random generator to set probabilities of division
       std::default_random_engine generator;
       std::uniform_real_distribution<double>  distribution(0, 1);
+      //TODO RANDOM DIST DOESN'T CHANGE !!!
+
+      //printf ("Random distribution is %f\n", distribution(generator));
+
 
       // stem cells
       //if (can_divide == true) {
         //set divsion criteria
         //if < 50 sc, 10% chance for self proliferation
-        if (atom->natoms < 50 && distribution(generator)  < 0.1){
+        //if (atom->natoms < 50 && distribution(generator)  < 0.1){
+      if (atom->natoms < 40){
         	//set both parent and child type to be the same
         	parentType = atom->type[i];
         	childType = atom->type[i];
-        }else if (distribution(generator) < 0.8){
+        //}else if (distribution(generator) < 0.8){
+        }else if (atom->natoms < 200){
         	//set parent as sc and child as ta
         	parentType = atom->type[i];
         	childType = atom->type[i] + 1;
@@ -321,10 +327,12 @@ void FixPDivideStem::post_integrate() {
         atom->f[n][2] = childfz;
 
         atom->radius[n] = childRadius;
+        avec->d_counter[n] = 5;
 
         modify->create_attribute(n);
 
         delete[] coord;
+        }
     }
   }
 
