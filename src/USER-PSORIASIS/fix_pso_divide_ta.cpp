@@ -34,7 +34,7 @@
 #include "update.h"
 #include "variable.h"
 #include "modify.h"
-
+#include "group.h"
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
@@ -75,6 +75,9 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
 
   // read optional param
   demflag = 0;
+
+  //dinika - set diff mask to -1
+  diff_mask = -1;
 
   int iarg = 7;
   while (iarg < narg) {
@@ -160,11 +163,16 @@ void FixPDivideTa::init() {
   for (int i = 0; i < nlocal; i++) {
 	if (atom->mask[i] & groupbit) {
 	   avec->d_counter[i] = bio->division_counter[atom->type[i]];
-	   //printf ("division counter  : %i \n", avec->d_counter[i]);
     }
   }
-  //division_counter = input->variable->compute_equal(ivar[4]);
-
+  //modify atom mask
+  for (int i = 1; i < group->ngroup; i++) {
+    if (strcmp(group->names[i],"DIFF") == 0) {
+      diff_mask = pow(2, i) + 1;
+      break;
+    }
+  }
+  if (diff_mask < 0) error->all(FLERR, "Cannot DIFF group.");
 }
 
 void FixPDivideTa::post_integrate() {
@@ -177,7 +185,6 @@ void FixPDivideTa::post_integrate() {
     return;
 
   int nlocal = atom->nlocal;
-  printf("nlocal is %i\n ", nlocal);
 
   for (int i = 0; i < nlocal; i++) {
     if (atom->mask[i] == avec->mask_dead)
@@ -188,40 +195,64 @@ void FixPDivideTa::post_integrate() {
     if (atom->mask[i] & groupbit) {
       double density = atom->rmass[i] / (4.0 * MY_PI / 3.0 * atom->radius[i] * atom->radius[i] * atom->radius[i]);
       double newX, newY, newZ;
-      // get type
-      int type_id = atom->type[i];
-      char* type_name = bio->tname[type_id];
 
-      double parentMass = 0;
-      double childMass = 0;
-      int parentType = 0;
-      int childType = 0;
+      // get type
+      type_id = atom->type[i];
+      type_name = bio->tname[type_id];
+      //set differentiated cell type
+      int diff_id = bio->find_typeid("diff");
+
+      int parentDivisionCount = avec->d_counter[i];
+      int childDivisionCount = 0;
 
       //random generator to set probabilities of division
-      std::default_random_engine generator;
-      std::uniform_real_distribution<double>  distribution(0, 1);
+      std::random_device rd;  //Will be used to obtain a seed for the random number engine
+      std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+      std::uniform_real_distribution<double>  distribution(0.0, 1.0);
+      double rand = 0.0;
+      for (int i = 0; i < nlocal; i++){
+    	  rand = distribution(gen);
+      }
 
+      //set here first as the max division
       division_counter = 4;
 
-      if (type_id == 2 && avec->d_counter[i] <= division_counter){
-    	  printf ("i am cell type %i\n ", atom->type[i]);
-    	  //printf ("division count  is %f\n", division_counter);
-    	  printf ("cell division count  is %i\n", avec->d_counter[i]);
-      //within its maximum proliferative life
-      	  if (avec->d_counter[i] < (division_counter - 3)){
-      		  parentType = atom->type[i];
-      		  childType = atom->type[i];
-      	  } else if (avec->d_counter[i] < (division_counter - 2)){
-      		  parentType = atom->type[i];
-      		  childType = atom->type[i] + 1;
-      	  } else if (avec->d_counter[i] == division_counter){
-      		  parentType = atom->type[i] + 1;
-      		  childType = atom->type[i] + 1;
-      	  }
-      //}
+	  if (parentDivisionCount <= division_counter && rand < 0.1){
+		  parentType = type_id;
+		  childType = type_id;
+		  parentMask = atom->mask[i];
+		  childMask = atom->mask[i];
+		  parentDivisionCount = avec->d_counter[i] + 1;
+		  childDivisionCount = 0;
+		//printf ("parent cell division count 1 is %i \n", parentDivisionCount);
+	  } else if (parentDivisionCount <= division_counter && rand < 0.8){
+		  parentType = type_id;
+		  childType = diff_id;
+		  parentMask = atom->mask[i];
+		  childMask = diff_mask;
+		  parentDivisionCount = avec->d_counter[i] + 1;
+		  childDivisionCount = 0;
+		  //printf ("parent cell division count 2 is %i \n", parentDivisionCount);
+	  } else if (parentDivisionCount > division_counter){
+		  parentType = diff_id;
+		  childType = diff_id;
+		  parentMask = diff_mask;
+		  childMask = diff_mask;
+		  parentDivisionCount = avec->d_counter[i] + 1;
+		  childDivisionCount = 0;
+		  //printf ("parent cell division count 3 is %i \n", parentDivisionCount);
+	  }
+//	  } else {
+//		  parentType = diff_id;
+//		  childType = diff_id;
+//		  parentMask = diff_mask;
+//		  childMask = diff_mask;
+//		  parentDivisionCount = avec->d_counter[i] + 1;
+//		  childDivisionCount = 0;
+//	  }
 
-		parentMass = atom->rmass[i];
-		childMass = atom->rmass[i];
+		double parentMass = atom->rmass[i];
+		double childMass = atom->rmass[i];
 
         //outer mass for parent and child
         double parentOuterMass = avec->outer_mass[i];
@@ -274,6 +305,8 @@ void FixPDivideTa::post_integrate() {
         atom->x[i][1] = newY;
         atom->x[i][2] = newZ;
         atom->type[i] = parentType;
+        atom->mask[i] = parentMask;
+        avec->d_counter[i] = parentDivisionCount;
 
         //create child
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
@@ -307,7 +340,6 @@ void FixPDivideTa::post_integrate() {
         n = atom->nlocal - 1;
 
         atom->tag[n] = 0;
-        atom->mask[n] = atom->mask[i];
         atom->image[n] = atom->image[i];
 
         atom->v[n][0] = atom->v[i][0];
@@ -318,20 +350,23 @@ void FixPDivideTa::post_integrate() {
         atom->f[n][2] = atom->f[i][2];
 
         atom->rmass[n] = childMass;
+        avec->outer_mass[n] = childOuterMass;
 
         atom->f[n][0] = childfx;
         atom->f[n][1] = childfy;
         atom->f[n][2] = childfz;
 
         atom->radius[n] = childRadius;
+        avec->outer_radius[n] = childOuterRadius;
 
         atom->type[n] = childType;
+        atom->mask[n] = childMask;
+        avec->d_counter[n] = childDivisionCount;
 
         modify->create_attribute(n);
 
         delete[] coord;
       }
-    }
   }
 
   bigint nblocal = atom->nlocal;

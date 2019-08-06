@@ -770,6 +770,8 @@ int AtomVecBio::pack_exchange(int i, double *buf)
   buf[m++] = omega[i][0];
   buf[m++] = omega[i][1];
   buf[m++] = omega[i][2];
+  //dinika's edit
+  buf[m++] = d_counter[i];
 
   if (atom->nextra_grow)
     for (int iextra = 0; iextra < atom->nextra_grow; iextra++)

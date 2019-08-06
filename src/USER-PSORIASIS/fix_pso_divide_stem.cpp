@@ -34,6 +34,7 @@
 #include "update.h"
 #include "variable.h"
 #include "modify.h"
+#include "group.h"
 
 
 using namespace LAMMPS_NS;
@@ -75,6 +76,9 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
 
   // read optional param
   demflag = 0;
+
+  //dinika - set ta_mask to -1
+  ta_mask = -1;
 
   int iarg = 7;
   while (iarg < narg) {
@@ -155,13 +159,15 @@ void FixPDivideStem::init() {
   eps_density = input->variable->compute_equal(ivar[0]);
   div_dia = input->variable->compute_equal(ivar[1]);
 
-//  int nlocal = atom->nlocal;
-//  for (int i = 0; i < nlocal; i++) {
-//	if (atom->mask[i] & groupbit) {
-//	   avec->d_counter[i] = bio->division_counter[atom->type[i]];
-//	   printf ("division counter  : %i \n", avec->d_counter[i]);
-//    }
-//  }
+  //Dinika's edits
+  //modify atom mask
+  for (int i = 1; i < group->ngroup; i++) {
+    if (strcmp(group->names[i],"TA") == 0) {
+      ta_mask = pow(2, i) + 1;
+      break;
+    }
+  }
+  if (ta_mask < 0) error->all(FLERR, "Cannot TA group.");
 }
 
 void FixPDivideStem::post_integrate() {
@@ -181,6 +187,7 @@ void FixPDivideStem::post_integrate() {
 
     //this groupbit will allow the input script to set each cell type to divide
     // i.e. if set fix d1 STEM 50 .. , fix d1 TA ... etc
+    //printf("groupbit stem %d \n", groupbit);
     if (atom->mask[i] & groupbit) {
       double density = atom->rmass[i] / (4.0 * MY_PI / 3.0 * atom->radius[i] * atom->radius[i] * atom->radius[i]);
       double newX, newY, newZ;
@@ -188,149 +195,154 @@ void FixPDivideStem::post_integrate() {
       type_id = atom->type[i];
       type_name = bio->tname[type_id];
 
-      double parentMass = 0;
-      double childMass = 0;
-      int parentType = 0;
-      int childType = 0;
-
       //random generator to set probabilities of division
-      std::default_random_engine generator;
-      std::uniform_real_distribution<double>  distribution(0, 1);
-      //TODO RANDOM DIST DOESN'T CHANGE !!!
-
-      //printf ("Random distribution is %f\n", distribution(generator));
-
-        //if < 50 sc, 10% chance for self proliferation
-        //if (atom->natoms < 50 && distribution(generator)  < 0.1){
-      if (type_id == 1) {
-          if (atom->natoms < 50){
-            	//set both parent and child type to be the same
-            parentType = atom->type[i];
-            childType = atom->type[i];
-            //}else if (distribution(generator) < 0.8){
-          }else if (atom->natoms < 200){
-            	//set parent as sc and child as ta
-            parentType = atom->type[i];
-            childType = atom->type[i] + 1;
-          }else {
-            	//set both parent and child type to be ta
-            parentType = atom->type[i] + 1;
-            childType = atom->type[i] + 1;
-          }
-      //}
-
-
-          parentMass = atom->rmass[i];
-          childMass = atom->rmass[i];
-
-        //outer mass for parent and child
-        double parentOuterMass = avec->outer_mass[i];
-        double childOuterMass = parentOuterMass;
-
-        // forces are the same for both parent and child, x, y and z axis
-        double parentfx = atom->f[i][0];
-        double childfx = atom->f[i][0];
-
-        double parentfy = atom->f[i][1];
-        double childfy = atom->f[i][1];
-
-        double parentfz = atom->f[i][2];
-        double childfz = atom->f[i][2];
-
-        double thetaD = random->uniform() * 2 * MY_PI;
-        double phiD = random->uniform() * (MY_PI);
-
-        double oldX = atom->x[i][0];
-        double oldY = atom->x[i][1];
-        double oldZ = atom->x[i][2];
-
-        //Update parent
-        atom->rmass[i] = parentMass;
-        atom->f[i][0] = parentfx;
-        atom->f[i][1] = parentfy;
-        atom->f[i][2] = parentfz;
-        //todo check what was declared as a parent radius
-        atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-        avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / eps_density)), (1.0 / 3.0));
-        newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
-        newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
-        newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
-        if (newX - avec->outer_radius[i] < xlo) {
-          newX = xlo + avec->outer_radius[i];
-        } else if (newX + avec->outer_radius[i] > xhi) {
-          newX = xhi - avec->outer_radius[i];
-        }
-        if (newY - avec->outer_radius[i] < ylo) {
-          newY = ylo + avec->outer_radius[i];
-        } else if (newY + avec->outer_radius[i] > yhi) {
-          newY = yhi - avec->outer_radius[i];
-        }
-        if (newZ - avec->outer_radius[i] < zlo) {
-          newZ = zlo + avec->outer_radius[i];
-        } else if (newZ + avec->outer_radius[i] > zhi) {
-          newZ = zhi - avec->outer_radius[i];
-        }
-        atom->x[i][0] = newX;
-        atom->x[i][1] = newY;
-        atom->x[i][2] = newZ;
-        atom->type[i] = parentType;
-
-        //create child
-        double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-        double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / eps_density)), (1.0 / 3.0));
-        double* coord = new double[3];
-        newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
-        newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
-        newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
-        if (newX - childOuterRadius < xlo) {
-          newX = xlo + childOuterRadius;
-        } else if (newX + childOuterRadius > xhi) {
-          newX = xhi - childOuterRadius;
-        }
-        if (newY - childOuterRadius < ylo) {
-          newY = ylo + childOuterRadius;
-        } else if (newY + childOuterRadius > yhi) {
-          newY = yhi - childOuterRadius;
-        }
-        if (newZ - childOuterRadius < zlo) {
-          newZ = zlo + childOuterRadius;
-        } else if (newZ + childOuterRadius > zhi) {
-          newZ = zhi - childOuterRadius;
-        }
-        //coordinates should be the same as parent
-        coord[0] = newX;
-        coord[1] = newY;
-        coord[2] = newZ;
-        // create new atom
-        int n = 0;
-        atom->avec->create_atom(atom->type[i], coord);
-        n = atom->nlocal - 1;
-
-        atom->tag[n] = 0;
-        atom->mask[n] = atom->mask[i];
-        atom->image[n] = atom->image[i];
-
-        atom->v[n][0] = atom->v[i][0];
-        atom->v[n][1] = atom->v[i][1];
-        atom->v[n][2] = atom->v[i][2];
-        atom->f[n][0] = atom->f[i][0];
-        atom->f[n][1] = atom->f[i][1];
-        atom->f[n][2] = atom->f[i][2];
-
-        atom->rmass[n] = childMass;
-
-        atom->f[n][0] = childfx;
-        atom->f[n][1] = childfy;
-        atom->f[n][2] = childfz;
-
-        atom->radius[n] = childRadius;
-        //avec->d_counter[n] = 5;
-        atom->type[n] = childType;
-
-        modify->create_attribute(n);
-
-        delete[] coord;
+      std::random_device rd;  //Will be used to obtain a seed for the random number engine
+      std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+      std::uniform_real_distribution<double>  distribution(0.0, 1.0);
+      double rand = 0.0;
+      for (int i = 0; i < nlocal; i++){
+    	  rand = distribution(gen);
       }
+
+      int ta_id = bio->find_typeid("ta");
+      int stem_id = bio->find_typeid("stem");
+
+      if (rand < 0.1){
+		//set both parent and child type to be the same
+		 parentType = ta_id;
+		 childType = ta_id;
+		 parentMask = ta_mask;
+		 childMask = ta_mask;
+	   }else if (atom->natoms > 50 && rand < 0.8){
+		//set parent as sc and child as ta
+		parentType = stem_id;
+		childType = ta_id;
+		parentMask = atom->mask[i];
+		childMask = ta_mask;
+		//printf ("parent type 2 is %i\n", parentType);
+		//printf ("child type 2 is %i\n", childType);
+	  } else {
+		  parentType = stem_id;
+		  childType = stem_id;
+		  parentMask = atom->mask[i];
+		  childMask = atom->mask[i];
+		  //printf ("parent type 3 is %i\n", parentType);
+		  //printf ("child type 3 is %i\n", childType);
+	  }
+
+	 double parentMass = atom->rmass[i];
+	 double childMass = atom->rmass[i];
+
+	 //outer mass for parent and child
+	 double parentOuterMass = avec->outer_mass[i];
+	 double childOuterMass = parentOuterMass;
+
+	 // forces are the same for both parent and child, x, y and z axis
+	 double parentfx = atom->f[i][0];
+	 double childfx = atom->f[i][0];
+
+	 double parentfy = atom->f[i][1];
+	 double childfy = atom->f[i][1];
+
+	 double parentfz = atom->f[i][2];
+	 double childfz = atom->f[i][2];
+
+	 double thetaD = random->uniform() * 2 * MY_PI;
+	 double phiD = random->uniform() * (MY_PI);
+
+	 double oldX = atom->x[i][0];
+	 double oldY = atom->x[i][1];
+	 double oldZ = atom->x[i][2];
+
+	 //Update parent
+	 atom->rmass[i] = parentMass;
+	 atom->f[i][0] = parentfx;
+	 atom->f[i][1] = parentfy;
+	 atom->f[i][2] = parentfz;
+	 //todo check what was declared as a parent radius
+	 atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
+	 avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / eps_density)), (1.0 / 3.0));
+	 newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
+	 newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
+	 newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
+	 if (newX - avec->outer_radius[i] < xlo) {
+		 newX = xlo + avec->outer_radius[i];
+	 } else if (newX + avec->outer_radius[i] > xhi) {
+		 newX = xhi - avec->outer_radius[i];
+	 }
+	 if (newY - avec->outer_radius[i] < ylo) {
+		 newY = ylo + avec->outer_radius[i];
+	 } else if (newY + avec->outer_radius[i] > yhi) {
+		 newY = yhi - avec->outer_radius[i];
+	 }
+	 if (newZ - avec->outer_radius[i] < zlo) {
+		 newZ = zlo + avec->outer_radius[i];
+	 } else if (newZ + avec->outer_radius[i] > zhi) {
+		 newZ = zhi - avec->outer_radius[i];
+	 }
+	 atom->x[i][0] = newX;
+	 atom->x[i][1] = newY;
+	 atom->x[i][2] = newZ;
+	 atom->type[i] = parentType;
+	 atom->mask[i] = parentMask;
+
+	 //create child
+	 double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
+	 double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / eps_density)), (1.0 / 3.0));
+	 double* coord = new double[3];
+	 newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
+	 newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
+	 newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
+	 if (newX - childOuterRadius < xlo) {
+		 newX = xlo + childOuterRadius;
+	 } else if (newX + childOuterRadius > xhi) {
+		 newX = xhi - childOuterRadius;
+	 }
+	 if (newY - childOuterRadius < ylo) {
+		 newY = ylo + childOuterRadius;
+	 } else if (newY + childOuterRadius > yhi) {
+		 newY = yhi - childOuterRadius;
+	 }
+	 if (newZ - childOuterRadius < zlo) {
+		 newZ = zlo + childOuterRadius;
+	 } else if (newZ + childOuterRadius > zhi) {
+		 newZ = zhi - childOuterRadius;
+	 }
+	 //coordinates should be the same as parent
+	 coord[0] = newX;
+	 coord[1] = newY;
+	 coord[2] = newZ;
+	 // create new atom
+	 int n = 0;
+	 atom->avec->create_atom(atom->type[i], coord);
+	 n = atom->nlocal - 1;
+
+	 atom->tag[n] = 0;
+	 atom->image[n] = atom->image[i];
+
+	 atom->v[n][0] = atom->v[i][0];
+	 atom->v[n][1] = atom->v[i][1];
+	 atom->v[n][2] = atom->v[i][2];
+	 atom->f[n][0] = atom->f[i][0];
+	 atom->f[n][1] = atom->f[i][1];
+	 atom->f[n][2] = atom->f[i][2];
+
+	 atom->rmass[n] = childMass;
+	 avec->outer_mass[n] = childOuterMass;
+
+	 atom->f[n][0] = childfx;
+	 atom->f[n][1] = childfy;
+	 atom->f[n][2] = childfz;
+
+	 atom->radius[n] = childRadius;
+	 avec->outer_radius[n] = childOuterRadius;
+
+	 atom->type[n] = childType;
+	 atom->mask[n] = childMask;
+
+	 modify->create_attribute(n);
+
+	 delete[] coord;
     }
   }
 

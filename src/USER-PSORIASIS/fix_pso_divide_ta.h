@@ -44,6 +44,7 @@ class FixPDivideTa : public Fix {
   tagint maxtag_all;
   double xlo,xhi,ylo,yhi,zlo,zhi;
   double eps_density, div_dia;
+  int diff_mask;
 
   /*
    * Dinika's edits
@@ -54,6 +55,9 @@ class FixPDivideTa : public Fix {
   int type_id;
   char* type_name;
   double division_counter;
+  int parentType;
+  int childType;
+  int parentMask, childMask;
 
   class RanPark *random;
   class AtomVecBio *avec;
