@@ -38,12 +38,13 @@ class FixPDivideStem : public Fix {
  private:
   char **var;
   int *ivar;
+  double *dvar;
 
   int seed;
   int demflag;
   tagint maxtag_all;
   double xlo,xhi,ylo,yhi,zlo,zhi;
-  double eps_density, div_dia;
+  double eps_density;
 
   /*
    * Dinika's edits
@@ -54,11 +55,10 @@ class FixPDivideStem : public Fix {
   int type_id;
   char* type_name;
   bool can_divide;
-  int parentType;
-  int childType;
+  int parentType, childType;
   int ta_mask;
-  int parentMask;
-  int childMask;
+  int parentMask, childMask;
+  double prob1, prob2, prob3;
 
   class RanPark *random;
   class AtomVecBio *avec;

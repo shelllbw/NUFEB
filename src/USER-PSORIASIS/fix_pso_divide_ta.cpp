@@ -55,23 +55,23 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 7) // dinika mod - from 7 to 8
+  if (narg < 8) // dinika mod - from 7 to 8
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[2];
-  ivar = new int[2];
+  var = new char*[3];
+  ivar = new int[3];
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 3; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[6]);
+  seed = force->inumeric(FLERR, arg[7]);
 
   // read optional param
   demflag = 0;
@@ -79,7 +79,7 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
   //dinika - set diff mask to -1
   diff_mask = -1;
 
-  int iarg = 7;
+  int iarg = 8;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -124,7 +124,7 @@ FixPDivideTa::~FixPDivideTa() {
   delete random;
 
   int i;
-  for (i = 0; i < 2; i++) {
+  for (i = 0; i < 3; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -147,7 +147,7 @@ void FixPDivideTa::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 2; n++) {
+  for (int n = 0; n < 3; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -155,8 +155,13 @@ void FixPDivideTa::init() {
       error->all(FLERR, "Variable for fix divide is invalid style");
   }
 
-  eps_density = input->variable->compute_equal(ivar[0]);
-  div_dia = input->variable->compute_equal(ivar[1]);
+  prob1 = input->variable->compute_equal(ivar[0]);
+  prob2 = input->variable->compute_equal(ivar[1]);
+  prob3 = input->variable->compute_equal(ivar[2]);
+
+  printf("prob 1 TA is %f \n", prob1);
+  printf("prob 2 TA is %f \n", prob2);
+  printf("prob 3 TA is %f \n", prob3);
 
   //dinika's edits - adding division counter
   int nlocal = atom->nlocal;
@@ -217,22 +222,20 @@ void FixPDivideTa::post_integrate() {
       //set here first as the max division
       division_counter = 4;
 
-	  if (parentDivisionCount <= division_counter && rand < 0.1){
+	  if (parentDivisionCount <= division_counter && prob1){
 		  parentType = type_id;
 		  childType = type_id;
 		  parentMask = atom->mask[i];
 		  childMask = atom->mask[i];
 		  parentDivisionCount = avec->d_counter[i] + 1;
 		  childDivisionCount = 0;
-		//printf ("parent cell division count 1 is %i \n", parentDivisionCount);
-	  } else if (parentDivisionCount <= division_counter && rand < 0.8){
+	  } else if (parentDivisionCount <= division_counter && prob2){
 		  parentType = type_id;
 		  childType = diff_id;
 		  parentMask = atom->mask[i];
 		  childMask = diff_mask;
 		  parentDivisionCount = avec->d_counter[i] + 1;
 		  childDivisionCount = 0;
-		  //printf ("parent cell division count 2 is %i \n", parentDivisionCount);
 	  } else if (parentDivisionCount > division_counter){
 		  parentType = diff_id;
 		  childType = diff_id;
@@ -240,16 +243,7 @@ void FixPDivideTa::post_integrate() {
 		  childMask = diff_mask;
 		  parentDivisionCount = avec->d_counter[i] + 1;
 		  childDivisionCount = 0;
-		  //printf ("parent cell division count 3 is %i \n", parentDivisionCount);
 	  }
-//	  } else {
-//		  parentType = diff_id;
-//		  childType = diff_id;
-//		  parentMask = diff_mask;
-//		  childMask = diff_mask;
-//		  parentDivisionCount = avec->d_counter[i] + 1;
-//		  childDivisionCount = 0;
-//	  }
 
 		double parentMass = atom->rmass[i];
 		double childMass = atom->rmass[i];
@@ -282,7 +276,7 @@ void FixPDivideTa::post_integrate() {
         atom->f[i][2] = parentfz;
         //todo check what was declared as a parent radius
         atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-        avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / eps_density)), (1.0 / 3.0));
+        avec->outer_radius[i] = atom->radius[i];
         newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
         newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
         newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
@@ -310,7 +304,7 @@ void FixPDivideTa::post_integrate() {
 
         //create child
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-        double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / eps_density)), (1.0 / 3.0));
+        double childOuterRadius = childRadius;
         double* coord = new double[3];
         newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
         newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);

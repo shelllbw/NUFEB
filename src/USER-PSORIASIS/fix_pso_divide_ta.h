@@ -55,9 +55,9 @@ class FixPDivideTa : public Fix {
   int type_id;
   char* type_name;
   double division_counter;
-  int parentType;
-  int childType;
+  int parentType, childType;
   int parentMask, childMask;
+  double prob1, prob2, prob3;
 
   class RanPark *random;
   class AtomVecBio *avec;

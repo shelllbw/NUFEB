@@ -56,23 +56,23 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 7) // dinika mod - from 7 to 8
+  if (narg < 8) // dinika mod - from 7 to 8
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[2];
-  ivar = new int[2];
+  var = new char*[3];
+  ivar = new int[3];
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 3; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[6]);
+  seed = force->inumeric(FLERR, arg[7]);
 
   // read optional param
   demflag = 0;
@@ -80,7 +80,7 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   //dinika - set ta_mask to -1
   ta_mask = -1;
 
-  int iarg = 7;
+  int iarg = 8; //mod from 7 to 8
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -125,7 +125,7 @@ FixPDivideStem::~FixPDivideStem() {
   delete random;
 
   int i;
-  for (i = 0; i < 2; i++) {
+  for (i = 0; i < 3; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -148,7 +148,7 @@ void FixPDivideStem::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 2; n++) {
+  for (int n = 0; n < 3; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -156,8 +156,9 @@ void FixPDivideStem::init() {
       error->all(FLERR, "Variable for fix divide is invalid style");
   }
 
-  eps_density = input->variable->compute_equal(ivar[0]);
-  div_dia = input->variable->compute_equal(ivar[1]);
+  prob1 = input->variable->compute_equal(ivar[0]);
+  prob2 = input->variable->compute_equal(ivar[1]);
+  prob3 = input->variable->compute_equal(ivar[2]);
 
   //Dinika's edits
   //modify atom mask
@@ -170,7 +171,7 @@ void FixPDivideStem::init() {
   if (ta_mask < 0) error->all(FLERR, "Cannot TA group.");
 }
 
-void FixPDivideStem::post_integrate() {
+  void FixPDivideStem::post_integrate() {
 
   if (nevery == 0)
     return;
@@ -187,7 +188,6 @@ void FixPDivideStem::post_integrate() {
 
     //this groupbit will allow the input script to set each cell type to divide
     // i.e. if set fix d1 STEM 50 .. , fix d1 TA ... etc
-    //printf("groupbit stem %d \n", groupbit);
     if (atom->mask[i] & groupbit) {
       double density = atom->rmass[i] / (4.0 * MY_PI / 3.0 * atom->radius[i] * atom->radius[i] * atom->radius[i]);
       double newX, newY, newZ;
@@ -207,27 +207,23 @@ void FixPDivideStem::post_integrate() {
       int ta_id = bio->find_typeid("ta");
       int stem_id = bio->find_typeid("stem");
 
-      if (rand < 0.1){
+      if (atom->natoms < 50 && rand < prob1){
 		//set both parent and child type to be the same
 		 parentType = ta_id;
 		 childType = ta_id;
 		 parentMask = ta_mask;
 		 childMask = ta_mask;
-	   }else if (atom->natoms > 50 && rand < 0.8){
+	   }else if (rand < prob2){
 		//set parent as sc and child as ta
 		parentType = stem_id;
 		childType = ta_id;
 		parentMask = atom->mask[i];
 		childMask = ta_mask;
-		//printf ("parent type 2 is %i\n", parentType);
-		//printf ("child type 2 is %i\n", childType);
-	  } else {
+	  } else if (atom->natoms > 50 && rand < prob3){
 		  parentType = stem_id;
 		  childType = stem_id;
 		  parentMask = atom->mask[i];
 		  childMask = atom->mask[i];
-		  //printf ("parent type 3 is %i\n", parentType);
-		  //printf ("child type 3 is %i\n", childType);
 	  }
 
 	 double parentMass = atom->rmass[i];
@@ -261,7 +257,7 @@ void FixPDivideStem::post_integrate() {
 	 atom->f[i][2] = parentfz;
 	 //todo check what was declared as a parent radius
 	 atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-	 avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / eps_density)), (1.0 / 3.0));
+	 avec->outer_radius[i] = atom->radius[i];
 	 newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
 	 newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
 	 newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
@@ -288,7 +284,7 @@ void FixPDivideStem::post_integrate() {
 
 	 //create child
 	 double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-	 double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / eps_density)), (1.0 / 3.0));
+	 double childOuterRadius = childRadius;
 	 double* coord = new double[3];
 	 newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
 	 newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
