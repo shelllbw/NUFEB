@@ -6,15 +6,44 @@ boundary	pp pp ff
 newton		off
 processors  * * 1
 
+units si
+
 comm_modify	vel yes
 read_data_bio atom.in
 
 group STEM type 1
 group TA type 2
 group DIFF type 3
+group BM type 4
+
+variable x equal 100
+variable y equal 40
+variable z equal 10
+
+lattice sc 1e-6 origin 0.5 0.5 0.5
+
+region reg block 0 $x 0 $y 0 $z
+
+variable  xx internal 0.0
+variable  zz internal 0.0
+variable  v equal "(0.29*v_z*zlat * cos(v_xx/xlat * 2.0*PI*4.0/v_x) + 0.7*v_z*zlat - v_zz) > 0.0"
+
+create_atoms 4 region reg var v set x xx set z zz
 
 neighbor	5e-7 bin
-neigh_modify	delay 0 one 5000
+#neigh_modify	delay 0 one 5000
+
+set type 1 density 150
+set type 1 diameter 1.0e-6
+
+set type 2 density 150
+set type 2 diameter 1.0e-6
+
+set type 3 density 150
+set type 3 diameter 1.0e-6
+
+set type 4 density 150
+set type 4 diameter 1.0e-6
 
 ##############Define DEM Variables&Commands##############
 
@@ -23,14 +52,14 @@ pair_coeff  * *
 
 timestep 100
 
-fix 1 all nve/limit 1e-8
-fix fv all viscous 1e-5
+#fix 1 all nve/limit 1e-8
+#fix fv all viscous 1e-5
 
-fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  1e-04
+#fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  1e-04
 
 variable kanc equal 50
 
-fix zwa all walladh v_kanc zplane  0.0  1e-04
+#fix zwa all walladh v_kanc zplane  0.0  1e-04
 
 ##############Define IBm Variables##############
 
@@ -39,6 +68,9 @@ fix zwa all walladh v_kanc zplane  0.0  1e-04
 variable divDia equal 1.36e-6
 variable EPSdens equal 30
 variable divisionCounter equal 4
+variable prob1 equal 0.1
+variable prob2 equal 0.8
+variable prob3 equal 0.1
 
 #variables used in fix kinetics
 variable diffT equal 1e-4
@@ -48,8 +80,8 @@ variable layer equal -1
 ##############Define IBm Commands##############
 
 fix k1 all kinetics 100 25 10 25 v_diffT v_layer niter 1
-fix d1 STEM psoriasis/divide_stem 5400 v_EPSdens v_divDia 64564
-fix d2 TA psoriasis/divide_ta 2160 v_EPSdens v_divDia 64564
+fix d1 STEM psoriasis/divide_stem 5400 v_prob1 v_prob2 v_prob3 64564
+fix d2 TA psoriasis/divide_ta 2160 v_prob1 v_prob2 v_prob3 64564
 
 
 ##############Define IBm Computes##############
@@ -60,11 +92,11 @@ compute myNtypes all ntypes
 ##############Simulation Output##############
 
 # Use atom_# instead of atom%_#
-dump		du1 all custom/vtk 2160 atom_*.vtu id type diameter x y z
+dump		du1 all custom/vtk 1 atom_*.vtu id type diameter x y z
 #dump		du2 all grid 2160 grid_%_*.vti con
 thermo_style    custom step cpu atoms c_myNtypes[*]
 thermo		2160
 thermo_modify	lost ignore
 
 
-run 1000000
+run 1
