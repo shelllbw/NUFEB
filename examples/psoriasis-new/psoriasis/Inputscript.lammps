@@ -17,18 +17,37 @@ group DIFF type 3
 group BM type 4
 
 variable x equal 100
-variable y equal 40
-variable z equal 10
+variable y equal 60
+variable z equal 40
 
 lattice sc 1e-6 origin 0.5 0.5 0.5
 
 region reg block 0 $x 0 $y 0 $z
+region reg2 block 0 $x 0 $y 0 42
 
 variable  xx internal 0.0
 variable  zz internal 0.0
-variable  v equal "(0.29*v_z*zlat * cos(v_xx/xlat * 2.0*PI*4.0/v_x) + 0.7*v_z*zlat - v_zz) > 0.0"
+variable  v equal "(0.08*v_z*zlat * cos(v_xx/xlat * 2.5*PI*4.0/v_x) + 0.85*v_z*zlat - v_zz) > 0.0"
+
+variable xx2 internal 0.0
+variable zz2 internal 0.0
+variable v2 equal "(0.2*v_z*zlat * cos(v_xx2/xlat * 2.5*PI*4.0/v_x) + 0.95*v_z*zlat - v_zz2) > 0.0"
 
 create_atoms 4 region reg var v set x xx set z zz
+
+create_atoms 1 region reg var v set x xx set z zz
+group STEM1 type 1
+
+#create_atoms 1 region reg2 var v set x xx set z zz
+create_atoms 1 random 100 1321 reg2 var v2 set x xx set z zz
+group STEM2 type 1
+
+group delete1 intersect STEM1 STEM2
+
+delete_atoms group delete1
+
+#create_atoms 1 random 100 1321 reg3 var v2 set x xx2 set z zz2
+#create_atoms 1 random 100 64564 reg2
 
 neighbor	5e-7 bin
 #neigh_modify	delay 0 one 5000
