@@ -11,19 +11,15 @@ units si
 comm_modify	vel yes
 read_data_bio atom.in
 
-group STEM type 1
-group TA type 2
-group DIFF type 3
-group BM type 4
-
 variable x equal 100
-variable y equal 60
+variable y equal 20
 variable z equal 40
 
 lattice sc 1e-6 origin 0.5 0.5 0.5
 
 region reg block 0 $x 0 $y 0 $z
-region reg2 block 0 $x 0 $y 0 42
+region reg2 block 0 $x 0 $y 36 39
+#region reg3 block 1 2 1 100 36 38
 
 variable  xx internal 0.0
 variable  zz internal 0.0
@@ -31,54 +27,52 @@ variable  v equal "(0.08*v_z*zlat * cos(v_xx/xlat * 2.5*PI*4.0/v_x) + 0.85*v_z*z
 
 variable xx2 internal 0.0
 variable zz2 internal 0.0
+#variable v2 equal "(0.08*v_z*zlat * cos(v_xx2/xlat * 2.5*PI*4.0/v_x) + 0.87*v_z*zlat - v_zz2) > 0.0"
 variable v2 equal "(0.2*v_z*zlat * cos(v_xx2/xlat * 2.5*PI*4.0/v_x) + 0.95*v_z*zlat - v_zz2) > 0.0"
 
 create_atoms 4 region reg var v set x xx set z zz
+#create_atoms 1 random 100 1321 reg2 var v2 set x xx2 set z zz2
+#create_atoms 1 random 50 1321 reg3
 
-create_atoms 1 region reg var v set x xx set z zz
-group STEM1 type 1
-
-#create_atoms 1 region reg2 var v set x xx set z zz
-create_atoms 1 random 100 1321 reg2 var v2 set x xx set z zz
-group STEM2 type 1
-
-group delete1 intersect STEM1 STEM2
-
-delete_atoms group delete1
-
-#create_atoms 1 random 100 1321 reg3 var v2 set x xx2 set z zz2
-#create_atoms 1 random 100 64564 reg2
+group STEM type 1
+group TA type 2
+group DIFF type 3
+group BM type 4
 
 neighbor	5e-7 bin
-#neigh_modify	delay 0 one 5000
 
 set type 1 density 150
 set type 1 diameter 1.0e-6
+set type 1 mass 3.68e-17
 
 set type 2 density 150
 set type 2 diameter 1.0e-6
+set type 2 mass 3.68e-17
 
 set type 3 density 150
 set type 3 diameter 1.0e-6
+set type 3 mass 3.68e-17
 
 set type 4 density 150
 set type 4 diameter 1.0e-6
+set type 4 mass 3.68e-17
 
 ##############Define DEM Variables&Commands##############
 
 pair_style  gran/hooke/history 1.e-4 NULL 1.e-5 NULL 0.0 1
 pair_coeff  * *
 
-timestep 100
+timestep 1e-10
 
-#fix 1 all nve/limit 1e-8
-#fix fv all viscous 1e-5
+fix 1 all nve/limit 1e-8
+fix fv all viscous 1e-5
 
-#fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  1e-04
+fix sf BM setforce 0.0 0.0 0.0
 
-variable kanc equal 50
-
-#fix zwa all walladh v_kanc zplane  0.0  1e-04
+#min_style quickmin
+#thermo 1
+#thermo_modify lost ignore
+#minimize 1.0e-8 1.0e-10 100 1000
 
 ##############Define IBm Variables##############
 
@@ -95,27 +89,25 @@ variable prob3 equal 0.1
 variable diffT equal 1e-4
 variable layer equal -1
 
-
 ##############Define IBm Commands##############
 
 fix k1 all kinetics 100 25 10 25 v_diffT v_layer niter 1
 fix d1 STEM psoriasis/divide_stem 5400 v_prob1 v_prob2 v_prob3 64564
 fix d2 TA psoriasis/divide_ta 2160 v_prob1 v_prob2 v_prob3 64564
-
+fix sc1 STEM psoriasis/create_stem 1 100 64564
 
 ##############Define IBm Computes##############
 
 compute myNtypes all ntypes
-
+compute myMass all biomass
 
 ##############Simulation Output##############
 
 # Use atom_# instead of atom%_#
 dump		du1 all custom/vtk 1 atom_*.vtu id type diameter x y z
-#dump		du2 all grid 2160 grid_%_*.vti con
 thermo_style    custom step cpu atoms c_myNtypes[*]
 thermo		2160
 thermo_modify	lost ignore
 
 
-run 1
+run 20

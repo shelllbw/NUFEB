@@ -22,6 +22,8 @@ FixStyle(psoriasis/create_stem,FixPCreateStem)
 
 #include "fix.h"
 #include <vector>
+#include <algorithm>
+#include <iterator>
 
 namespace LAMMPS_NS {
 
@@ -31,7 +33,7 @@ class FixPCreateStem : public Fix {
  ~FixPCreateStem();
   void init();
   int setmask();
-  void end_of_step();
+  void pre_force(int vflag);
   int modify_param(int, char **);
 
  private:
@@ -51,17 +53,19 @@ class FixPCreateStem : public Fix {
   class ComputeNufebHeight *cheight;
   class AtomVecBio *avec;
 
-  std::vector< std::vector<int> > nlist;
+  std::vector< std::vector<double> > nlist;
   int *visit;
   double cutoff;
-  std::vector<int> fslist;
 
-  std::vector< std::vector<int> > emptyList;
+  std::vector<double> emptyList;
   void neighbor_list ();
-  void free_particle_list();
-  void remove_duplicates(std::vector<int> v);
+  void remove_duplicates(std::vector<double> &v);
   void empty_loc ();
-  void get_neighbour_loc ();
+  int ntype;
+  double a_coord[3];
+
+  char **var;
+  int *ivar;
 
 };
 
