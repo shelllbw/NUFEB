@@ -35,17 +35,18 @@ class FixPCreateStem : public Fix {
   int setmask();
   void pre_force(int vflag);
   int modify_param(int, char **);
+  void print(std::vector<double> const &input);
 
  private:
 
   int nlocal;
   int nall;
-  int nnus;                         // # of nutrients
 
   int nevery;
   int demflag;
   int num_sc;
   int seed;
+  int max_surface;
 
   class FixKinetics *kinetics;
   class BIO *bio;
@@ -62,10 +63,8 @@ class FixPCreateStem : public Fix {
   void remove_duplicates(std::vector<double> &v);
   void empty_loc ();
   int ntype;
-  double a_coord[3];
+  //double a_coord[3], *coord;
 
-  char **var;
-  int *ivar;
 
 };
 
