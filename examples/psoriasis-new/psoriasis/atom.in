@@ -1,7 +1,7 @@
   Granular Flow Simulation
 
        0 atoms
-       4 atom types
+       5 atom types
        1 nutrients
 
    0.000000e-04   1e-04  xlo xhi
@@ -21,6 +21,7 @@
      2 ta
      3 diff
      4 bm
+     5 sbm
 
  Division Counter
 
@@ -28,3 +29,4 @@
      ta 4
      diff 0
      bm 0
+     sbm 0

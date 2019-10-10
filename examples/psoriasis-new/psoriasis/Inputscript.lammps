@@ -13,7 +13,7 @@ read_data_bio atom.in
 
 variable x equal 100
 variable y equal 20
-variable z equal 40
+variable z equal 20
 
 lattice sc 1e-6 origin 0.5 0.5 0.5
 
@@ -29,8 +29,8 @@ variable xx2 internal 0.0
 variable zz2 internal 0.0
 variable v2 equal "(0.2*v_z*zlat * cos(v_xx2/xlat * 2.5*PI*4.0/v_x) + 0.95*v_z*zlat - v_zz2) > 0.0"
 
-create_atoms 4 region reg var v set x xx set z zz
-#create_atoms 4 region reg
+#create_atoms 4 region reg var v set x xx set z zz
+create_atoms 4 region reg
 
 group STEM type 1
 group TA type 2
@@ -40,28 +40,29 @@ group BM type 4
 neighbor	5e-7 bin
 
 set type 1 density 150
-#set type 1 mass 7.853985e-14
 set type 1 diameter 1.0e-6
-set type 1 mass 3.68e-17
+set type 1 mass 7.853981e-17
 
 set type 2 density 150
-#set type 2 mass 7.853985e-14
 set type 2 diameter 1.0e-6
-set type 2 mass 3.68e-17
+set type 2 mass 7.853981e-17
 
 set type 3 density 150
-#set type 3 mass 7.853985e-14
 set type 3 diameter 1.0e-6
-set type 3 mass 3.68e-17
+set type 3 mass 7.853981e-17
 
 set type 4 density 150
-#set type 4 mass 7.853985e-14
 set type 4 diameter 1.0e-6
-set type 4 mass 3.68e-17
+set type 4 mass 7.853981e-17
+
+set type 5 density 150
+set type 5 diameter 1.0e-6
+set type 5 mass 7.853981e-17
 
 ##############Define DEM Variables&Commands##############
 
-fix sc1 STEM psoriasis/create_stem 1 6 20 64564
+# ***bowen** new format, cutoff, density, diameter, #of sc, seed
+fix sc1 STEM psoriasis/create_stem 1e-8 150 1.0e-6 50 64564
 
 pair_style  gran/hooke/history 1.e-4 NULL 1.e-5 NULL 0.0 1
 pair_coeff  * *

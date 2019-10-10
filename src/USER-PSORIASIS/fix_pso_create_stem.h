@@ -42,11 +42,13 @@ class FixPCreateStem : public Fix {
   int nlocal;
   int nall;
 
-  int nevery;
   int demflag;
   int num_sc;
   int seed;
   int max_surface;
+  int sc_mask;
+  double density, diameter;
+
 
   class FixKinetics *kinetics;
   class BIO *bio;
@@ -56,14 +58,13 @@ class FixPCreateStem : public Fix {
 
   std::vector< std::vector<double> > nlist;
   int *visit;
-  double cutoff;
+  double cutoff, e_cutoff;
 
   std::vector<double> emptyList;
   void neighbor_list ();
   void remove_duplicates(std::vector<double> &v);
   void empty_loc ();
   int ntype;
-  //double a_coord[3], *coord;
 
 
 };
@@ -72,4 +73,3 @@ class FixPCreateStem : public Fix {
 
 #endif
 #endif
-

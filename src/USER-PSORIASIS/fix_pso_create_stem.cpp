@@ -32,6 +32,8 @@
 #include <stdio.h>
 #include <math.h>
 #include "comm.h"
+#include "group.h"
+#include "math_const.h"
 
 #include <vector>
 #include <algorithm>
@@ -47,22 +49,24 @@ using namespace FixConst;
 FixPCreateStem::FixPCreateStem(LAMMPS *lmp, int narg, char **arg) :
   Fix(lmp, narg, arg)
 {
-  if (narg < 7)
+  if (narg < 8)
 	  error->all(FLERR,"Invalid number of arguments");
 
   demflag = 0;
-
-  ntype = force->inumeric(FLERR,arg[3]); // todo check if 0 or 1
+  max_surface = 6;
 
   //read the max number of surfaces an atom should have
-  max_surface = force->inumeric(FLERR, arg[4]);
+  //***bowen*** read density and diameter from input, change max_surface to cutoff. max_surface is a fix value
+  cutoff = force->numeric(FLERR, arg[3]);
+  density = force->numeric(FLERR, arg[4]);
+  diameter = force->numeric(FLERR, arg[5]);
   //get the number of sc to initialise
-  num_sc = force->inumeric(FLERR, arg[5]);
+  num_sc = force->inumeric(FLERR, arg[6]);
   // read last input param
-  seed = force->inumeric(FLERR, arg[6]);
+  seed = force->inumeric(FLERR, arg[7]);
+  //printf("cutoff = %e, density = %e, dia = %e, num_sc=%i, seed=%i \n", cutoff, density, diameter, num_sc, seed);
 
-
-  int iarg = 7;
+  int iarg = 8;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -91,50 +95,80 @@ void FixPCreateStem::init()
 		error->all(FLERR, "Max number of surfaces cannot be less than or equal to 0");
 	}
 	if (num_sc > 0) {
-		//refresh list
+		//refresh list and get all the empty locations
 		emptyList.clear();
-		//get all the empty locations
 		empty_loc();
-		//int randomPos;
 		double atomId;
 		int aId;
 		std::vector<double> freeLoc;
-		printf("empty list is BEFORE shuffle  \n");
-		print(emptyList);
-		//shuffle the vector
+		printf("size of empty list BEFORE removing duplicates %d \n", emptyList.size());
+		//remove any duplicates
+		//remove_duplicates(emptyList);
+		//printf("size of empty list AFTER removing duplicates %d \n", emptyList.size());
+		//shuffle the vector and assign to a new vector with the number of sc to initialise
 		std::random_shuffle (emptyList.begin(), emptyList.end());
-		//std::shuffle(emptyList.begin(), emptyList.end(), std::default_random_engine(seed));
-		printf("empty list is AFTER shuffle  \n");
-		print(emptyList);
-		freeLoc.assign(emptyList.begin(), emptyList.begin() + (num_sc + 1));
-		remove_duplicates(freeLoc);
-		printf("free loc list is \n");
+		freeLoc.assign(emptyList.begin(), emptyList.begin() + (num_sc));
+		printf("free location list as follows \n");
 		print(freeLoc);
-		double a_coord[3], *coord;
-		coord = a_coord;
+		printf("\n");
+		printf("free location size is %d \n", freeLoc.size());
+
+		 //***bowen*** get mask
+	    for (int i = 1; i < group->ngroup; i++) {
+		  if (strcmp(group->names[i],"STEM") == 0) {
+		    sc_mask = pow(2, i) + 1;
+		    break;
+	    	}
+	    }
+
+	    if (sc_mask < 0) error->all(FLERR, "Cannot find STEM group.");
+	    //***bowen*** get type id
+		int stem_id = avec->bio->find_typeid("stem");
+
 		for (int i = 0; i < freeLoc.size(); i++){
+			double* coord = new double[3];
+			double r = diameter/2;
+
 			atomId = freeLoc[i];
 			aId = int (atomId);
 
-			//printf("atom a id is %i \n", aId);
-			//printf("atom diameter is %e \n", (atom->radius[pId] * 2));
-			//store atom coordinates based on the atom ID
-			coord[0] = atom->x[aId][0] + atom->radius[aId];
-			coord[1] = atom->x[aId][1] + atom->radius[aId];
-			coord[2] = atom->x[aId][2] + atom->radius[aId];
+			 //***bowen*** x y are same with surface atom, z is 1 diameter higher
+			coord[0] = atom->x[aId][0];
+			coord[1] = atom->x[aId][1];
+			coord[2] = atom->x[aId][2] + atom->radius[aId] * 2;
 
 			int n = 0;
-			//create atom
-			atom->avec->create_atom(ntype, coord);
-			//get new atom id
+			//create new sc to initialise on surface
+			atom->avec->create_atom(stem_id, coord);
+			//gets the new atom id
 			n = atom->nlocal - 1;
+			atom->radius[n] = r;
+			atom->rmass[n] = 4.0*3.1415926/3.0*r*r*r*density;
+			avec->outer_mass[n] = atom->rmass[n];
+			avec->outer_radius[n] = r;
 
-			atom->radius[n] = atom->radius[aId];
-			atom->rmass[n] = atom->rmass[aId];
-			avec->outer_mass[n] = avec->outer_mass[aId];
-			atom->type[n] = ntype;
-			atom->mask[n] = atom->mask[aId];
+			//printf("mass = %e, radiuss = %e type = %i sc_mask = %i \n", atom->rmass[n], atom->radius[n], stem_id, sc_mask);
+			atom->mask[n] = sc_mask;
+			atom->tag[n] = 0;
+
+	        delete[] coord;
 	  }
+  }
+
+	 //***bowen*** same with division, set tag, natom etc.
+  bigint nblocal = atom->nlocal;
+  MPI_Allreduce(&nblocal, &atom->natoms, 1, MPI_LMP_BIGINT, MPI_SUM, world);
+  if (atom->natoms < 0 || atom->natoms >= MAXBIGINT)
+	error->all(FLERR, "Too many total atoms");
+
+  if (atom->tag_enable)
+	atom->tag_extend();
+  atom->tag_check();
+
+  if (atom->map_style) {
+	atom->nghost = 0;
+	atom->map_init();
+	atom->map_set();
   }
 }
 
@@ -143,7 +177,7 @@ void FixPCreateStem::init()
 int FixPCreateStem::setmask()
 {
 	int mask = 0;
-	mask |= PRE_FORCE; //TODO CHECK WHAT MASK TO SET AS I DO NOT HAVE POST_INT AND END_OF_STEP function
+	mask |= PRE_FORCE;
 	return mask;
 }
 
@@ -153,8 +187,8 @@ void FixPCreateStem::pre_force(int vflag)
 
 //create a list of all the empty locations
 void FixPCreateStem::empty_loc () {
-	//std::vector<double> subEmptyList;
-	cutoff = 1e-8;
+	//get cutoff from inputscript
+	e_cutoff = cutoff;
 	// uniform radius
 	double d = atom->radius[0] * 2;
 	double r = atom->radius[0];
@@ -215,7 +249,7 @@ void FixPCreateStem::empty_loc () {
 	  //if the atom has less than 6 surfaces, then it is a surface atom
 	  if (surface < max_surface) {
 		  emptyList.push_back(i);
-		  atom->type[i] = 3; //for testing just set to type 3
+		  atom->type[i] = 5; //for testing just set to type 3
 		}
 	}
 }
