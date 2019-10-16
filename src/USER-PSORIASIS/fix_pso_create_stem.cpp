@@ -101,10 +101,16 @@ void FixPCreateStem::init()
 		double atomId;
 		int aId;
 		std::vector<double> freeLoc;
-		printf("size of empty list BEFORE removing duplicates %d \n", emptyList.size());
+//		printf("size of empty list BEFORE removing duplicates %d \n", emptyList.size());
+//		printf("empty list as follows \n");
+//		print(emptyList);
+//		printf("\n");
 		//remove any duplicates
-		//remove_duplicates(emptyList);
-		//printf("size of empty list AFTER removing duplicates %d \n", emptyList.size());
+//		remove_duplicates(emptyList);
+//		printf("size of empty list AFTER removing duplicates %d \n", emptyList.size());
+//		printf("empty list as follows \n");
+//		print(emptyList);
+//		printf("\n");
 		//shuffle the vector and assign to a new vector with the number of sc to initialise
 		std::random_shuffle (emptyList.begin(), emptyList.end());
 		freeLoc.assign(emptyList.begin(), emptyList.begin() + (num_sc));
@@ -124,10 +130,11 @@ void FixPCreateStem::init()
 	    if (sc_mask < 0) error->all(FLERR, "Cannot find STEM group.");
 	    //***bowen*** get type id
 		int stem_id = avec->bio->find_typeid("stem");
+		double* coord = new double[3];
+		double r = diameter/2;
 
 		for (int i = 0; i < freeLoc.size(); i++){
-			double* coord = new double[3];
-			double r = diameter/2;
+
 
 			atomId = freeLoc[i];
 			aId = int (atomId);
@@ -151,7 +158,7 @@ void FixPCreateStem::init()
 			atom->mask[n] = sc_mask;
 			atom->tag[n] = 0;
 
-	        delete[] coord;
+	       // delete[] coord;
 	  }
   }
 
