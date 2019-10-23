@@ -157,13 +157,9 @@ void FixPDivideTa::init() {
       error->all(FLERR, "Variable for fix divide is invalid style");
   }
 
-  prob1 = input->variable->compute_equal(ivar[0]);
-  prob2 = input->variable->compute_equal(ivar[1]);
-  prob3 = input->variable->compute_equal(ivar[2]);
-
-  printf("prob 1 TA is %f \n", prob1);
-  printf("prob 2 TA is %f \n", prob2);
-  printf("prob 3 TA is %f \n", prob3);
+  selfpro = input->variable->compute_equal(ivar[0]);
+  asym = input->variable->compute_equal(ivar[1]);
+  sym = input->variable->compute_equal(ivar[2]);
 
   //dinika's edits - adding division counter
   int nlocal = atom->nlocal;
@@ -179,7 +175,7 @@ void FixPDivideTa::init() {
       break;
     }
   }
-  if (diff_mask < 0) error->all(FLERR, "Cannot DIFF group.");
+  if (diff_mask < 0) error->all(FLERR, "Cannot get DIFF group.");
 }
 
 void FixPDivideTa::post_integrate() {
@@ -224,14 +220,14 @@ void FixPDivideTa::post_integrate() {
       //set here first as the max division
       division_counter = 4;
 
-	  if (parentDivisionCount <= division_counter && prob1){
+	  if (parentDivisionCount <= division_counter && selfpro){
 		  parentType = type_id;
 		  childType = type_id;
 		  parentMask = atom->mask[i];
 		  childMask = atom->mask[i];
 		  parentDivisionCount = avec->d_counter[i] + 1;
 		  childDivisionCount = 0;
-	  } else if (parentDivisionCount <= division_counter && prob2){
+	  } else if (parentDivisionCount <= division_counter && asym){
 		  parentType = type_id;
 		  childType = diff_id;
 		  parentMask = atom->mask[i];

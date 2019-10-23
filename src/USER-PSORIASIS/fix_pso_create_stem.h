@@ -33,7 +33,7 @@ class FixPCreateStem : public Fix {
  ~FixPCreateStem();
   void init();
   int setmask();
-  void pre_force(int vflag);
+  void post_integrate();
   int modify_param(int, char **);
   void print(std::vector<double> const &input);
 
@@ -62,7 +62,6 @@ class FixPCreateStem : public Fix {
 
   std::vector<double> emptyList;
   void neighbor_list ();
-  void remove_duplicates(std::vector<double> &v);
   void empty_loc ();
   int ntype;
 

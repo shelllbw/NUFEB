@@ -59,7 +59,7 @@ class FixPDivideTa : public Fix {
   double division_counter;
   int parentType, childType;
   int parentMask, childMask;
-  double prob1, prob2, prob3;
+  double selfpro, asym, sym;
 
   class RanPark *random;
   class AtomVecBio *avec;

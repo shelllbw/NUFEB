@@ -60,7 +60,7 @@ class FixPDivideStem : public Fix {
   int parentType, childType;
   int ta_mask;
   int parentMask, childMask;
-  double prob1, prob2, prob3;
+  double selfpro, asym, sym;
 
   class RanPark *random;
   class AtomVecBio *avec;

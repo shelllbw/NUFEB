@@ -64,7 +64,6 @@ FixPCreateStem::FixPCreateStem(LAMMPS *lmp, int narg, char **arg) :
   num_sc = force->inumeric(FLERR, arg[6]);
   // read last input param
   seed = force->inumeric(FLERR, arg[7]);
-  //printf("cutoff = %e, density = %e, dia = %e, num_sc=%i, seed=%i \n", cutoff, density, diameter, num_sc, seed);
 
   int iarg = 8;
   while (iarg < narg) {
@@ -94,6 +93,21 @@ void FixPCreateStem::init()
 	if (max_surface <= 0){
 		error->all(FLERR, "Max number of surfaces cannot be less than or equal to 0");
 	}
+}
+
+/* ---------------------------------------------------------------------- */
+
+int FixPCreateStem::setmask()
+{
+	int mask = 0;
+	mask |= POST_INTEGRATE;
+	return mask;
+}
+
+void FixPCreateStem::post_integrate()
+{
+	if (update->ntimestep != 1) return;
+
 	if (num_sc > 0) {
 		//refresh list and get all the empty locations
 		emptyList.clear();
@@ -101,23 +115,9 @@ void FixPCreateStem::init()
 		double atomId;
 		int aId;
 		std::vector<double> freeLoc;
-//		printf("size of empty list BEFORE removing duplicates %d \n", emptyList.size());
-//		printf("empty list as follows \n");
-//		print(emptyList);
-//		printf("\n");
-		//remove any duplicates
-//		remove_duplicates(emptyList);
-//		printf("size of empty list AFTER removing duplicates %d \n", emptyList.size());
-//		printf("empty list as follows \n");
-//		print(emptyList);
-//		printf("\n");
 		//shuffle the vector and assign to a new vector with the number of sc to initialise
 		std::random_shuffle (emptyList.begin(), emptyList.end());
 		freeLoc.assign(emptyList.begin(), emptyList.begin() + (num_sc));
-		printf("free location list as follows \n");
-		print(freeLoc);
-		printf("\n");
-		printf("free location size is %d \n", freeLoc.size());
 
 		 //***bowen*** get mask
 	    for (int i = 1; i < group->ngroup; i++) {
@@ -130,11 +130,10 @@ void FixPCreateStem::init()
 	    if (sc_mask < 0) error->all(FLERR, "Cannot find STEM group.");
 	    //***bowen*** get type id
 		int stem_id = avec->bio->find_typeid("stem");
-		double* coord = new double[3];
 		double r = diameter/2;
 
 		for (int i = 0; i < freeLoc.size(); i++){
-
+			double* coord = new double[3];
 
 			atomId = freeLoc[i];
 			aId = int (atomId);
@@ -154,11 +153,12 @@ void FixPCreateStem::init()
 			avec->outer_mass[n] = atom->rmass[n];
 			avec->outer_radius[n] = r;
 
-			//printf("mass = %e, radiuss = %e type = %i sc_mask = %i \n", atom->rmass[n], atom->radius[n], stem_id, sc_mask);
 			atom->mask[n] = sc_mask;
 			atom->tag[n] = 0;
 
-	       // delete[] coord;
+
+
+	        delete[] coord;
 	  }
   }
 
@@ -177,19 +177,10 @@ void FixPCreateStem::init()
 	atom->map_init();
 	atom->map_set();
   }
-}
 
-/* ---------------------------------------------------------------------- */
-
-int FixPCreateStem::setmask()
-{
-	int mask = 0;
-	mask |= PRE_FORCE;
-	return mask;
-}
-
-void FixPCreateStem::pre_force(int vflag)
-{
+  // trigger immediate reneighboring
+  next_reneighbor = update->ntimestep;
+  printf("%i initial stem cells created \n", num_sc);
 }
 
 //create a list of all the empty locations
@@ -259,18 +250,6 @@ void FixPCreateStem::empty_loc () {
 		  atom->type[i] = 5; //for testing just set to type 3
 		}
 	}
-}
-
-void FixPCreateStem::remove_duplicates(std::vector<double> &v) {
-    std::vector<double>::iterator ip;
-    // Sort the array first
-    std::sort(v.begin(), v.end());
-    // Using std::unique to remove duplicates in a container
-    ip = std::unique(v.begin(), (v.end() - 1));
-    // Resizing the vector so as to remove the undefined terms
-    v.resize(std::distance(v.begin(), ip));
-    //remove duplicates
-    v.erase(ip, v.end());
 }
 
 //get a list of all the neighboring cells

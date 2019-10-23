@@ -158,9 +158,9 @@ void FixPDivideStem::init() {
       error->all(FLERR, "Variable for fix divide is invalid style");
   }
 
-  prob1 = input->variable->compute_equal(ivar[0]);
-  prob2 = input->variable->compute_equal(ivar[1]);
-  prob3 = input->variable->compute_equal(ivar[2]);
+  selfpro = input->variable->compute_equal(ivar[0]);
+  asym = input->variable->compute_equal(ivar[1]);
+  sym = input->variable->compute_equal(ivar[2]);
 
   //Dinika's edits
   //modify atom mask
@@ -170,11 +170,10 @@ void FixPDivideStem::init() {
       break;
     }
   }
-  if (ta_mask < 0) error->all(FLERR, "Cannot TA group.");
+  if (ta_mask < 0) error->all(FLERR, "Cannot get TA group.");
 }
 
   void FixPDivideStem::post_integrate() {
-
   if (nevery == 0)
     return;
   if (update->ntimestep % nevery)
@@ -183,11 +182,15 @@ void FixPDivideStem::init() {
     return;
 
   int nlocal = atom->nlocal;
+  int nstem = 0;
 
   for (int i = 0; i < nlocal; i++) {
-    if (atom->mask[i] == avec->mask_dead)
-      continue;
+	    if (atom->mask[i] & groupbit) {
+	    	nstem++;
+	    }
+  }
 
+  for (int i = 0; i < nlocal; i++) {
     //this groupbit will allow the input script to set each cell type to divide
     // i.e. if set fix d1 STEM 50 .. , fix d1 TA ... etc
     if (atom->mask[i] & groupbit) {
@@ -209,19 +212,24 @@ void FixPDivideStem::init() {
       int ta_id = bio->find_typeid("ta");
       int stem_id = bio->find_typeid("stem");
 
-      if (atom->natoms < 50 && rand < prob1){
+      if (nstem > 50 && nstem < 100 && rand < sym){
 		//set both parent and child type to be the same
 		 parentType = ta_id;
 		 childType = ta_id;
 		 parentMask = ta_mask;
 		 childMask = ta_mask;
-	   }else if (rand < prob2){
+	   }else if (nstem < 100 && rand < asym){
 		//set parent as sc and child as ta
 		parentType = stem_id;
 		childType = ta_id;
 		parentMask = atom->mask[i];
 		childMask = ta_mask;
-	  } else if (atom->natoms > 50 && rand < prob3){
+	  } else if (nstem < 50 && rand < selfpro){
+		  parentType = stem_id;
+		  childType = stem_id;
+		  parentMask = atom->mask[i];
+		  childMask = atom->mask[i];
+	  } else {
 		  parentType = stem_id;
 		  childType = stem_id;
 		  parentMask = atom->mask[i];
@@ -257,7 +265,6 @@ void FixPDivideStem::init() {
 	 atom->f[i][0] = parentfx;
 	 atom->f[i][1] = parentfy;
 	 atom->f[i][2] = parentfz;
-	 //todo check what was declared as a parent radius
 	 atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
 	 avec->outer_radius[i] = atom->radius[i];
 	 newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
