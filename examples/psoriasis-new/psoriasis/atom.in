@@ -1,7 +1,7 @@
   Granular Flow Simulation
 
        0 atoms
-       5 atom types
+       7 atom types
        1 nutrients
 
    0.000000e-04   1e-04  xlo xhi
@@ -13,20 +13,48 @@
 
  Nutrients
 
-     1 ca2 l 0 0 0 0 0 0 0
+     1 il17 l 0.1 0.1 0.1 0.1 0.1 0.1 0.1
 
  Type Name
 
      1 stem
      2 ta
      3 diff
-     4 bm
-     5 sbm
+     4 tcell
+     5 dc
+     6 bm
+     7 sbm
+
+ Diffusion Coeffs
+
+     il17 1.6e-9
 
  Division Counter
 
      stem 0
      ta 4
      diff 0
+     tcell 0
+     dc 0
      bm 0
      sbm 0
+
+ Growth Rate
+
+    stem 0.1
+    ta 0
+    diff 0
+    tcell 0
+    dc 0
+    bm 0
+    sbm 0
+
+ Decay
+
+    stem 0.01
+    ta 0
+    diff 0
+    tcell 0
+    dc 0
+    bm 0
+    sbm 0

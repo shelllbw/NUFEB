@@ -247,7 +247,7 @@ void FixPCreateStem::empty_loc () {
 	  //if the atom has less than 6 surfaces, then it is a surface atom
 	  if (surface < max_surface) {
 		  emptyList.push_back(i);
-		  atom->type[i] = 5; //for testing just set to type 3
+		  atom->type[i] = 7; //for testing just set to type 7
 		}
 	}
 }

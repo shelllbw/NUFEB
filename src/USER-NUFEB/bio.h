@@ -58,6 +58,7 @@ class BIO : protected Pointers {
    * Dinika's edits
    * */
   int *division_counter;   //division counter for TA cells
+ // double *scta_mass;
 
   BIO(class LAMMPS *);
   ~BIO();
@@ -90,6 +91,7 @@ class BIO : protected Pointers {
    * Dinika's edits
    * */
   void set_division_counter(const char *);
+ // void set_scta_mass(const char *str);
 
   int find_typeid(char *name);
   int find_nuid(char *name);

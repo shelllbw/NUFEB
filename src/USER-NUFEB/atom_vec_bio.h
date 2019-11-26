@@ -77,9 +77,8 @@ class AtomVecBio : public AtomVec {
   /*
    * Dinika's edits
    * */
-//  void division_counter(int); //function takes in an int
-//  void division_counter_reset();
   int *d_counter; //division counter for each atom
+  double *scta_mass;
 
   class BIO *bio;
 
@@ -91,8 +90,6 @@ class AtomVecBio : public AtomVec {
   double *radius,*rmass;
   double **omega,**torque;
   int radvary;
-  //dinika's edits
-  int *count;
 
   void set_group_mask();
 };

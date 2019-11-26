@@ -211,6 +211,7 @@ void FixPDivideStem::init() {
 
       int ta_id = bio->find_typeid("ta");
       int stem_id = bio->find_typeid("stem");
+      //double sctaMass = avec->scta_mass[i];
 
       if (nstem > 50 && nstem < 100 && rand < sym){
 		//set both parent and child type to be the same
@@ -235,6 +236,12 @@ void FixPDivideStem::init() {
 		  parentMask = atom->mask[i];
 		  childMask = atom->mask[i];
 	  }
+//     if (rand < asym && (sctamass/atom->rmass[i]) => 0.5){
+//    	 parentType = stem_id;
+//    	 childType = ta_id;
+//    	 parentMask = atom->mask[i];
+//    	 childMask = ta_mask;
+//     }
 
 	 double parentMass = atom->rmass[i];
 	 double childMass = atom->rmass[i];

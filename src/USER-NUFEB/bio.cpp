@@ -59,6 +59,7 @@ BIO::BIO(LAMMPS *lmp) : Pointers(lmp)
    * Dinika's edits
    * */
   division_counter = NULL;
+  //scta_mass = NULL;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -93,6 +94,7 @@ BIO::~BIO()
    * Dinika's edits
    * */
   memory->destroy(division_counter);
+  //memory->destroy(scta_mass);
 
   for (int i = 0; i < atom->ntypes+1; i++) {
     delete [] tname[i];
@@ -125,6 +127,7 @@ void BIO::type_grow()
   if (tname != NULL) tname = (char **) memory->srealloc(tname,(atom->ntypes+1)*sizeof(char *),"bio:tname");
   //dinika's edits
   if (division_counter != NULL) memory->grow(division_counter,atom->ntypes+1,"bio:division_counter");
+ // if (scta_mass != NULL) memory->grow(scta_mass,atom->ntypes+1,"bio:scta_mass");
 }
 
 void BIO::create_type(char *name) {
@@ -790,7 +793,7 @@ int BIO::find_nuid(char *name) {
 
 void BIO::set_division_counter(const char *str)
 {
-  if (division_counter == NULL) error->all(FLERR,"Cannot set yield for this atom style");
+  if (division_counter == NULL) error->all(FLERR,"Cannot set division_counter for this atom style");
 
   char* name;
   int counter_one;
@@ -814,6 +817,38 @@ void BIO::set_division_counter(const char *str)
 
   if (division_counter[itype] < 0) error->all(FLERR,"Invalid set_division_counter value");
 }
+
+/* ----------------------------------------------------------------------
+   set sc ta mass values for all types
+   called from reading of data file
+------------------------------------------------------------------------- */
+
+//void BIO::set_scta_mass(const char *str)
+//{
+//  if (scta_mass == NULL) error->all(FLERR,"Cannot set sc, ta mass for this atom style");
+//
+//  char* name;
+//  int counter_one;
+//  int len = strlen(str) + 1;
+//  name = new char[len];
+//
+//  int n = sscanf(str,"%s %i",name,&counter_one); //make sure to check for type, int or double
+//  if (n != 2) error->all(FLERR,"Invalid set_scta_mass line in data file");
+//
+//  int itype = find_typeid(name);
+//  delete [] name;
+//
+//  if (itype < 1 || itype > atom->ntypes)
+//    error->all(FLERR,"Invalid type for set_scta_mass set");
+//
+//  if (counter_one < 0)
+//    lmp->error->all(FLERR,"sc, ta mass cannot be zero or less than zero");
+//
+//  scta_mass[itype] = counter_one;
+//  //printf("!!counter %s = %i \n", name, counter_one);
+//
+//  if (scta_mass[itype] < 0) error->all(FLERR,"Invalid set_scta_mass value");
+//}
 
 
 
