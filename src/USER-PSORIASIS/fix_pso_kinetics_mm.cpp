@@ -252,6 +252,8 @@ void FixPKineticsMM::grow_subgrid(int n) {
 
 /* ----------------------------------------------------------------------
  metabolism and atom update
+ for each cell type -> growth and decay rates are used (mu[i], decay[i])
+ nutrient reaction rate is then calculated
  ------------------------------------------------------------------------- */
 void FixPKineticsMM::growth(double dt, int gflag) {
   int *mask = atom->mask;
@@ -272,18 +274,11 @@ void FixPKineticsMM::growth(double dt, int gflag) {
 
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
     //empty grid is not considered
-
     for (int i = 1; i <= ntypes; i++) {
       int spec = species[i];
 
       // Stem cell monod model
       if (spec == 1) {
-
-        //nur --> update change within the grid for each timestep
-        //xdensity -> e.g. T cell density within the grid
-    	 // nur[tnfa][grid] += (tnfa2 * xdensity[i][grid]) - (tnfa20 * nus[tnfa][grid]);
-
-        //2 growth rates for SC - 1. the growth rate from cytokines 2. to include the mass of TA cell until it formally splits from the stem cell
         growrate[i][0][grid] = mu[i]; //normal growth
         growrate[i][1][grid] = decay[i]; //decay rate
        // growrate[i][1][grid] = sc_ta; //conversion to TA cell but have yet to split from mother cell
@@ -295,7 +290,6 @@ void FixPKineticsMM::growth(double dt, int gflag) {
 
       } else if (spec == 4) {
         // T cell monod model
-
     	  growrate[i][0][grid] = mu[i];
     	  growrate[i][i][grid] = decay[i];
 //    }
@@ -305,8 +299,10 @@ void FixPKineticsMM::growth(double dt, int gflag) {
 //      }
       }
     }
-
+    /*nur --> update change within the grid for each timestep
+    xdensity -> e.g. T cell density within the grid*/
 	nur[il17][grid] += (il172 * xdensity[4][grid]) - (il1720 * nus[il17][grid]);
+	// nur[tnfa][grid] += (tnfa2 * xdensity[i][grid]) - (tnfa20 * nus[tnfa][grid]);
 
   }
 
@@ -317,19 +313,122 @@ void FixPKineticsMM::growth(double dt, int gflag) {
  update particle attributes: biomass, outer mass, radius etc
  ------------------------------------------------------------------------- */
 void FixPKineticsMM::update_biomass(double ***growrate, double dt) {
+  int *mask = atom->mask;
+  int nlocal = atom->nlocal;
+  int *type = atom->type;
+
+  double *radius = atom->radius;
+  double *rmass = atom->rmass;
+  double *outer_mass = avec->outer_mass;
+  double *outer_radius = avec->outer_radius;
+
+  const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
+  const double four_thirds_pi = 4.0 * MY_PI / 3.0;
+  const double third = 1.0 / 3.0;
+
+  double *mu = bio->mu;
+  double *decay = bio->decay;
+
+  double **nus = kinetics->nus;
+  double **nur = kinetics->nur;
+  double **xdensity = kinetics->xdensity;
+
+  double grid_sc = 0;
+
+  for (int grid = 0; grid < kinetics->bgrids; grid++) {
+	  for (int i = 0; i < nlocal; i++) {
+	    if (mask[i] & groupbit) {
+	      int t = type[i];
+	      int pos = kinetics->position(i);
+
+	      double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
+	      //rmass[i] = rmass[i] * (1 + growrate[t][0][pos] * dt);
+
+	      if (species[t] == 1) {
+	    	  update_SCTAmass();
+	          radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+	          rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * dt;
+	          outer_radius[i] = radius[i]; // in this case outer radius is the same
+//	      } else if (species[t] == 4){
+//
+//	      }
+	    } else {
+	        radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+	        outer_mass[i] = rmass[i];
+	        outer_radius[i] = radius[i];
+	    }
+	  }
+	 }
+
+  }
 
 }
 
-// void FixPKineticsMM::update_SCTAmass(double dt){ //TODO doule check what sort of param to take in, decay rate or just sc2ta constant
-//	 int *mask = atom->mask;
-//	 int nlocal = atom->nlocal;
-//	 int *type = atom->type;
-//	 dt = sc_ta;
-//	 for (int i = 0; i < nlocal; i++){
-//		 if (mask[i] & groupbit) {
-//			 int t = type[i];
-//			 avec->scta_mass[i] += dt * atom->rmass[i];
-//		 }
-//	 }
-//}
+/* ----------------------------------------------------------------------
+ calculate the gird concentration for each type of cytokine
+
+ for now just use il17 in system
+ ------------------------------------------------------------------------- */
+double FixPKineticsMM::calculate_gridconc(){
+  double **nus = kinetics->nus;
+
+  double il17_conc = 0;
+
+  for (int grid = 0; grid < kinetics->bgrids; grid++) {
+	  il17_conc = nus[il17][grid] * vol;
+  }
+
+  return il17_conc;
+}
+
+/* ----------------------------------------------------------------------
+ calculate the number of stem cells in each grid
+ ------------------------------------------------------------------------- */
+int FixPKineticsMM::calculate_gridstem(){
+	int sc_count = 0;
+	int *mask = atom->mask;
+	int nlocal = atom->nlocal;
+	int *type = atom->type;
+
+  for (int grid = 0; grid < kinetics->bgrids; grid++) {
+	  for (int i = 0; i < nlocal; i++) {
+		if (mask[i] & groupbit) {
+		  int t = type[i];
+
+		  //if stem cell
+		  if (species[t] == 1) {
+			  sc_count += 1;
+		  }
+		}
+	  }
+	  return sc_count;
+  }
+}
+
+/* ----------------------------------------------------------------------
+ calculate the SC-TA mass to update to based on each grid
+
+ *note: each grid will have different number of SC and IL
+ ------------------------------------------------------------------------- */
+ void FixPKineticsMM::update_SCTAmass(){
+	 int *mask = atom->mask;
+	 int nlocal = atom->nlocal;
+	 int *type = atom->type;
+	 double *rmass = atom->rmass;
+
+	 for(int grid = 0; grid < kinetics->bgrids; grid++){
+		 double grid_conc = calculate_gridconc();
+		 int stem_count = calculate_gridstem();
+		 for (int i = 0; i < nlocal; i++){
+			 if (mask[i] & groupbit) {
+				 int t = type[i];
+				 int pos = kinetics->position(i);
+
+				 double update_sctamass_by = (grid_conc / stem_count) * growrate[t][0][pos];
+				 avec->scta_mass[i] = rmass[i] + (rmass[i] * update_sctamass_by);
+				 rmass[i] = avec->scta_mass[i];
+			 }
+		 }
+	 }
+}
 
