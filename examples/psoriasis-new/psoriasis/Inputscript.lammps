@@ -13,7 +13,7 @@ read_data_bio atom.in
 
 variable x equal 100
 variable y equal 20
-variable z equal 10
+variable z equal 40
 
 lattice sc 1e-6 origin 0.5 0.5 0.5
 
@@ -25,7 +25,7 @@ variable  zz internal 0.0
 variable  v equal "(0.12*v_z*zlat * cos(v_xx/xlat * 2.0*PI*PI/v_x) * cos(v_yy/ylat * 0.75*PI*PI/v_y) + 0.9*v_z*zlat - v_zz  ) > 0.0"
 
 create_atoms 6 region reg var v set x xx set y yy set z zz
-#create_atoms 4 region reg
+#create_atoms 6 region reg
 
 group STEM type 1
 group TA type 2
@@ -91,23 +91,23 @@ variable asym equal 0.8
 variable sym equal 0.16
 
 #variables used in fix kinetics
-variable diffT equal 1e-41
+variable diffT equal 1e-4
 variable layer equal -1
-#variable tol equal 1e-6
+variable tol equal 1e-5
 
 #variables used in kinetics/mm
 variable STEMdens equal 30
-variable il172 equal 0.1
-variable il1720 equal 0.01
+variable il172 equal 0.01
+variable il1720 equal 0.0001
 
 ##############Define IBm Commands##############
 
 # ***bowen** new format, cutoff, density, diameter, #of sc, seed
-fix sc1 STEM psoriasis/create_stem 1e-8 150 1.0e-6 50 64564
-fix k1 all kinetics 1 4 4 4 v_diffT v_layer demflag 1 niter 1
-#fix d1 STEM psoriasis/divide_stem 1 v_selfpro v_asym v_sym 64564 demflag 0
+#fix sc1 STEM psoriasis/create_stem 1e-8 150 1.0e-6 50 64564
+fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
+#fix d1 STEM psoriasis/divide_stem 1 v_divDia v_selfpro v_asym v_sym 64564 demflag 0
 #fix d2 TA psoriasis/divide_ta 6 v_prob1 v_prob2 v_prob3 79966 demflag 0
-#fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
+fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgm all psoriasis/kinetics/mm v_STEMdens v_il172 v_il1720
 
 
@@ -119,11 +119,12 @@ compute myMass all biomass
 ##############Simulation Output##############
 
 # Use atom_# instead of atom%_#
-dump		du1 all custom/vtk 50 atom_*.vtu id type diameter x y z
+dump		du1 all custom/vtk 1 atom_*.vtu id type diameter x y z
+dump		du2 all grid 1 grid_%_*.vti con
 thermo_style    custom step cpu atoms c_myNtypes[*]
-thermo		1001
+thermo		1
 thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 10
+run 5
