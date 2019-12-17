@@ -236,12 +236,8 @@ void FixPKineticsMM::init_param() {
 		species[i] = 5;
 	  else if (strcmp(name, "bm") == 0)
 	  	species[i] = 6;
-	  else if (strcmp(name, "sbm") == 0)
-	  	species[i] = 7;
 	  else
 		error->all(FLERR, "unknow species in fix_psoriasis/kinetics/mm");
-
-	  delete[] name;
   }
 }
 
@@ -272,6 +268,9 @@ void FixPKineticsMM::growth(double dt, int gflag) {
 
   double **xdensity = kinetics->xdensity;
 
+//  for(int i=0; i<atom->nlocal; i++)
+//      if (atom->type[i] == 1)  printf("ii=%i %i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
+
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
     //empty grid is not considered
     for (int i = 1; i <= ntypes; i++) {
@@ -281,6 +280,7 @@ void FixPKineticsMM::growth(double dt, int gflag) {
       if (spec == 1) {
         growrate[i][0][grid] = mu[i]; //normal growth
         growrate[i][1][grid] = decay[i]; //decay rate
+
        // growrate[i][1][grid] = sc_ta; //conversion to TA cell but have yet to split from mother cell
 //      } else if (spec == 2) {
 //        // TA cell monod model
@@ -292,6 +292,8 @@ void FixPKineticsMM::growth(double dt, int gflag) {
         // T cell monod model
     	  growrate[i][0][grid] = mu[i];
     	  growrate[i][i][grid] = decay[i];
+    	 // printf("grow rate is %f \n", mu[i]);
+    	  //printf("decay rate is %f \n", decay[i]);
 //    }
 //      else if (spec == 5) {
 //    	  //dendritic cell
@@ -302,11 +304,14 @@ void FixPKineticsMM::growth(double dt, int gflag) {
     /*nur --> update change within the grid for each timestep
     xdensity -> e.g. T cell density within the grid*/
 	nur[il17][grid] += (il172 * xdensity[4][grid]) - (il1720 * nus[il17][grid]);
+//	if (nur[il17][grid] > 0){
+//		printf("nur is %f grid=%i\n", nur[il17][grid], grid);
+//	}
 	// nur[tnfa][grid] += (tnfa2 * xdensity[i][grid]) - (tnfa20 * nus[tnfa][grid]);
 
   }
 
-  if (gflag && external_gflag) update_biomass(growrate, dt);
+ // if (gflag && external_gflag) update_biomass(growrate, dt);
 }
 
 /* ----------------------------------------------------------------------
@@ -333,8 +338,6 @@ void FixPKineticsMM::update_biomass(double ***growrate, double dt) {
   double **nur = kinetics->nur;
   double **xdensity = kinetics->xdensity;
 
-  double grid_sc = 0;
-
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
 	  for (int i = 0; i < nlocal; i++) {
 	    if (mask[i] & groupbit) {
@@ -344,24 +347,28 @@ void FixPKineticsMM::update_biomass(double ***growrate, double dt) {
 	      double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 	      //rmass[i] = rmass[i] * (1 + growrate[t][0][pos] * dt);
 
+	      double grid_conc = calculate_gridmass(grid);
+	      int stem_count = calculate_gridcell(grid, 1);
+	      int tcell_count = calculate_gridcell(grid, 4);
+
 	      if (species[t] == 1) {
-	    	  update_SCTAmass();
+	    	  double update_sctamass_by = (grid_conc / stem_count) * growrate[t][0][pos];
+	          rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * update_sctamass_by * dt;
 	          radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-	          rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * dt;
 	          outer_radius[i] = radius[i]; // in this case outer radius is the same
-//	      } else if (species[t] == 4){
-//
-//	      }
-	    } else {
+	      } else if (species[t] == 4){
+	    	  double update_tcellmass_by = (grid_conc / tcell_count) * growrate[t][0][pos];
+	          rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * update_tcellmass_by * dt;
+	          radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+	          outer_radius[i] = radius[i]; // in this case outer radius is the same
+	      } else {
 	        radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
 	        outer_mass[i] = rmass[i];
 	        outer_radius[i] = radius[i];
+	      }
 	    }
 	  }
-	 }
-
   }
-
 }
 
 /* ----------------------------------------------------------------------
@@ -369,40 +376,38 @@ void FixPKineticsMM::update_biomass(double ***growrate, double dt) {
 
  for now just use il17 in system
  ------------------------------------------------------------------------- */
-double FixPKineticsMM::calculate_gridconc(){
+double FixPKineticsMM::calculate_gridmass(int grid_id){ // to edit
   double **nus = kinetics->nus;
-
   double il17_conc = 0;
 
-  for (int grid = 0; grid < kinetics->bgrids; grid++) {
-	  il17_conc = nus[il17][grid] * vol;
-  }
+  il17_conc = nus[il17][grid_id] * vol;
 
+  printf("il17 concentration in grid %i is %f\n", grid_id, il17_conc);
   return il17_conc;
 }
 
 /* ----------------------------------------------------------------------
- calculate the number of stem cells in each grid
+ calculate the number of cells in each grid
+ based on the grid id and the targeted cell type
  ------------------------------------------------------------------------- */
-int FixPKineticsMM::calculate_gridstem(){
-	int sc_count = 0;
+int FixPKineticsMM::calculate_gridcell(int grid_id, int t){
+	int cell_count = 0;
 	int *mask = atom->mask;
 	int nlocal = atom->nlocal;
 	int *type = atom->type;
 
-  for (int grid = 0; grid < kinetics->bgrids; grid++) {
-	  for (int i = 0; i < nlocal; i++) {
+	for (int i = 0; i < nlocal; i++) {
 		if (mask[i] & groupbit) {
-		  int t = type[i];
+			int pos = kinetics->position(i);
 
-		  //if stem cell
-		  if (species[t] == 1) {
-			  sc_count += 1;
-		  }
+			//if it is within the same grid and is the targeted cell type, add 1
+			if (pos == grid_id && t == type[i]){
+				cell_count += 1;
+			}
 		}
-	  }
-	  return sc_count;
-  }
+	}
+	printf("type: %i cell count in grid %d is %d \n", t, grid_id, cell_count);
+	return cell_count;
 }
 
 /* ----------------------------------------------------------------------
@@ -410,25 +415,32 @@ int FixPKineticsMM::calculate_gridstem(){
 
  *note: each grid will have different number of SC and IL
  ------------------------------------------------------------------------- */
- void FixPKineticsMM::update_SCTAmass(){
-	 int *mask = atom->mask;
-	 int nlocal = atom->nlocal;
-	 int *type = atom->type;
-	 double *rmass = atom->rmass;
-
-	 for(int grid = 0; grid < kinetics->bgrids; grid++){
-		 double grid_conc = calculate_gridconc();
-		 int stem_count = calculate_gridstem();
-		 for (int i = 0; i < nlocal; i++){
-			 if (mask[i] & groupbit) {
-				 int t = type[i];
-				 int pos = kinetics->position(i);
-
-				 double update_sctamass_by = (grid_conc / stem_count) * growrate[t][0][pos];
-				 avec->scta_mass[i] = rmass[i] + (rmass[i] * update_sctamass_by);
-				 rmass[i] = avec->scta_mass[i];
-			 }
-		 }
-	 }
-}
+// void FixPKineticsMM::update_cellmass(int grid_id, int t){
+//	 int *mask = atom->mask;
+//	 int nlocal = atom->nlocal;
+//	 int *type = atom->type;
+//	 double *rmass = atom->rmass;
+//
+//	 double grid_conc = calculate_gridmass(grid_id);
+//	 int stem_count = calculate_gridcell(grid_id, 1);
+//	 int tcell_count = calculate_gridcell(grid_id, 4);
+//
+//	 for (int i = 0; i < nlocal; i++){
+//		 if (mask[i] & groupbit) {
+//			 int pos = kinetics->position(i); //gets the grid_id of cell
+//
+//			 if (pos == grid_id && t == type[i]){
+//				 double update_sctamass_by = (grid_conc / stem_count) * growrate[t][0][pos];
+//				 avec->cell_mass[i] = rmass[i] + (rmass[i] * update_sctamass_by);
+//				 rmass[i] = avec->cell_mass[i];
+//			 }
+//
+//			 if (pos == grid_id && t == type[i]){
+//				 double update_tcellmass_by = (grid_conc / tcell_count) * growrate[t][0][pos];
+//				 avec->cell_mass[i] = rmass[i] + (rmass[i] * update_tcellmass_by);
+//				 rmass[i] = avec->cell_mass[i];
+//			 }
+//		 }
+//	 }
+//}
 

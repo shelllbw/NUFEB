@@ -78,7 +78,7 @@ class AtomVecBio : public AtomVec {
    * Dinika's edits
    * */
   int *d_counter; //division counter for each atom
-  double *scta_mass;
+  double *cell_mass; //to use in kinetics/pso/mm
 
   class BIO *bio;
 

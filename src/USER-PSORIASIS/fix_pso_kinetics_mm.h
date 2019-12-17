@@ -63,9 +63,9 @@ class FixPKineticsMM : public Fix {
 
   void init_param();
   void update_biomass(double***, double);
-  double calculate_gridconc();
-  int calculate_gridstem();
-  void update_SCTAmass();
+  double calculate_gridmass(int);
+  int calculate_gridcell(int, int);
+ // void update_cellmass(int, int);
 };
 
 }

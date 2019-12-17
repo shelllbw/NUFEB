@@ -1,7 +1,7 @@
   Granular Flow Simulation
 
-       5 atoms
-       7 atom types
+       6 atoms
+       6 atom types
        1 nutrients
 
    0.000000e-04   1e-04  xlo xhi
@@ -10,11 +10,12 @@
 
  Atoms
 
-     1 4 1.0e-6 150 0.52e-5 0.6e-5 1e-6 1.0e-6
-     2 4 1.0e-6 150 1.52e-5 0.6e-5 1e-6 1.0e-6
-     3 4 1.0e-6 150 2.52e-5 0.6e-5 1e-6 1.0e-6
-     4 4 1.0e-6 150 3.52e-5 0.6e-5 1e-6 1.0e-6
-     5 4 1.0e-6 150 4.52e-5 0.6e-5 1e-6 1.0e-6
+     1 4 1.0e-6 150 0.5e-5 0.5e-5 1e-6 1.0e-6
+     2 4 1.0e-6 150 1.5e-5 0.5e-5 1e-6 1.0e-6
+     3 4 1.0e-6 150 2.5e-5 0.5e-5 1e-6 1.0e-6
+     4 4 1.0e-6 150 3.5e-5 0.5e-5 1e-6 1.0e-6
+     5 4 1.0e-6 150 4.5e-5 0.5e-5 1e-6 1.0e-6
+     6 4 1.0e-6 150 5.5e-5 0.5e-5 1e-6 1.0e-6
 
  Nutrients
 
@@ -28,7 +29,6 @@
      4 tcell
      5 dc
      6 bm
-     7 sbm
 
  Diffusion Coeffs
 
@@ -42,7 +42,6 @@
      tcell 0
      dc 0
      bm 0
-     sbm 0
 
  Growth Rate
 
@@ -52,7 +51,6 @@
     tcell 0.1
     dc 0
     bm 0
-    sbm 0
 
  Decay
 
@@ -62,4 +60,3 @@
     tcell 0.01
     dc 0
     bm 0
-    sbm 0

@@ -130,6 +130,7 @@ void FixPCreateStem::post_integrate()
 	    if (sc_mask < 0) error->all(FLERR, "Cannot find STEM group.");
 	    //***bowen*** get type id
 		int stem_id = avec->bio->find_typeid("stem");
+
 		double r = diameter/2;
 
 		for (int i = 0; i < freeLoc.size(); i++){
@@ -142,7 +143,7 @@ void FixPCreateStem::post_integrate()
 			coord[0] = atom->x[aId][0];
 			coord[1] = atom->x[aId][1];
 			coord[2] = atom->x[aId][2] + atom->radius[aId] * 2;
-
+			//printf("i=%i x=%e y=%e z=%e \n", i, coord[0],coord[1],coord[2]);
 			int n = 0;
 			//create new sc to initialise on surface
 			atom->avec->create_atom(stem_id, coord);
@@ -181,6 +182,9 @@ void FixPCreateStem::post_integrate()
   // trigger immediate reneighboring
   next_reneighbor = update->ntimestep;
   printf("%i initial stem cells created \n", num_sc);
+
+  for(int i=0; i<atom->nlocal; i++)
+      if (atom->type[i] == 1)  printf("create ii=%i %i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
 }
 
 //create a list of all the empty locations
@@ -202,8 +206,8 @@ void FixPCreateStem::empty_loc () {
 	minx = miny = minz = 10;
 	maxx = maxy = 0;
 	height = 0;
-
-	for (int i = 0; i < atom->nlocal; i++) {
+	printf("nlist size: %i \n", nlist.size());
+	for (int i = 0; i < nlist.size(); i++) {
 	  if(nlist[i].size() > max_surface) error->all(FLERR, "Too many neighbors, adjust cutoff value.");
 	  if(nlist[i].size() == max_surface) continue;
 
@@ -224,7 +228,7 @@ void FixPCreateStem::empty_loc () {
 	base = 10;
 	top = 0;
 
-	for (int i = 0; i < atom->nlocal; i++) {
+	for (int i = 0; i < nlist.size(); i++) {
 	  int surface = nlist[i].size();
 	  if (surface == max_surface) continue;
 
@@ -247,30 +251,34 @@ void FixPCreateStem::empty_loc () {
 	  //if the atom has less than 6 surfaces, then it is a surface atom
 	  if (surface < max_surface) {
 		  emptyList.push_back(i);
-		  atom->type[i] = 7; //for testing just set to type 7
 		}
 	}
 }
 
 //get a list of all the neighboring cells
 void FixPCreateStem::neighbor_list () {
-  int nall = atom->nlocal;
 
   for(int i = 0; i < atom->nlocal; i++){
-    std::vector<double> subList;
-    for(int j = 0; j < nall; j++){
-      if(i != j) {
-        double xd = atom->x[i][0] - atom->x[j][0];
-        double yd = atom->x[i][1] - atom->x[j][1];
-        double zd = atom->x[i][2] - atom->x[j][2];
+	int type = atom->type[i];
+	if (strcmp(avec->bio->tname[type],"bm") == 0) {
+		std::vector<double> subList;
+		for(int j = 0; j < atom->nlocal; j++){
+			int typej = atom->type[j];
+			if (strcmp(avec->bio->tname[typej],"bm") == 0) {
+			  if(i != j) {
+				double xd = atom->x[i][0] - atom->x[j][0];
+				double yd = atom->x[i][1] - atom->x[j][1];
+				double zd = atom->x[i][2] - atom->x[j][2];
 
-        double rsq = (xd*xd + yd*yd + zd*zd);
-        double cut = (atom->radius[i] + atom->radius[j] + cutoff) * (atom->radius[i] + atom->radius[j]+ cutoff);
+				double rsq = (xd*xd + yd*yd + zd*zd);
+				double cut = (atom->radius[i] + atom->radius[j] + cutoff) * (atom->radius[i] + atom->radius[j]+ cutoff);
 
-        if (rsq <= cut) subList.push_back(j); //push.back = adding to the list
-      }
-    }
-    nlist.push_back(subList);
+				if (rsq <= cut) subList.push_back(j); //push.back = adding to the list
+			  }
+			}
+		}
+		nlist.push_back(subList);
+	  }
   }
 }
 

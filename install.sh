@@ -28,8 +28,10 @@ do
        cd ../vtk
        cp Makefile.lammps_vtk8.0 Makefile.lammps
     else
-       echo "Unknown parameter"
-       exit 1
+       if [ $var != "--serial" ]; then
+          echo "Unknown parameter"
+          exit 1
+       fi
     fi
 done
 
@@ -51,10 +53,11 @@ do
 	cd STUBS
         make
         cd ..
+        make -j4 serial
+    else 
+        make -j4 mpi
     fi
 done
-
-make -j4 mpi
 
 #echo "Writing path to .bashrc"
 #echo "export PATH=\$PATH:$currentDir/lammps/src/" >> ~/.bashrc

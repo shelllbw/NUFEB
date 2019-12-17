@@ -58,23 +58,23 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 8) // dinika mod - from 7 to 8
+  if (narg < 9)
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[3];
-  ivar = new int[3];
+  var = new char*[4];
+  ivar = new int[4];
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 4; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[7]);
+  seed = force->inumeric(FLERR, arg[8]);
 
   // read optional param
   demflag = 0;
@@ -82,7 +82,7 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   //dinika - set ta_mask to -1
   ta_mask = -1;
 
-  int iarg = 8; //mod from 7 to 8
+  int iarg = 9;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -127,7 +127,7 @@ FixPDivideStem::~FixPDivideStem() {
   delete random;
 
   int i;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 4; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -150,7 +150,7 @@ void FixPDivideStem::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 3; n++) {
+  for (int n = 0; n < 4; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -158,9 +158,10 @@ void FixPDivideStem::init() {
       error->all(FLERR, "Variable for fix divide is invalid style");
   }
 
-  selfpro = input->variable->compute_equal(ivar[0]);
-  asym = input->variable->compute_equal(ivar[1]);
-  sym = input->variable->compute_equal(ivar[2]);
+  div_dia = input->variable->compute_equal(ivar[0]);
+  selfpro = input->variable->compute_equal(ivar[1]);
+  asym = input->variable->compute_equal(ivar[2]);
+  sym = input->variable->compute_equal(ivar[3]);
 
   //Dinika's edits
   //modify atom mask
@@ -210,55 +211,57 @@ void FixPDivideStem::init() {
       }
 
       int ta_id = bio->find_typeid("ta");
+      printf("ta id is %i \n", ta_id);
       int stem_id = bio->find_typeid("stem");
-      //double sctaMass = avec->scta_mass[i];
+      //double sctaMass = avec->cell_mass[i];
 
-      if (nstem > 50 && nstem < 100 && rand < sym){
-		//set both parent and child type to be the same
-		 parentType = ta_id;
-		 childType = ta_id;
-		 parentMask = ta_mask;
-		 childMask = ta_mask;
-	   }else if (nstem < 100 && rand < asym){
-		//set parent as sc and child as ta
-		parentType = stem_id;
-		childType = ta_id;
-		parentMask = atom->mask[i];
-		childMask = ta_mask;
-	  } else if (nstem < 50 && rand < selfpro){
-		  parentType = stem_id;
-		  childType = stem_id;
-		  parentMask = atom->mask[i];
-		  childMask = atom->mask[i];
-	  } else {
-		  parentType = stem_id;
-		  childType = stem_id;
-		  parentMask = atom->mask[i];
-		  childMask = atom->mask[i];
-	  }
-//     if (rand < asym && (sctamass/atom->rmass[i]) => 0.5){
-//    	 parentType = stem_id;
-//    	 childType = ta_id;
-//    	 parentMask = atom->mask[i];
-//    	 childMask = ta_mask;
-//     }
+//      if (nstem > 50 && nstem < 100 && rand < sym){
+//		//set both parent and child type to be the same
+//		 parentType = ta_id;
+//		 childType = ta_id;
+//		 parentMask = ta_mask;
+//		 childMask = ta_mask;
+//	   }else if (nstem < 100 && rand < asym){
+//		//set parent as sc and child as ta
+//		parentType = stem_id;
+//		childType = ta_id;
+//		parentMask = atom->mask[i];
+//		childMask = ta_mask;
+//	  } else if (nstem < 50 && rand < selfpro){
+//		  parentType = stem_id;
+//		  childType = stem_id;
+//		  parentMask = atom->mask[i];
+//		  childMask = atom->mask[i];
+//	  } else {
+//		  parentType = stem_id;
+//		  childType = stem_id;
+//		  parentMask = atom->mask[i];
+//		  childMask = atom->mask[i];
+//	  }
+     if (rand < asym && atom->rmass[i] * 2 >= div_dia){
+    	 parentType = stem_id;
+    	 childType = ta_id;
+    	 parentMask = atom->mask[i];
+    	 childMask = ta_mask;
+     }
 
-	 double parentMass = atom->rmass[i];
-	 double childMass = atom->rmass[i];
+     double splitF = 0.4 + (random->uniform() *0.2);
+	 double parentMass = atom->rmass[i] * splitF;
+	 double childMass = atom->rmass[i] - parentMass;
 
 	 //outer mass for parent and child
 	 double parentOuterMass = avec->outer_mass[i];
 	 double childOuterMass = parentOuterMass;
 
 	 // forces are the same for both parent and child, x, y and z axis
-	 double parentfx = atom->f[i][0];
-	 double childfx = atom->f[i][0];
+	 double parentfx = atom->f[i][0] * splitF;
+	 double childfx = atom->f[i][0] - parentfx;
 
-	 double parentfy = atom->f[i][1];
-	 double childfy = atom->f[i][1];
+	 double parentfy = atom->f[i][1] * splitF;
+	 double childfy = atom->f[i][1] - parentfy;
 
-	 double parentfz = atom->f[i][2];
-	 double childfz = atom->f[i][2];
+	 double parentfz = atom->f[i][2] * splitF;
+	 double childfz = atom->f[i][2] - parentfz;
 
 	 double thetaD = random->uniform() * 2 * MY_PI;
 	 double phiD = random->uniform() * (MY_PI);

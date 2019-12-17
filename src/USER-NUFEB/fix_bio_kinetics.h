@@ -34,6 +34,7 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
   friend class FixImmigration;
   friend class DumpBio;
   friend class FixKineticsBalance;
+  friend class FixPKineticsMM;
 
  public:
   FixKinetics(class LAMMPS *, int, char **);
@@ -89,6 +90,7 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
   class FixKineticsPH *ph;
   class FixKineticsThermo *thermo;
   class FixFluid *nufebfoam;
+  class FixPKineticsMM *psomm;
 
   void init_param();
   void integration();

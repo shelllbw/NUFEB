@@ -46,7 +46,7 @@ class FixPDivideStem : public Fix {
   int demflag;
   tagint maxtag_all;
   double xlo,xhi,ylo,yhi,zlo,zhi;
-  double eps_density;
+  double div_dia;
 
   /*
    * Dinika's edits
