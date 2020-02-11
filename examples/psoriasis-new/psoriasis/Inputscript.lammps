@@ -13,11 +13,12 @@ read_data_bio atom.in
 
 variable x equal 100
 variable y equal 20
-variable z equal 15
+variable z equal 30
 
 lattice sc 1e-6 origin 0.5 0.5 0.5
 
 region reg block 0 $x 0 $y 0 $z
+region reg2 block 0 100 0 20 0 1
 
 variable  xx internal 0.0
 variable  yy internal 0.0
@@ -25,7 +26,9 @@ variable  zz internal 0.0
 variable  v equal "(0.12*v_z*zlat * cos(v_xx/xlat * 2.0*PI*PI/v_x) * cos(v_yy/ylat * 0.75*PI*PI/v_y) + 0.9*v_z*zlat - v_zz  ) > 0.0"
 
 create_atoms 6 region reg var v set x xx set y yy set z zz
-#create_atoms 6 region reg
+#create_pso_atoms 1 stem 1e-8 150 1.0e-6 100 64564
+
+#create_atoms 4 random 100 64564 reg2
 
 group STEM type 1
 group TA type 2
@@ -97,7 +100,7 @@ variable il1720 equal 0.0001
 ##############Define IBm Commands##############
 
 # ***bowen** new format, cutoff, density, diameter, #of sc, seed
-fix sc1 STEM psoriasis/create_stem 1e-8 150 1.0e-6 50 64564
+#fix sc1 STEM psoriasis/create_stem 1e-8 150 1.0e-6 100 64564
 fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
 #fix d1 STEM psoriasis/divide_stem 1 v_divDia v_selfpro v_asym v_sym 64564 demflag 0
 #fix d2 TA psoriasis/divide_ta 6 v_prob1 v_prob2 v_prob3 79966 demflag 0
