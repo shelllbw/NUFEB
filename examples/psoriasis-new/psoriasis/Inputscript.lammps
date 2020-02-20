@@ -11,6 +11,13 @@ units si
 comm_modify	vel yes
 read_data_bio atom.in
 
+group STEM type 1
+group TA type 2
+group DIFF type 3
+group TCELL type 4
+group DC type 5
+group BM type 6
+
 variable x equal 100
 variable y equal 20
 variable z equal 30
@@ -26,22 +33,18 @@ variable  zz internal 0.0
 variable  v equal "(0.12*v_z*zlat * cos(v_xx/xlat * 2.0*PI*PI/v_x) * cos(v_yy/ylat * 0.75*PI*PI/v_y) + 0.9*v_z*zlat - v_zz  ) > 0.0"
 
 create_atoms 6 region reg var v set x xx set y yy set z zz
-#create_pso_atoms 1 stem 1e-8 150 1.0e-6 100 64564
+set type 6 density 150
+set type 6 diameter 1.0e-6
+set type 6 mass 7.853981e-17
 
-#create_atoms 4 random 100 64564 reg2
-
-group STEM type 1
-group TA type 2
-group DIFF type 3
-group TCELL type 4
-group DC type 5
-group BM type 6
-
-neighbor	5e-7 bin
-
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 200 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
+
+create_atoms 4 random 20 64564 reg2
+
+neighbor	5e-7 bin
 
 set type 2 density 150
 set type 2 diameter 1.0e-6
@@ -59,9 +62,6 @@ set type 5 density 150
 set type 5 diameter 1.0e-6
 set type 5 mass 7.853981e-17
 
-set type 6 density 150
-set type 6 diameter 1.0e-6
-set type 6 mass 7.853981e-17
 
 ##############Define DEM Variables&Commands##############
 
@@ -124,7 +124,7 @@ thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 10 pre no post no every 1 &
+run 20 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
 "timestep 1e-3" &
 "run 1000 pre no post no" &

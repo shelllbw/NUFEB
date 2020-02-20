@@ -143,8 +143,6 @@ void FixPKineticsMM::init() {
   printf("il172 value is %f \n", il172);
   il1720 = input->variable->compute_equal(ivar[2]);
   printf("il1720 value is %f \n", il1720);
-//  tnfa2 = input->variable->compute_equal(ivar[4]);
-//  tnfa20 = input->variable->compute_equal(ivar[5]);
 
   bio = kinetics->bio;
 
@@ -190,35 +188,18 @@ void FixPKineticsMM::init() {
 }
 
 void FixPKineticsMM::init_param() {
-  //il17 = il22, il23 = tnfa = amp = 0;
 	il17 = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
 	if (strcmp(bio->nuname[nu], "il17") == 0)
 	  il17 = nu;
-//	else if (strcmp(bio->nuname[nu], "il22") == 0)
-//	  il22 = nu;
-//	else if (strcmp(bio->nuname[nu], "il23") == 0)
-//	  il23 = nu;
-//	else if (strcmp(bio->nuname[nu], "tnfa") == 0)
-//		tnfa = nu;
-//	else if (strcmp(bio->nuname[nu], "amp") == 0)
-//		amp = nu;
 	else
 	  error->all(FLERR, "unknow nutrient in fix_psoriasis/kinetics/mm");
   }
 
   if (il17 == 0)
 	error->all(FLERR, "fix_psoriasis/kinetics/mm requires nutrient il17");
-//  if (il22 == 0)
-//	error->all(FLERR, "fix_psoriasis/kinetics/mm requires nutrient il22");
-//  if (il23 == 0)
-//	error->all(FLERR, "fix_psoriasis/kinetics/mm requires nutrient il23");
-//  if (tnfa == 0)
-//	error->all(FLERR, "fix_psoriasis/kinetics/mm requires nutrient tnfa");
-//  if (amp == 0)
-//	error->all(FLERR, "fix_psoriasis/kinetics/mm requires nutrient amp");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -280,25 +261,12 @@ void FixPKineticsMM::growth(double dt, int gflag) {
       if (spec == 1) {
         growrate[i][0][grid] = mu[i]; //normal growth
         growrate[i][1][grid] = decay[i]; //decay rate
-
-       // growrate[i][1][grid] = sc_ta; //conversion to TA cell but have yet to split from mother cell
-//      } else if (spec == 2) {
-//        // TA cell monod model
-
-//      } else if (spec == 3) {
-//        // Differentiated cell monod model
-
       } else if (spec == 4) {
         // T cell monod model
     	  growrate[i][0][grid] = mu[i];
     	  growrate[i][i][grid] = decay[i];
     	 // printf("grow rate is %f \n", mu[i]);
     	  //printf("decay rate is %f \n", decay[i]);
-//    }
-//      else if (spec == 5) {
-//    	  //dendritic cell
-//
-//      }
       }
     }
     /*nur --> update change within the grid for each timestep
@@ -307,7 +275,6 @@ void FixPKineticsMM::growth(double dt, int gflag) {
 //	if (nur[il17][grid] > 0){
 //		printf("nur is %f grid=%i\n", nur[il17][grid], grid);
 //	}
-	// nur[tnfa][grid] += (tnfa2 * xdensity[i][grid]) - (tnfa20 * nus[tnfa][grid]);
 
   }
 

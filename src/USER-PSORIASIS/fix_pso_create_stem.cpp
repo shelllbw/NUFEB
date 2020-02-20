@@ -133,10 +133,10 @@ void FixPCreateStem::post_integrate()
 
 		double r = diameter/2;
 
-		for (int i = 0; i < freeLoc.size(); i++){
+		for (int i = 0; i < emptyList.size(); i++){
 			double* coord = new double[3];
 
-			atomId = freeLoc[i];
+			atomId = emptyList[i];
 			aId = int (atomId);
 
 			 //***bowen*** x y are same with surface atom, z is 1 diameter higher
@@ -156,8 +156,6 @@ void FixPCreateStem::post_integrate()
 
 			atom->mask[n] = sc_mask;
 			atom->tag[n] = 0;
-
-
 
 	        delete[] coord;
 	  }
@@ -183,8 +181,8 @@ void FixPCreateStem::post_integrate()
   next_reneighbor = update->ntimestep;
   printf("%i initial stem cells created \n", num_sc);
 
-  for(int i=0; i<atom->nlocal; i++)
-      if (atom->type[i] == 1)  printf("create ii=%i %i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
+//  for(int i=0; i<atom->nlocal; i++)
+//      if (atom->type[i] == 1)  printf("create ii=%i %i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
 }
 
 //create a list of all the empty locations
@@ -206,7 +204,7 @@ void FixPCreateStem::empty_loc () {
 	minx = miny = minz = 10;
 	maxx = maxy = 0;
 	height = 0;
-	printf("nlist size: %i \n", nlist.size());
+
 	for (int i = 0; i < nlist.size(); i++) {
 	  if(nlist[i].size() > max_surface) error->all(FLERR, "Too many neighbors, adjust cutoff value.");
 	  if(nlist[i].size() == max_surface) continue;
@@ -259,8 +257,8 @@ void FixPCreateStem::empty_loc () {
 void FixPCreateStem::neighbor_list () {
 
   for(int i = 0; i < atom->nlocal; i++){
-	int type = atom->type[i];
-	if (strcmp(avec->bio->tname[type],"bm") == 0) {
+	int typei = atom->type[i];
+	if (strcmp(avec->bio->tname[typei],"bm") == 0) {
 		std::vector<double> subList;
 		for(int j = 0; j < atom->nlocal; j++){
 			int typej = atom->type[j];
@@ -280,6 +278,7 @@ void FixPCreateStem::neighbor_list () {
 		nlist.push_back(subList);
 	  }
   }
+  printf("size of nlist is %d \n",nlist.size());
 }
 
 //function to test - prints vectors
