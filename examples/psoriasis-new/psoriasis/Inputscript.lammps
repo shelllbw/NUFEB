@@ -102,7 +102,7 @@ variable il1720 equal 0.0001
 # ***bowen** new format, cutoff, density, diameter, #of sc, seed
 #fix sc1 STEM psoriasis/create_stem 1e-8 150 1.0e-6 100 64564
 fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
-#fix d1 STEM psoriasis/divide_stem 1 v_divDia v_selfpro v_asym v_sym 64564 demflag 0
+fix d1 STEM psoriasis/divide_stem 1 v_divDia v_selfpro v_asym v_sym 64564 demflag 0
 #fix d2 TA psoriasis/divide_ta 6 v_prob1 v_prob2 v_prob3 79966 demflag 0
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgm all psoriasis/kinetics/mm v_STEMdens v_il172 v_il1720
