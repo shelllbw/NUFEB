@@ -211,7 +211,7 @@ void FixPDivideStem::init() {
       }
 
       int ta_id = bio->find_typeid("ta");
-      printf("ta id is %i \n", ta_id);
+     // printf("ta id is %i \n", ta_id);
       int stem_id = bio->find_typeid("stem");
       //double sctaMass = avec->cell_mass[i];
 

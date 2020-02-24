@@ -69,6 +69,11 @@ FixPKineticsMM::FixPKineticsMM(LAMMPS *lmp, int narg, char **arg) :
 	strcpy(var[i], &arg[3 + i][2]);
   }
 
+  if (strcmp(arg[1],"stem") == 0) {
+    style = BOX;
+    iarg = 2;
+  }
+
   kinetics = NULL;
 
   external_gflag = 1;

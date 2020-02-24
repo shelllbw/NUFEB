@@ -76,7 +76,7 @@ void CreatePsoAtoms::command(int narg, char **arg)
 
   if (narg < 2) error->all(FLERR,"Illegal create_pso_atoms command");
   ntype = force->inumeric(FLERR,arg[0]);
-  printf("cell type is %d\n", ntype);
+  //printf("cell type is %d\n", ntype);
 
   int iarg;
   if (strcmp(arg[1],"box") == 0) {

@@ -56,6 +56,7 @@ class FixPKineticsMM : public Fix {
   //double sc_decay;                   // sc decay rate
   double sc_ta; 					//sc -> TA rate
   double il172, il1720, tnfa2,tnfa20;
+  double abase, sc2ta, ddesq, ta2d, t2il23, dcvm, dckp;
 
   class AtomVecBio *avec;
   class FixKinetics *kinetics;
