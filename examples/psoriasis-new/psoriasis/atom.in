@@ -1,7 +1,7 @@
   Granular Flow Simulation
 
        0 atoms
-       6 atom types
+       7 atom types
        1 nutrients
 
    0.000000e-04   1e-04  xlo xhi
@@ -22,7 +22,8 @@
      3 diff
      4 tcell
      5 dc
-     6 bm
+     6 apop
+     7 bm
 
  Diffusion Coeffs
 
@@ -35,6 +36,7 @@
      diff 0
      tcell 0
      dc 0
+     apop 0
      bm 0
 
  Growth Rate
@@ -44,6 +46,7 @@
     diff 0
     tcell 0.1
     dc 0
+    apop 0
     bm 0
 
  Decay
@@ -53,4 +56,5 @@
     diff 0
     tcell 0.01
     dc 0
+    apop 0
     bm 0

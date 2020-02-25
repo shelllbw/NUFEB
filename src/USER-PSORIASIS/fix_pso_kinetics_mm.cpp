@@ -57,28 +57,51 @@ FixPKineticsMM::FixPKineticsMM(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/kinetics/mm requires atom style bio");
 
-  if (narg < 6)
-	error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command");
+//  if (narg < 6)
+//	error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command");
 
-  var = new char*[3];
-  ivar = new int[3];
+  //ntype = force->inumeric(FLERR,arg[1]);
 
-  for (int i = 0; i < 3; i++) {
+  itype = new char [5];
+
+  //TODO change # of narg to include tnfa
+  if (strcmp(arg[1],"STEM") == 0) {
+	  if (narg < 7) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for stem cells");
+	  strcpy(itype, arg[1]);
+	  printf("itype is %s\n", itype);
+  } else if (strcmp(arg[1], "TA") == 0){
+	  if (narg < 8) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for TA cells");
+	  strcpy(itype, arg[1]);
+  } else if (strcmp(arg[1], "DIFF") == 0){
+	  if (narg < 9) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for differentiated cells");
+	  strcpy(itype, arg[1]);
+  } else if (strcmp(arg[1], "TCELL") == 0){
+	  if (narg < 6) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for T cells");
+	  strcpy(itype, arg[1]);
+  } else if (strcmp(arg[1], "DC") == 0){
+	  if (narg < 7) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for dendritic cells");
+	  strcpy(itype, arg[1]);
+  } else if (strcmp(arg[1], "APOP") == 0){
+	  if (narg < 5) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for apoptotic cells");
+	  strcpy(itype, arg[1]);
+  } else
+	  error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command");
+
+  varg = narg-3;
+  var = new char*[varg];
+  ivar = new int[varg];
+
+  for (int i = 0; i < varg; i++) {
 	int n = strlen(&arg[3 + i][2]) + 1;
 	var[i] = new char[n];
 	strcpy(var[i], &arg[3 + i][2]);
-  }
-
-  if (strcmp(arg[1],"stem") == 0) {
-    style = BOX;
-    iarg = 2;
   }
 
   kinetics = NULL;
 
   external_gflag = 1;
 
-  int iarg = 6;
+  int iarg = narg; // need to double check if this makes sense
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -120,7 +143,7 @@ void FixPKineticsMM::init() {
   if (!atom->radius_flag)
 	error->all(FLERR, "Fix requires atom attribute diameter");
 
-  for (int n = 0; n < 3; n++) {
+  for (int n = 0; n < varg; n++) {
 	ivar[n] = input->variable->find(var[n]);
 	if (ivar[n] < 0)
 	  error->all(FLERR, "Variable name for fix psoriasis/kinetics/mm does not exist");
@@ -142,12 +165,50 @@ void FixPKineticsMM::init() {
   if (kinetics == NULL)
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
-  sc_dens = input->variable->compute_equal(ivar[0]);
-  printf("sc_dens value is %f \n", sc_dens);
-  il172 = input->variable->compute_equal(ivar[1]);
-  printf("il172 value is %f \n", il172);
-  il1720 = input->variable->compute_equal(ivar[2]);
-  printf("il1720 value is %f \n", il1720);
+  if (itype = "STEM") {
+	sc_dens = input->variable->compute_equal(ivar[0]);
+	printf("sc_dens value is %f \n", sc_dens);
+	abase = input->variable->compute_equal(ivar[1]);
+	printf("abase value is %f \n", abase);
+	il172 = input->variable->compute_equal(ivar[2]);
+	printf("il172 value is %f \n", il172);
+	il1720 = input->variable->compute_equal(ivar[3]);
+	printf("il1720 value is %f \n", il1720);
+  } else if (itype = "TA"){
+	ta_dens = input->variable->compute_equal(ivar[0]);
+	//printf("ta_dens value is %f \n", sc_dens);
+	abase = input->variable->compute_equal(ivar[1]);
+	il172 = input->variable->compute_equal(ivar[2]);
+	//printf("il172 value is %f \n", il172);
+	il1720 = input->variable->compute_equal(ivar[3]);
+	//printf("il1720 value is %f \n", il1720);
+	sc2ta = input->variable->compute_equal(ivar[4]);
+  } else if (itype = "DIFF"){
+	diff_dens = input->variable->compute_equal(ivar[0]);
+	//printf("diff_dens value is %f \n", sc_dens);
+	abase = input->variable->compute_equal(ivar[1]);
+	il172 = input->variable->compute_equal(ivar[2]);
+	//printf("il172 value is %f \n", il172);
+	il1720 = input->variable->compute_equal(ivar[3]);
+	//printf("il1720 value is %f \n", il1720);
+	ta2d = input->variable->compute_equal(ivar[4]);
+	ddesq = input->variable->compute_equal(ivar[5]);
+  } else if (itype = "TCELL"){
+	tc_dens = input->variable->compute_equal(ivar[0]);
+	//printf("tc_dens value is %f \n", sc_dens);
+	abase = input->variable->compute_equal(ivar[1]);
+	t2il23 = input->variable->compute_equal(ivar[2]);
+  } else if (itype = "DC"){
+	dc_dens = input->variable->compute_equal(ivar[0]);
+	//printf("dc_dens value is %f \n", sc_dens);
+	abase = input->variable->compute_equal(ivar[1]);
+	dcvm = input->variable->compute_equal(ivar[2]);
+	dckp = input->variable->compute_equal(ivar[2]);
+  } else if (itype = "APOP"){
+	dc_dens = input->variable->compute_equal(ivar[0]);
+	//printf("apop_dens value is %f \n", sc_dens);
+	abase = input->variable->compute_equal(ivar[1]);
+  }
 
   bio = kinetics->bio;
 
@@ -220,8 +281,10 @@ void FixPKineticsMM::init_param() {
 		species[i] = 4;
 	  else if (strcmp(name, "dc") == 0)
 		species[i] = 5;
+	  else if (strcmp(name, "apop") == 0)
+		  species[i] = 6;
 	  else if (strcmp(name, "bm") == 0)
-	  	species[i] = 6;
+	  	species[i] = 7;
 	  else
 		error->all(FLERR, "unknow species in fix_psoriasis/kinetics/mm");
   }

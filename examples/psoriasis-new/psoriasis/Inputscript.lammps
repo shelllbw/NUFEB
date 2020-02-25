@@ -16,7 +16,8 @@ group TA type 2
 group DIFF type 3
 group TCELL type 4
 group DC type 5
-group BM type 6
+group APOP type 6
+group BM type 7
 
 variable x equal 100
 variable y equal 20
@@ -32,17 +33,17 @@ variable  yy internal 0.0
 variable  zz internal 0.0
 variable  v equal "(0.12*v_z*zlat * cos(v_xx/xlat * 2.0*PI*PI/v_x) * cos(v_yy/ylat * 0.75*PI*PI/v_y) + 0.9*v_z*zlat - v_zz  ) > 0.0"
 
-create_atoms 6 region reg var v set x xx set y yy set z zz
-set type 6 density 150
-set type 6 diameter 1.0e-6
-set type 6 mass 7.853981e-17
+create_atoms 7 region reg var v set x xx set y yy set z zz
+set type 7 density 150
+set type 7 diameter 1.0e-6
+set type 7 mass 7.853981e-17
 
 create_pso_atoms 1 stem 1e-8 150 1.0e-6 200 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
-create_atoms 4 random 20 64564 reg2
+create_atoms 4 random 100 64564 reg2
 
 neighbor	5e-7 bin
 
@@ -61,6 +62,10 @@ set type 4 mass 7.853981e-17
 set type 5 density 150
 set type 5 diameter 1.0e-6
 set type 5 mass 7.853981e-17
+
+set type 6 density 150
+set type 6 diameter 1.0e-6
+set type 6 mass 7.853981e-17
 
 
 ##############Define DEM Variables&Commands##############
@@ -96,16 +101,18 @@ variable tol equal 1e-5
 variable STEMdens equal 30
 variable il172 equal 0.01
 variable il1720 equal 0.0001
+variable abase equal 0.0036
 
 ##############Define IBm Commands##############
 
 # ***bowen** new format, cutoff, density, diameter, #of sc, seed
 #fix sc1 STEM psoriasis/create_stem 1e-8 150 1.0e-6 100 64564
 fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
-fix d1 STEM psoriasis/divide_stem 1 v_divDia v_selfpro v_asym v_sym 64564 demflag 0
+#fix d1 STEM psoriasis/divide_stem 1 v_divDia v_selfpro v_asym v_sym 64564 demflag 0
 #fix d2 TA psoriasis/divide_ta 6 v_prob1 v_prob2 v_prob3 79966 demflag 0
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
-fix kgm all psoriasis/kinetics/mm v_STEMdens v_il172 v_il1720
+#fix kgm all psoriasis/kinetics/mm v_STEMdens v_il172 v_il1720
+fix kgsc STEM psoriasis/kinetics/mm v_STEMdens v_abase v_il172 v_il1720
 
 
 ##############Define IBm Computes##############

@@ -42,6 +42,9 @@ class FixPKineticsMM : public Fix {
   char **var;
   int *ivar;
 
+  int varg;
+  char *itype;
+
   //int il17, il22, il23, tnfa, amp;  // nutrient index
   int il17;
 
@@ -52,7 +55,7 @@ class FixPKineticsMM : public Fix {
   double xlo,xhi,ylo,yhi,zlo,zhi;   // computational domain size
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
-  double sc_dens;                  // stem cell density
+  double sc_dens, ta_dens, diff_dens, tc_dens, dc_dens, apop_dens; //cell density
   //double sc_decay;                   // sc decay rate
   double sc_ta; 					//sc -> TA rate
   double il172, il1720, tnfa2,tnfa20;
