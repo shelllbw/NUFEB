@@ -15,22 +15,22 @@
 
 #ifdef FIX_CLASS
 
-FixStyle(psoriasis/kinetics/mm,FixPKineticsMM)
+FixStyle(psoriasis/growth/tcell,FixPGrowthTCELL)
 
 #else
 
-#ifndef LMP_FIX_PKINETICSMM_H
-#define LMP_FIX_PKINETICSMM_H
+#ifndef LMP_FIX_PGROWTHTCELL_H
+#define LMP_FIX_PGROWTHTCELL_H
 
 #include "fix.h"
 
 namespace LAMMPS_NS {
 
-class FixPKineticsMM : public Fix {
+class FixPGrowthTCELL : public Fix {
  public:
  
-	FixPKineticsMM(class LAMMPS *, int, char **);
-  ~FixPKineticsMM();
+	FixPGrowthTCELL(class LAMMPS *, int, char **);
+  ~FixPGrowthTCELL();
   int setmask();
   void init();
   void grow_subgrid(int);
@@ -46,7 +46,7 @@ class FixPKineticsMM : public Fix {
   char *itype;
 
   //int il17, il22, il23, tnfa, amp;  // nutrient index
-  int il17;
+  int il17, il23;
 
   int *species;                     // species index 0 = unknow, 1 = sc, 2 = ta, 3 = d, 4 = tc, 5 = dc
   double ***growrate;               // growth rate [type][2][grid]
@@ -55,11 +55,11 @@ class FixPKineticsMM : public Fix {
   double xlo,xhi,ylo,yhi,zlo,zhi;   // computational domain size
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
-  double sc_dens, ta_dens, diff_dens, tc_dens, dc_dens, apop_dens; //cell density
+  double tc_dens; //cell density
   //double sc_decay;                   // sc decay rate
-  double sc_ta; 					//sc -> TA rate
-  double il172, il1720, tnfa2,tnfa20;
-  double abase, sc2ta, ddesq, ta2d, t2il23, dcvm, dckp;
+ // double sc_ta; 					//sc -> TA rate
+  double il232, il2320;
+  double abase;
 
   class AtomVecBio *avec;
   class FixKinetics *kinetics;

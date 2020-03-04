@@ -2,7 +2,7 @@
 
        0 atoms
        7 atom types
-       1 nutrients
+       2 nutrients
 
    0.000000e-04   1e-04  xlo xhi
    0.000000e-04   0.2e-04  ylo yhi
@@ -14,6 +14,7 @@
  Nutrients
 
      1 il17 l 0 0 0 0 0 0 0
+     2 il23 l 0 0 0 0 0 0 0
 
  Type Name
 
@@ -28,6 +29,7 @@
  Diffusion Coeffs
 
      il17 1.6e-9
+     il23 1.6e-9
 
  Division Counter
 

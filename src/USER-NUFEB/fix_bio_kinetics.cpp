@@ -35,7 +35,8 @@
 #include "fix_bio_kinetics_diffusion.h"
 #include "fix_bio_kinetics_energy.h"
 #include "fix_bio_kinetics_monod.h"
-#include "fix_pso_kinetics_mm.h"
+#include "fix_pso_growth_sc.h"
+#include "fix_pso_growth_tcell.h"
 #include "comm.h"
 #include "fix_bio_fluid.h"
 #include "compute.h"
@@ -235,8 +236,12 @@ void FixKinetics::init() {
       monod = static_cast<FixKineticsMonod *>(lmp->modify->fix[j]);
     } else if (strcmp(modify->fix[j]->style, "nufebFoam") == 0) {
       nufebfoam = static_cast<FixFluid *>(lmp->modify->fix[j]);
-    } else if (strcmp(modify->fix[j]->style, "psoriasis/kinetics/mm") == 0) {
-        psomm = static_cast<FixPKineticsMM *>(lmp->modify->fix[j]);
+//    } else if (strcmp(modify->fix[j]->style, "psoriasis/growth") == 0) { // DINIKA MOD
+//        psog = static_cast<FixPGrowth *>(lmp->modify->fix[j]);
+    }else if (strcmp(modify->fix[j]->style, "psoriasis/growth/sc") == 0) { // DINIKA MOD
+        psosc = static_cast<FixPGrowthSC *>(lmp->modify->fix[j]);
+    } else if (strcmp(modify->fix[j]->style, "psoriasis/growth/tcell") == 0) {
+        psotcell = static_cast<FixPGrowthTCELL *>(lmp->modify->fix[j]);
     }
   }
 
@@ -366,8 +371,12 @@ void FixKinetics::integration() {
           energy->growth(diff_dt * devery, grow_flag);
         } else if (monod != NULL) {
           monod->growth(diff_dt * devery, grow_flag);
-        } else if (psomm != NULL) {
-            psomm->growth(diff_dt * devery, grow_flag);
+//        } else if (psog != NULL) {				//DINIKA MOD
+//            psog->growth(diff_dt * devery, grow_flag);
+        } else if (psosc != NULL) {				//DINIKA MOD
+            psosc->growth(diff_dt * devery, grow_flag);
+        } else if (psotcell != NULL) {				//DINIKA MOD
+            psotcell->growth(diff_dt * devery, grow_flag);
         }
       }
 
@@ -407,8 +416,13 @@ void FixKinetics::integration() {
     energy->growth(update->dt * nevery, grow_flag);
   if (monod != NULL)
     monod->growth(update->dt * nevery, grow_flag);
-  if (psomm != NULL)
-     psomm->growth(update->dt * nevery, grow_flag);
+  //DINIKA MOD
+//  if (psog != NULL)
+//       psog->growth(update->dt * nevery, grow_flag);
+  if (psosc != NULL)
+     psosc->growth(update->dt * nevery, grow_flag);
+  if (psotcell != NULL)
+     psotcell->growth(update->dt * nevery, grow_flag);
 
   if (ph != NULL && ph->buffer_flag)
     ph->buffer_ph();

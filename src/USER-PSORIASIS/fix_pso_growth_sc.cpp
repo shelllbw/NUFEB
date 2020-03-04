@@ -14,7 +14,7 @@
  See the README file in the top-level LAMMPS directory.
  ------------------------------------------------------------------------- */
 
-#include "fix_pso_kinetics_mm.h"
+#include "fix_pso_growth_sc.h"
 
 #include <math.h>
 #include <string.h>
@@ -36,7 +36,6 @@
 
 #include "bio.h"
 #include "fix_bio_kinetics.h"
-#include "fix_pso_kinetics_mm.h"
 #include "modify.h"
 #include "pointers.h"
 #include "update.h"
@@ -51,41 +50,14 @@ using namespace std;
 
 /* ---------------------------------------------------------------------- */
 
-FixPKineticsMM::FixPKineticsMM(LAMMPS *lmp, int narg, char **arg) :
+FixPGrowthSC::FixPGrowthSC(LAMMPS *lmp, int narg, char **arg) :
 	Fix(lmp, narg, arg) {
   avec = (AtomVecBio *) atom->style_match("bio");
   if (!avec)
-	error->all(FLERR, "Fix psoriasis/kinetics/mm requires atom style bio");
+	error->all(FLERR, "Fix psoriasis/growth/sc requires atom style bio");
 
-//  if (narg < 6)
-//	error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command");
-
-  //ntype = force->inumeric(FLERR,arg[1]);
-
-  itype = new char [5];
-
-  //TODO change # of narg to include tnfa
-  if (strcmp(arg[1],"STEM") == 0) {
-	  if (narg < 7) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for stem cells");
-	  strcpy(itype, arg[1]);
-	  printf("itype is %s\n", itype);
-  } else if (strcmp(arg[1], "TA") == 0){
-	  if (narg < 8) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for TA cells");
-	  strcpy(itype, arg[1]);
-  } else if (strcmp(arg[1], "DIFF") == 0){
-	  if (narg < 9) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for differentiated cells");
-	  strcpy(itype, arg[1]);
-  } else if (strcmp(arg[1], "TCELL") == 0){
-	  if (narg < 6) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for T cells");
-	  strcpy(itype, arg[1]);
-  } else if (strcmp(arg[1], "DC") == 0){
-	  if (narg < 7) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for dendritic cells");
-	  strcpy(itype, arg[1]);
-  } else if (strcmp(arg[1], "APOP") == 0){
-	  if (narg < 5) error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command for apoptotic cells");
-	  strcpy(itype, arg[1]);
-  } else
-	  error->all(FLERR, "Not enough arguments in fix psoriasis/kinetics/mm command");
+  if (narg < 7)
+	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/sc command");
 
   varg = narg-3;
   var = new char*[varg];
@@ -101,23 +73,23 @@ FixPKineticsMM::FixPKineticsMM(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = narg; // need to double check if this makes sense
+  int iarg = 7;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
 	  if (external_gflag != 0 && external_gflag != 1)
-		error->all(FLERR, "Illegal fix psoriasis/kinetics/mm command: gflag");
+		error->all(FLERR, "Illegal fix psoriasis/growth/sc command: gflag");
 	  iarg += 2;
 	} else
-	  error->all(FLERR, "Illegal fix psoriasis/kinetics/mm command");
+	  error->all(FLERR, "Illegal fix psoriasis/growth/sc command");
   }
 }
 
 /* ---------------------------------------------------------------------- */
 
-FixPKineticsMM::~FixPKineticsMM() {
+FixPGrowthSC::~FixPGrowthSC() {
   int i;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < varg; i++) {
 	delete[] var[i];
   }
   delete[] var;
@@ -129,7 +101,7 @@ FixPKineticsMM::~FixPKineticsMM() {
 
 /* ---------------------------------------------------------------------- */
 
-int FixPKineticsMM::setmask() {
+int FixPGrowthSC::setmask() {
   int mask = 0;
   mask |= PRE_FORCE;
   return mask;
@@ -139,16 +111,16 @@ int FixPKineticsMM::setmask() {
  if need to restore per-atom quantities, create new fix STORE styles
  ------------------------------------------------------------------------- */
 
-void FixPKineticsMM::init() {
+void FixPGrowthSC::init() {
   if (!atom->radius_flag)
 	error->all(FLERR, "Fix requires atom attribute diameter");
 
   for (int n = 0; n < varg; n++) {
 	ivar[n] = input->variable->find(var[n]);
 	if (ivar[n] < 0)
-	  error->all(FLERR, "Variable name for fix psoriasis/kinetics/mm does not exist");
+	  error->all(FLERR, "Variable name for fix psoriasis/growth/sc does not exist");
 	if (!input->variable->equalstyle(ivar[n]))
-	  error->all(FLERR, "Variable for fix psoriasis/kinetics/mm is invalid style");
+	  error->all(FLERR, "Variable for fix psoriasis/growth/sc is invalid style");
   }
 
   // register fix kinetics with this class
@@ -165,66 +137,30 @@ void FixPKineticsMM::init() {
   if (kinetics == NULL)
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
-  if (itype = "STEM") {
-	sc_dens = input->variable->compute_equal(ivar[0]);
-	printf("sc_dens value is %f \n", sc_dens);
-	abase = input->variable->compute_equal(ivar[1]);
-	printf("abase value is %f \n", abase);
-	il172 = input->variable->compute_equal(ivar[2]);
-	printf("il172 value is %f \n", il172);
-	il1720 = input->variable->compute_equal(ivar[3]);
-	printf("il1720 value is %f \n", il1720);
-  } else if (itype = "TA"){
-	ta_dens = input->variable->compute_equal(ivar[0]);
-	//printf("ta_dens value is %f \n", sc_dens);
-	abase = input->variable->compute_equal(ivar[1]);
-	il172 = input->variable->compute_equal(ivar[2]);
-	//printf("il172 value is %f \n", il172);
-	il1720 = input->variable->compute_equal(ivar[3]);
-	//printf("il1720 value is %f \n", il1720);
-	sc2ta = input->variable->compute_equal(ivar[4]);
-  } else if (itype = "DIFF"){
-	diff_dens = input->variable->compute_equal(ivar[0]);
-	//printf("diff_dens value is %f \n", sc_dens);
-	abase = input->variable->compute_equal(ivar[1]);
-	il172 = input->variable->compute_equal(ivar[2]);
-	//printf("il172 value is %f \n", il172);
-	il1720 = input->variable->compute_equal(ivar[3]);
-	//printf("il1720 value is %f \n", il1720);
-	ta2d = input->variable->compute_equal(ivar[4]);
-	ddesq = input->variable->compute_equal(ivar[5]);
-  } else if (itype = "TCELL"){
-	tc_dens = input->variable->compute_equal(ivar[0]);
-	//printf("tc_dens value is %f \n", sc_dens);
-	abase = input->variable->compute_equal(ivar[1]);
-	t2il23 = input->variable->compute_equal(ivar[2]);
-  } else if (itype = "DC"){
-	dc_dens = input->variable->compute_equal(ivar[0]);
-	//printf("dc_dens value is %f \n", sc_dens);
-	abase = input->variable->compute_equal(ivar[1]);
-	dcvm = input->variable->compute_equal(ivar[2]);
-	dckp = input->variable->compute_equal(ivar[2]);
-  } else if (itype = "APOP"){
-	dc_dens = input->variable->compute_equal(ivar[0]);
-	//printf("apop_dens value is %f \n", sc_dens);
-	abase = input->variable->compute_equal(ivar[1]);
-  }
+  sc_dens = input->variable->compute_equal(ivar[0]);
+  //printf("sc_dens value is %f \n", sc_dens);
+  abase = input->variable->compute_equal(ivar[1]);
+  //printf("abase value is %f \n", abase);
+  il172 = input->variable->compute_equal(ivar[2]);
+  //printf("il172 value is %f \n", il172);
+  il1720 = input->variable->compute_equal(ivar[3]);
+  //printf("il1720 value is %f \n", il1720);
 
   bio = kinetics->bio;
 
   if (bio->nnu == 0)
-	error->all(FLERR, "fix_psoriasis/kinetics/mm requires Nutrients input");
+	error->all(FLERR, "fix_psoriasis/growth/sc requires Nutrients input");
   else if (bio->decay == NULL)
-	error->all(FLERR, "fix_psoriasis/kinetics/mm requires Decay input");
+	error->all(FLERR, "fix_psoriasis/growth/sc requires Decay input");
   else if (bio->mu == NULL)
-	error->all(FLERR, "fix_psoriasis/kinetics/mm requires Growth Rate input");
+	error->all(FLERR, "fix_psoriasis/growth/sc requires Growth Rate input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
   nz = kinetics->nz;
 
-  species = memory->create(species, atom->ntypes+1, "mm:species");
-  growrate = memory->create(growrate, atom->ntypes+1, 2, kinetics->ngrids, "mm:growrate");
+  species = memory->create(species, atom->ntypes+1, "sc:species");
+  growrate = memory->create(growrate, atom->ntypes+1, 2, kinetics->ngrids, "sc:growrate");
 
   //Get computational domain size
   if (domain->triclinic == 0) {
@@ -253,19 +189,19 @@ void FixPKineticsMM::init() {
 
 }
 
-void FixPKineticsMM::init_param() {
+/* ---------------------------------------------------------------------- */
+
+void FixPGrowthSC::init_param() {
 	il17 = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
 	if (strcmp(bio->nuname[nu], "il17") == 0)
 	  il17 = nu;
-	else
-	  error->all(FLERR, "unknow nutrient in fix_psoriasis/kinetics/mm");
   }
 
   if (il17 == 0)
-	error->all(FLERR, "fix_psoriasis/kinetics/mm requires nutrient il17");
+	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il17");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -286,13 +222,14 @@ void FixPKineticsMM::init_param() {
 	  else if (strcmp(name, "bm") == 0)
 	  	species[i] = 7;
 	  else
-		error->all(FLERR, "unknow species in fix_psoriasis/kinetics/mm");
+		error->all(FLERR, "unknow species in fix_psoriasis/growth/sc");
   }
 }
 
+/* ---------------------------------------------------------------------- */
 
-void FixPKineticsMM::grow_subgrid(int n) {
-  growrate = memory->create(growrate, atom->ntypes + 1, 2, n, "mm:growrate");
+void FixPGrowthSC::grow_subgrid(int n) {
+  growrate = memory->create(growrate, atom->ntypes + 1, 2, n, "sc:growrate");
 }
 
 /* ----------------------------------------------------------------------
@@ -300,7 +237,7 @@ void FixPKineticsMM::grow_subgrid(int n) {
  for each cell type -> growth and decay rates are used (mu[i], decay[i])
  nutrient reaction rate is then calculated
  ------------------------------------------------------------------------- */
-void FixPKineticsMM::growth(double dt, int gflag) {
+void FixPGrowthSC::growth(double dt, int gflag) {
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
   int *type = atom->type;
@@ -325,34 +262,25 @@ void FixPKineticsMM::growth(double dt, int gflag) {
     for (int i = 1; i <= ntypes; i++) {
       int spec = species[i];
 
-      // Stem cell monod model
+      // Stem cell model
       if (spec == 1) {
         growrate[i][0][grid] = mu[i]; //normal growth
         growrate[i][1][grid] = decay[i]; //decay rate
       } else if (spec == 4) {
-        // T cell monod model
-    	  growrate[i][0][grid] = mu[i];
-    	  growrate[i][i][grid] = decay[i];
-    	 // printf("grow rate is %f \n", mu[i]);
-    	  //printf("decay rate is %f \n", decay[i]);
+        // T cell model
+		growrate[i][0][grid] = mu[i];
+		growrate[i][i][grid] = decay[i];
       }
     }
-    /*nur --> update change within the grid for each timestep
-    xdensity -> e.g. T cell density within the grid*/
 	nur[il17][grid] += (il172 * xdensity[4][grid]) - (il1720 * nus[il17][grid]);
-//	if (nur[il17][grid] > 0){
-//		printf("nur is %f grid=%i\n", nur[il17][grid], grid);
-//	}
-
   }
-
- // if (gflag && external_gflag) update_biomass(growrate, dt);
+  //if (gflag && external_gflag) update_biomass(growrate, dt);
 }
 
 /* ----------------------------------------------------------------------
  update particle attributes: biomass, outer mass, radius etc
  ------------------------------------------------------------------------- */
-void FixPKineticsMM::update_biomass(double ***growrate, double dt) {
+void FixPGrowthSC::update_biomass(double ***growrate, double dt) {
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
   int *type = atom->type;
@@ -375,57 +303,60 @@ void FixPKineticsMM::update_biomass(double ***growrate, double dt) {
 
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
 	  for (int i = 0; i < nlocal; i++) {
-	    if (mask[i] & groupbit) {
-	      int t = type[i];
-	      int pos = kinetics->position(i);
+		if (mask[i] & groupbit) {
+		  int t = type[i];
+		  int pos = kinetics->position(i);
 
-	      double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
-	      //rmass[i] = rmass[i] * (1 + growrate[t][0][pos] * dt);
+		  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
+		  //rmass[i] = rmass[i] * (1 + growrate[t][0][pos] * dt);
 
-	      double grid_conc = calculate_gridmass(grid);
-	      int stem_count = calculate_gridcell(grid, 1);
-	      int tcell_count = calculate_gridcell(grid, 4);
+		  double grid_conc = calculate_gridmass(grid);
+		  //printf("il17 concentration in grid %i is %f\n", grid, grid_conc);
+		  int stem_count = calculate_gridcell(grid, 1);
+		  int tcell_count = calculate_gridcell(grid, 4);
 
-	      if (species[t] == 1) {
-	    	  double update_sctamass_by = (grid_conc / stem_count) * growrate[t][0][pos];
-	          rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * update_sctamass_by * dt;
-	          radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-	          outer_radius[i] = radius[i]; // in this case outer radius is the same
-	      } else if (species[t] == 4){
-	    	  double update_tcellmass_by = (grid_conc / tcell_count) * growrate[t][0][pos];
-	          rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * update_tcellmass_by * dt;
-	          radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-	          outer_radius[i] = radius[i]; // in this case outer radius is the same
-	      } else {
-	        radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-	        outer_mass[i] = rmass[i];
-	        outer_radius[i] = radius[i];
-	      }
-	    }
+		  if (species[t] == 1) {
+			  double update_sctamass_by = (grid_conc / stem_count) * growrate[t][0][pos];
+			  rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * update_sctamass_by * dt;
+			  radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+			  outer_radius[i] = radius[i]; // in this case outer radius is the same
+		  } else if (species[t] == 4){
+			  double update_tcellmass_by = (grid_conc / tcell_count) * growrate[t][0][pos];
+			  rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * update_tcellmass_by * dt;
+			  radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+			  outer_radius[i] = radius[i]; // in this case outer radius is the same
+		  } else {
+			radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+			outer_mass[i] = rmass[i];
+			outer_radius[i] = radius[i];
+		  }
+		}
 	  }
   }
 }
 
 /* ----------------------------------------------------------------------
+ DINIKA
  calculate the gird concentration for each type of cytokine
 
  for now just use il17 in system
  ------------------------------------------------------------------------- */
-double FixPKineticsMM::calculate_gridmass(int grid_id){ // to edit
+double FixPGrowthSC::calculate_gridmass(int grid_id){ // to edit
   double **nus = kinetics->nus;
   double il17_conc = 0;
 
   il17_conc = nus[il17][grid_id] * vol;
 
-  printf("il17 concentration in grid %i is %f\n", grid_id, il17_conc);
   return il17_conc;
 }
 
 /* ----------------------------------------------------------------------
+ DINIKA
  calculate the number of cells in each grid
+
  based on the grid id and the targeted cell type
  ------------------------------------------------------------------------- */
-int FixPKineticsMM::calculate_gridcell(int grid_id, int t){
+int FixPGrowthSC::calculate_gridcell(int grid_id, int t){
 	int cell_count = 0;
 	int *mask = atom->mask;
 	int nlocal = atom->nlocal;
@@ -441,7 +372,7 @@ int FixPKineticsMM::calculate_gridcell(int grid_id, int t){
 			}
 		}
 	}
-	printf("type: %i cell count in grid %d is %d \n", t, grid_id, cell_count);
+//	printf("type: %i cell count in grid %d is %d \n", t, grid_id, cell_count);
 	return cell_count;
 }
 
@@ -450,7 +381,7 @@ int FixPKineticsMM::calculate_gridcell(int grid_id, int t){
 
  *note: each grid will have different number of SC and IL
  ------------------------------------------------------------------------- */
-// void FixPKineticsMM::update_cellmass(int grid_id, int t){
+// void FixPGrowthSC::update_cellmass(int grid_id, int t){
 //	 int *mask = atom->mask;
 //	 int nlocal = atom->nlocal;
 //	 int *type = atom->type;

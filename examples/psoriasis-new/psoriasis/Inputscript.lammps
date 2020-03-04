@@ -97,11 +97,16 @@ variable diffT equal 1e-4
 variable layer equal -1
 variable tol equal 1e-5
 
-#variables used in kinetics/mm
+#variables used in kinetics/sc
 variable STEMdens equal 30
 variable il172 equal 0.01
 variable il1720 equal 0.0001
 variable abase equal 0.0036
+
+#variables used in growth/tcell
+variable TCELLdens equal 30
+variable il232 equal 0.01
+variable il2320 equal 0.0001
 
 ##############Define IBm Commands##############
 
@@ -112,7 +117,9 @@ fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
 #fix d2 TA psoriasis/divide_ta 6 v_prob1 v_prob2 v_prob3 79966 demflag 0
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 #fix kgm all psoriasis/kinetics/mm v_STEMdens v_il172 v_il1720
-fix kgsc STEM psoriasis/kinetics/mm v_STEMdens v_abase v_il172 v_il1720
+fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abase v_il172 v_il1720
+fix kgtc STEM psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320
+
 
 
 ##############Define IBm Computes##############
