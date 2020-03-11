@@ -46,7 +46,7 @@ class FixPGrowthSC : public Fix {
   char *itype;
 
   //int il17, il22, il23, tnfa, amp;  // nutrient index
-  int il17, tnfa, il23;
+  int il17, tnfa, il23, gf;
 
   int *species;                     // species index 0 = unknow, 1 = sc, 2 = ta, 3 = d, 4 = tc, 5 = dc
   double ***growrate;               // growth rate [type][2][grid]
@@ -57,16 +57,15 @@ class FixPGrowthSC : public Fix {
   double vol;                       // grid volume and gas volume
   double sc_dens; //cell density
   //double sc_decay;                   // sc decay rate
-  double sc_ta; 					//sc -> TA rate
   double il172, il1720, tnfa2,tnfa20;
-  double abase, sc2ta;
+  double abase, sc2ta, sc2gf, gf20;
 
   class AtomVecBio *avec;
   class FixKinetics *kinetics;
   class BIO *bio;
 
   void init_param();
-  void update_biomass(double***, double);
+ //void update_biomass(double***, double);
   double calculate_gridmass(int);
   int calculate_gridcell(int, int);
  // void update_cellmass(int, int);

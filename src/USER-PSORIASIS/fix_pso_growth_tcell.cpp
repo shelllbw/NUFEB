@@ -56,7 +56,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/tcell requires atom style bio");
 
-  if (narg < 7)
+  if (narg < 9)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/tcell command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 7;
+  int iarg = 9;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -141,9 +141,11 @@ void FixPGrowthTCELL::init() {
   //printf("sc_dens value is %f \n", sc_dens);
   abase = input->variable->compute_equal(ivar[1]);
   //printf("abase value is %f \n", abase);
-  il232 = input->variable->compute_equal(ivar[2]);
+  dcvm = input->variable->compute_equal(ivar[2]);
+  dckp = input->variable->compute_equal(ivar[3]);
+  il232 = input->variable->compute_equal(ivar[4]);
   printf("il232 value is %f \n", il232);
-  il2320 = input->variable->compute_equal(ivar[3]);
+  il2320 = input->variable->compute_equal(ivar[5]);
   printf("il2320 value is %f \n", il2320);
 
   bio = kinetics->bio;
@@ -222,7 +224,7 @@ void FixPGrowthTCELL::init_param() {
 	  else if (strcmp(name, "bm") == 0)
 	  	species[i] = 7;
 	  else
-		error->all(FLERR, "unknow species in fix_psoriasis/growth/tcell");
+		error->all(FLERR, "unknown species in fix_psoriasis/growth/tcell");
   }
 }
 
@@ -245,46 +247,9 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 
   double *radius = atom->radius;
   double *rmass = atom->rmass;
-
-  double *mu = bio->mu;
-  double *decay = bio->decay;
-
-  double **nus = kinetics->nus;
-  double **nur = kinetics->nur;
-
-  double **xdensity = kinetics->xdensity;
-
-  for (int grid = 0; grid < kinetics->bgrids; grid++) {
-    //empty grid is not considered
-    for (int i = 1; i <= ntypes; i++) {
-      int spec = species[i];
-
-      // t cell model
-      if (spec == 4) {
-        growrate[i][0][grid] = mu[i]; //normal growth
-        growrate[i][4][grid] = decay[i]; //decay rate
-      } else if (spec == 5) { //dc model
-  		growrate[i][0][grid] = mu[i];
-  		growrate[i][i][grid] = decay[i];
-      }
-    }
-	nur[il23][grid] += (il232 * xdensity[5][grid]) - (il2320 * nus[il23][grid]);
-  }
-  //if (gflag && external_gflag) update_biomass(growrate, dt);
-}
-
-/* ----------------------------------------------------------------------
- update particle attributes: biomass, outer mass, radius etc
- ------------------------------------------------------------------------- */
-void FixPGrowthTCELL::update_biomass(double ***growrate, double dt) {
-  int *mask = atom->mask;
-  int nlocal = atom->nlocal;
-  int *type = atom->type;
-
-  double *radius = atom->radius;
-  double *rmass = atom->rmass;
   double *outer_mass = avec->outer_mass;
   double *outer_radius = avec->outer_radius;
+  double grid_vol = kinetics->stepx * kinetics->stepy * kinetics->stepz;
 
   const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
@@ -295,41 +260,45 @@ void FixPGrowthTCELL::update_biomass(double ***growrate, double dt) {
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
-  double **xdensity = kinetics->xdensity;
 
-  for (int grid = 0; grid < kinetics->bgrids; grid++) {
-	  for (int i = 0; i < nlocal; i++) {
-		if (mask[i] & groupbit) {
-		  int t = type[i];
-		  int pos = kinetics->position(i);
+  //double **xdensity = kinetics->xdensity;
 
-		  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
-		  //rmass[i] = rmass[i] * (1 + growrate[t][0][pos] * dt);
+  double growrate_tcell = 0;
 
-		  double grid_conc = calculate_gridmass(grid);
-		  //printf("il17 concentration in grid %i is %f\n", grid, grid_conc);
-		  int dc_count = calculate_gridcell(grid, 5);
-		  int tcell_count = calculate_gridcell(grid, 4);
+  for (int i = 0; i < nlocal; i++) {
+	if (mask[i] & groupbit) {
+	  int t = type[i];
+	  int grid = kinetics->position(i); //find grid that atom is in
 
-		  if (species[t] == 4) {
-			  double update_tcellmass_by = (grid_conc / tcell_count) * growrate[t][0][pos];
-			  rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * update_tcellmass_by * dt;
-			  radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-			  outer_radius[i] = radius[i]; // in this case outer radius is the same
-		  } else if (species[t] == 4){
-			  double update_dcmass_by = (grid_conc / dc_count) * growrate[t][0][pos];
-			  rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * update_dcmass_by * dt;
-			  radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-			  outer_radius[i] = radius[i]; // in this case outer radius is the same
-		  } else {
-			radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-			outer_mass[i] = rmass[i];
-			outer_radius[i] = radius[i];
-		  }
-		}
-	  }
+	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
+
+      // t cell model
+      if (species[t] == 4) {
+    	double R11 = mu[i] * nus[il23][grid];
+    	double R12 = decay[i];
+    	double R13 = abase;
+
+    	nur[il23][grid] += (il232 * (rmass[i]/grid_vol)) - (il2320 * nus[il23][grid]);
+
+        growrate_tcell = R11 - R12 - R13;
+
+        if (!gflag || !external_gflag){
+        	continue;
+        }
+
+		rmass[i] = rmass[i] * density + growrate_tcell - abase * dt;
+		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * tc_dens + growrate_tcell * rmass[i] * dt;
+		printf("outer mass is %e\n", outer_mass[i]);
+
+		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / tc_dens), third);
+		printf("outer radius is %e\n", outer_radius[i]);
+
+      }
+    }
   }
 }
+
 
 /* ----------------------------------------------------------------------
  DINIKA
@@ -371,38 +340,4 @@ int FixPGrowthTCELL::calculate_gridcell(int grid_id, int t){
 //	printf("type: %i cell count in grid %d is %d \n", t, grid_id, cell_count);
 	return cell_count;
 }
-
-/* ----------------------------------------------------------------------
- calculate the SC-TA mass to update to based on each grid
-
- *note: each grid will have different number of SC and IL
- ------------------------------------------------------------------------- */
-// void FixPGrowthTCELL::update_cellmass(int grid_id, int t){
-//	 int *mask = atom->mask;
-//	 int nlocal = atom->nlocal;
-//	 int *type = atom->type;
-//	 double *rmass = atom->rmass;
-//
-//	 double grid_conc = calculate_gridmass(grid_id);
-//	 int stem_count = calculate_gridcell(grid_id, 1);
-//	 int tcell_count = calculate_gridcell(grid_id, 4);
-//
-//	 for (int i = 0; i < nlocal; i++){
-//		 if (mask[i] & groupbit) {
-//			 int pos = kinetics->position(i); //gets the grid_id of cell
-//
-//			 if (pos == grid_id && t == type[i]){
-//				 double update_sctamass_by = (grid_conc / stem_count) * growrate[t][0][pos];
-//				 avec->cell_mass[i] = rmass[i] + (rmass[i] * update_sctamass_by);
-//				 rmass[i] = avec->cell_mass[i];
-//			 }
-//
-//			 if (pos == grid_id && t == type[i]){
-//				 double update_tcellmass_by = (grid_conc / tcell_count) * growrate[t][0][pos];
-//				 avec->cell_mass[i] = rmass[i] + (rmass[i] * update_tcellmass_by);
-//				 rmass[i] = avec->cell_mass[i];
-//			 }
-//		 }
-//	 }
-//}
 

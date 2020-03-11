@@ -21,7 +21,7 @@ group BM type 7
 
 variable x equal 100
 variable y equal 20
-variable z equal 30
+variable z equal 5
 
 lattice sc 1e-6 origin 0.5 0.5 0.5
 
@@ -38,12 +38,12 @@ set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 200 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 1 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
-create_atoms 4 random 100 64564 reg2
+create_atoms 4 random 5 64564 reg2
 
 neighbor	5e-7 bin
 
@@ -97,30 +97,38 @@ variable diffT equal 1e-4
 variable layer equal -1
 variable tol equal 1e-5
 
-#variables used in kinetics/sc
+#variables used in growth
+variable abase equal 4.16666667e-8
+
+#variables used in growth/sc
 variable STEMdens equal 30
-variable il172 equal 0.01
-variable il1720 equal 0.0001
-variable abase equal 0.0036
+variable sc2ta equal 1.78414352e-8
+variable sc2gf equal 0.00001157407
+variable gf20 equal 0.0004224537
+variable il172 equal 0.00000578703
+variable il1720 equal 0.0004224537
+
+#variables used in growth/ta
+variable ta2d equal 2.090625e-8
+variable ta2gf equal 0.00001157407
+
+#variable used in growth/diff
+variable ddesq equal 5.50104167e-8
 
 #variables used in growth/tcell
 variable TCELLdens equal 30
-variable il232 equal 0.01
+variable il232 equal 0.00001157407
 variable il2320 equal 0.0001
 
 ##############Define IBm Commands##############
 
-# ***bowen** new format, cutoff, density, diameter, #of sc, seed
-#fix sc1 STEM psoriasis/create_stem 1e-8 150 1.0e-6 100 64564
-fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
+fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 50
 #fix d1 STEM psoriasis/divide_stem 1 v_divDia v_selfpro v_asym v_sym 64564 demflag 0
 #fix d2 TA psoriasis/divide_ta 6 v_prob1 v_prob2 v_prob3 79966 demflag 0
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 #fix kgm all psoriasis/kinetics/mm v_STEMdens v_il172 v_il1720
-fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abase v_il172 v_il1720
-fix kgtc STEM psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320
-
-
+fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_gf20 v_abase v_il172 v_il1720
+#fix kgtc STEM psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320
 
 ##############Define IBm Computes##############
 
@@ -138,7 +146,7 @@ thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 20 pre no post no every 1 &
+run 5 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
 "timestep 1e-3" &
 "run 1000 pre no post no" &

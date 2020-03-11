@@ -56,9 +56,7 @@ class FixPGrowthTCELL : public Fix {
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
   double tc_dens; //cell density
-  //double sc_decay;                   // sc decay rate
- // double sc_ta; 					//sc -> TA rate
-  double il232, il2320;
+  double il232, il2320, dcvm, dckp;
   double abase;
 
   class AtomVecBio *avec;
@@ -66,10 +64,8 @@ class FixPGrowthTCELL : public Fix {
   class BIO *bio;
 
   void init_param();
-  void update_biomass(double***, double);
   double calculate_gridmass(int);
   int calculate_gridcell(int, int);
- // void update_cellmass(int, int);
 };
 
 }

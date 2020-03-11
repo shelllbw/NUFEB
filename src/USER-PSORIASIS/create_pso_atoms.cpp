@@ -737,6 +737,7 @@ void CreatePsoAtoms::add_stem()
 	    //***bowen*** get type id
 		int stem_id = avec_bio->bio->find_typeid("stem");
 		double r = diameter/2;
+		//printf("radius is %e\n", r);
 
 		for (int i = 0; i < freeLoc.size(); i++){
 			double* coord = new double[3];
@@ -747,14 +748,17 @@ void CreatePsoAtoms::add_stem()
 			coord[0] = atom->x[atomId][0];
 			coord[1] = atom->x[atomId][1];
 			coord[2] = atom->x[atomId][2] + atom->radius[atomId] * 2;
-			//printf("i=%i x=%e y=%e z=%e \n", i, coord[0],coord[1],coord[2]);
+		//	printf("stem id is %i i=%i x=%e y=%e z=%e \n", stem_id, i, coord[0],coord[1],coord[2]);
 			int n = 0;
 			//create new sc to initialise on surface
 			avec_bio->create_atom(stem_id, coord);
 			//gets the new atom id
 			n = atom->nlocal - 1;
 
+			//printf("density is %f\n", density);
+
 			atom->radius[n] = r;
+			//printf("radius is %f\n", r);
 			atom->rmass[n] = 4.0*3.1415926/3.0*r*r*r*density;
 			avec_bio->outer_mass[n] = atom->rmass[n];
 			avec_bio->outer_radius[n] = r;
@@ -765,6 +769,14 @@ void CreatePsoAtoms::add_stem()
 	    delete[] coord;
 	  }
 	}
+	int *type = atom->type;
+
+//	for (int i = 0; i < atom->nlocal; i ++){
+//		if (type[i] == 1){
+//			printf("stem cell created. type %i \n", type[i]);
+//			printf("rmass of sc is %e\n", atom->rmass[i]);
+//		}
+//	}
 }
 
 //create a list of all the empty locations

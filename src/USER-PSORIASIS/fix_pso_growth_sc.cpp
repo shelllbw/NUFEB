@@ -56,7 +56,7 @@ FixPGrowthSC::FixPGrowthSC(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/sc requires atom style bio");
 
-  if (narg < 7)
+  if (narg < 10)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/sc command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthSC::FixPGrowthSC(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 7;
+  int iarg = 10;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -138,13 +138,20 @@ void FixPGrowthSC::init() {
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
   sc_dens = input->variable->compute_equal(ivar[0]);
-  //printf("sc_dens value is %f \n", sc_dens);
+  printf("sc_dens value is %f \n", sc_dens);
   abase = input->variable->compute_equal(ivar[1]);
-  //printf("abase value is %f \n", abase);
-  il172 = input->variable->compute_equal(ivar[2]);
-  //printf("il172 value is %f \n", il172);
-  il1720 = input->variable->compute_equal(ivar[3]);
-  //printf("il1720 value is %f \n", il1720);
+  printf("abase value is %f \n", abase);
+  sc2ta = input->variable->compute_equal(ivar[2]);
+  printf("sc2ta rate is %f \n", sc2ta);
+  sc2gf = input->variable->compute_equal(ivar[3]);
+  printf("sc2gf rate is %f \n", sc2gf);
+  gf20 = input->variable->compute_equal(ivar[4]);
+  printf("gf20 rate is %f \n", gf20);
+  il172 = input->variable->compute_equal(ivar[5]);
+  printf("il172 value is %f \n", il172);
+  il1720 = input->variable->compute_equal(ivar[6]);
+  printf("il1720 value is %f \n", il1720);
+
 
   bio = kinetics->bio;
 
@@ -192,16 +199,20 @@ void FixPGrowthSC::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthSC::init_param() {
-	il17 = 0;
+	il17, gf = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
 	if (strcmp(bio->nuname[nu], "il17") == 0)
 	  il17 = nu;
+	if (strcmp(bio->nuname[nu], "gf") == 0)
+		  gf = nu;
   }
 
   if (il17 == 0)
 	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il17");
+  if (gf == 0)
+  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient gf");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -222,7 +233,7 @@ void FixPGrowthSC::init_param() {
 	  else if (strcmp(name, "bm") == 0)
 	  	species[i] = 7;
 	  else
-		error->all(FLERR, "unknow species in fix_psoriasis/growth/sc");
+		error->all(FLERR, "unknown species in fix_psoriasis/growth/sc");
   }
 }
 
@@ -236,6 +247,8 @@ void FixPGrowthSC::grow_subgrid(int n) {
  metabolism and atom update
  for each cell type -> growth and decay rates are used (mu[i], decay[i])
  nutrient reaction rate is then calculated
+
+ todo: place update biomass in here since we are calculating based on cell rather than grid
  ------------------------------------------------------------------------- */
 void FixPGrowthSC::growth(double dt, int gflag) {
   int *mask = atom->mask;
@@ -245,6 +258,9 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
   double *radius = atom->radius;
   double *rmass = atom->rmass;
+  double *outer_mass = avec->outer_mass;
+  double *outer_radius = avec->outer_radius;
+  double grid_vol = kinetics->stepx * kinetics->stepy * kinetics->stepz;
 
   double *mu = bio->mu;
   double *decay = bio->decay;
@@ -252,88 +268,59 @@ void FixPGrowthSC::growth(double dt, int gflag) {
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
-  double **xdensity = kinetics->xdensity;
-
-//  for(int i=0; i<atom->nlocal; i++)
-//      if (atom->type[i] == 1)  printf("ii=%i %i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
-
-  for (int grid = 0; grid < kinetics->bgrids; grid++) {
-    //empty grid is not considered
-    for (int i = 1; i <= ntypes; i++) {
-      int spec = species[i];
-
-      // Stem cell model
-      if (spec == 1) {
-        growrate[i][0][grid] = mu[i]; //normal growth
-        growrate[i][1][grid] = decay[i]; //decay rate
-      } else if (spec == 4) {
-        // T cell model
-		growrate[i][0][grid] = mu[i];
-		growrate[i][i][grid] = decay[i];
-      }
-    }
-	nur[il17][grid] += (il172 * xdensity[4][grid]) - (il1720 * nus[il17][grid]);
-  }
-  //if (gflag && external_gflag) update_biomass(growrate, dt);
-}
-
-/* ----------------------------------------------------------------------
- update particle attributes: biomass, outer mass, radius etc
- ------------------------------------------------------------------------- */
-void FixPGrowthSC::update_biomass(double ***growrate, double dt) {
-  int *mask = atom->mask;
-  int nlocal = atom->nlocal;
-  int *type = atom->type;
-
-  double *radius = atom->radius;
-  double *rmass = atom->rmass;
-  double *outer_mass = avec->outer_mass;
-  double *outer_radius = avec->outer_radius;
+  //double **xdensity = kinetics->xdensity;
 
   const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
   const double third = 1.0 / 3.0;
 
-  double *mu = bio->mu;
-  double *decay = bio->decay;
+  double growrate_sc = 0;
+  double growrate_ta = 0; //sc can divide to a TA cell
 
-  double **nus = kinetics->nus;
-  double **nur = kinetics->nur;
-  double **xdensity = kinetics->xdensity;
+//  for(int i=0; i<atom->nlocal; i++)
+//      if (atom->type[i] == 1)  printf("ii=%i %i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
 
-  for (int grid = 0; grid < kinetics->bgrids; grid++) {
-	  for (int i = 0; i < nlocal; i++) {
-		if (mask[i] & groupbit) {
-		  int t = type[i];
-		  int pos = kinetics->position(i);
+  for (int i = 0; i < nlocal; i++) {
+	if (mask[i] & groupbit) {
+	  int t = type[i];
+	  int grid = kinetics->position(i); //find grid that atom is in
 
-		  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
-		  //rmass[i] = rmass[i] * (1 + growrate[t][0][pos] * dt);
+	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-		  double grid_conc = calculate_gridmass(grid);
-		  //printf("il17 concentration in grid %i is %f\n", grid, grid_conc);
-		  int stem_count = calculate_gridcell(grid, 1);
-		  int tcell_count = calculate_gridcell(grid, 4);
+      // Stem cell model
+      if (species[t] == 1) {
+		double R1 = mu[t] * nus[il17][grid];
+		double R2 = decay[t];
+		double R3 = abase;
+		double R4 = sc2ta * nus[il17][grid];
 
-		  if (species[t] == 1) {
-			  double update_sctamass_by = (grid_conc / stem_count) * growrate[t][0][pos];
-			  rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * update_sctamass_by * dt;
-			  radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-			  outer_radius[i] = radius[i]; // in this case outer radius is the same
-		  } else if (species[t] == 4){
-			  double update_tcellmass_by = (grid_conc / tcell_count) * growrate[t][0][pos];
-			  rmass[i] = four_thirds_pi * (radius[i] * radius[i] * radius[i]) * density + growrate[t][1][pos] * rmass[i] * update_tcellmass_by * dt;
-			  radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-			  outer_radius[i] = radius[i]; // in this case outer radius is the same
-		  } else {
-			radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-			outer_mass[i] = rmass[i];
-			outer_radius[i] = radius[i];
-		  }
-		}
-	  }
+		//nutrient uptake for sc is affected by gf
+		//need to cal density
+		nur[gf][grid] += (sc2gf * (rmass[i]/grid_vol)) - (gf20 * nus[gf][grid]);
+
+        growrate_sc = R1 - R2 - R3;
+        growrate_ta = R4; //sc can divide to a TA cell
+
+        if (!gflag || !external_gflag){
+        	continue;
+        }
+
+        printf("rmass BEFORE is now %e\n", rmass[i]);
+		rmass[i] = rmass[i] + (growrate_sc - growrate_ta) * rmass[i] * dt;
+		printf("rmass is now %e\n", rmass[i]);
+		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+		printf("radius  is now %e\n", radius[i]);
+        //outer mass & radius is for sc to ta
+		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
+		printf("outer mass is %e\n", outer_mass[i]);
+
+		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
+		printf("outer radius is %e\n", outer_radius[i]);
+      }
+    }
   }
 }
+
 
 /* ----------------------------------------------------------------------
  DINIKA
@@ -346,6 +333,7 @@ double FixPGrowthSC::calculate_gridmass(int grid_id){ // to edit
   double il17_conc = 0;
 
   il17_conc = nus[il17][grid_id] * vol;
+ //printf("cal gridmass %i is %f\n", grid_id, il17_conc);
 
   return il17_conc;
 }
