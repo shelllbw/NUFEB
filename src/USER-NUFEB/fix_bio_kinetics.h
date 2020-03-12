@@ -36,6 +36,8 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
   friend class FixKineticsBalance;
   friend class FixPGrowthSC;
   friend class FixPGrowthTCELL;
+  friend class FixPGrowthTA;
+  friend class FixPGrowthDIFF;
 
  public:
   FixKinetics(class LAMMPS *, int, char **);
@@ -91,10 +93,13 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
   class FixKineticsPH *ph;
   class FixKineticsThermo *thermo;
   class FixFluid *nufebfoam;
+
   //DINIKA - add for each fix kinetics
-//  class FixPGrowth *psog;
+
   class FixPGrowthSC *psosc;
   class FixPGrowthTCELL *psotcell;
+  class FixPGrowthTA *psota;
+  class FixPGrowthDIFF *psodiff;
 
   void init_param();
   void integration();

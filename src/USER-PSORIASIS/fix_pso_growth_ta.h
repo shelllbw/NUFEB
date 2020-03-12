@@ -15,22 +15,22 @@
 
 #ifdef FIX_CLASS
 
-FixStyle(psoriasis/growth/tcell,FixPGrowthTCELL)
+FixStyle(psoriasis/growth/ta,FixPGrowthTA)
 
 #else
 
-#ifndef LMP_FIX_PGROWTHTCELL_H
-#define LMP_FIX_PGROWTHTCELL_H
+#ifndef LMP_FIX_PGROWTHTA_H
+#define LMP_FIX_PGROWTHTA_H
 
 #include "fix.h"
 
 namespace LAMMPS_NS {
 
-class FixPGrowthTCELL : public Fix {
+class FixPGrowthTA : public Fix {
  public:
  
-	FixPGrowthTCELL(class LAMMPS *, int, char **);
-  ~FixPGrowthTCELL();
+	FixPGrowthTA(class LAMMPS *, int, char **);
+  ~FixPGrowthTA();
   int setmask();
   void init();
   void growth(double, int);
@@ -44,7 +44,7 @@ class FixPGrowthTCELL : public Fix {
   int varg;
   char *itype;
 
-  int il23;
+  int il17, tnfa, gf;
 
   int *species;                     // species index 0 = unknow, 1 = sc, 2 = ta, 3 = d, 4 = tc, 5 = dc
 
@@ -52,17 +52,17 @@ class FixPGrowthTCELL : public Fix {
   double xlo,xhi,ylo,yhi,zlo,zhi;   // computational domain size
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
-  double tc_dens; //cell density
-  double il232, il2320;
-  double abase;
+  double ta_dens; 					//cell density
+  double il172, il1720, tnfa2,tnfa20;
+  double abase, ta2d, ta2gf, gf20, sc2ta;
 
   class AtomVecBio *avec;
   class FixKinetics *kinetics;
   class BIO *bio;
 
   void init_param();
-  double calculate_gridmass(int);
   int calculate_gridcell(int, int);
+ // void update_cellmass(int, int);
 };
 
 }

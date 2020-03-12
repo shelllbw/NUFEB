@@ -56,7 +56,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/tcell requires atom style bio");
 
-  if (narg < 9)
+  if (narg < 7)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/tcell command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 9;
+  int iarg = 7;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -96,7 +96,6 @@ FixPGrowthTCELL::~FixPGrowthTCELL() {
   delete[] ivar;
 
   memory->destroy(species);
-  memory->destroy(growrate);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -141,11 +140,9 @@ void FixPGrowthTCELL::init() {
   //printf("sc_dens value is %f \n", sc_dens);
   abase = input->variable->compute_equal(ivar[1]);
   //printf("abase value is %f \n", abase);
-  dcvm = input->variable->compute_equal(ivar[2]);
-  dckp = input->variable->compute_equal(ivar[3]);
-  il232 = input->variable->compute_equal(ivar[4]);
+  il232 = input->variable->compute_equal(ivar[2]);
   printf("il232 value is %f \n", il232);
-  il2320 = input->variable->compute_equal(ivar[5]);
+  il2320 = input->variable->compute_equal(ivar[3]);
   printf("il2320 value is %f \n", il2320);
 
   bio = kinetics->bio;
@@ -162,7 +159,6 @@ void FixPGrowthTCELL::init() {
   nz = kinetics->nz;
 
   species = memory->create(species, atom->ntypes+1, "tcell:species");
-  growrate = memory->create(growrate, atom->ntypes+1, 2, kinetics->ngrids, "tcell:growrate");
 
   //Get computational domain size
   if (domain->triclinic == 0) {
@@ -228,11 +224,6 @@ void FixPGrowthTCELL::init_param() {
   }
 }
 
-/* ---------------------------------------------------------------------- */
-
-void FixPGrowthTCELL::grow_subgrid(int n) {
-  growrate = memory->create(growrate, atom->ntypes + 1, 2, n, "tcell:growrate");
-}
 
 /* ----------------------------------------------------------------------
  metabolism and atom update
@@ -289,10 +280,9 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 		rmass[i] = rmass[i] * density + growrate_tcell - abase * dt;
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * tc_dens + growrate_tcell * rmass[i] * dt;
-		printf("outer mass is %e\n", outer_mass[i]);
-
+		//printf("outer mass is %e\n", outer_mass[i]);
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / tc_dens), third);
-		printf("outer radius is %e\n", outer_radius[i]);
+		//printf("outer radius is %e\n", outer_radius[i]);
 
       }
     }

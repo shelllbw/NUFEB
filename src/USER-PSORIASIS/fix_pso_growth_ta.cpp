@@ -14,7 +14,7 @@
  See the README file in the top-level LAMMPS directory.
  ------------------------------------------------------------------------- */
 
-#include "fix_pso_growth_sc.h"
+#include "fix_pso_growth_ta.h"
 
 #include <math.h>
 #include <string.h>
@@ -50,14 +50,14 @@ using namespace std;
 
 /* ---------------------------------------------------------------------- */
 
-FixPGrowthSC::FixPGrowthSC(LAMMPS *lmp, int narg, char **arg) :
+FixPGrowthTA::FixPGrowthTA(LAMMPS *lmp, int narg, char **arg) :
 	Fix(lmp, narg, arg) {
   avec = (AtomVecBio *) atom->style_match("bio");
   if (!avec)
-	error->all(FLERR, "Fix psoriasis/growth/sc requires atom style bio");
+	error->all(FLERR, "Fix psoriasis/growth/ta requires atom style bio");
 
-  if (narg < 12)
-	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/sc command");
+  if (narg < 13)
+	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/ta command");
 
   varg = narg-3;
   var = new char*[varg];
@@ -73,21 +73,21 @@ FixPGrowthSC::FixPGrowthSC(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 12;
+  int iarg = 13;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
 	  if (external_gflag != 0 && external_gflag != 1)
-		error->all(FLERR, "Illegal fix psoriasis/growth/sc command: gflag");
+		error->all(FLERR, "Illegal fix psoriasis/growth/ta command: gflag");
 	  iarg += 2;
 	} else
-	  error->all(FLERR, "Illegal fix psoriasis/growth/sc command");
+	  error->all(FLERR, "Illegal fix psoriasis/growth/ta command");
   }
 }
 
 /* ---------------------------------------------------------------------- */
 
-FixPGrowthSC::~FixPGrowthSC() {
+FixPGrowthTA::~FixPGrowthTA() {
   int i;
   for (i = 0; i < varg; i++) {
 	delete[] var[i];
@@ -100,7 +100,7 @@ FixPGrowthSC::~FixPGrowthSC() {
 
 /* ---------------------------------------------------------------------- */
 
-int FixPGrowthSC::setmask() {
+int FixPGrowthTA::setmask() {
   int mask = 0;
   mask |= PRE_FORCE;
   return mask;
@@ -110,16 +110,16 @@ int FixPGrowthSC::setmask() {
  if need to restore per-atom quantities, create new fix STORE styles
  ------------------------------------------------------------------------- */
 
-void FixPGrowthSC::init() {
+void FixPGrowthTA::init() {
   if (!atom->radius_flag)
 	error->all(FLERR, "Fix requires atom attribute diameter");
 
   for (int n = 0; n < varg; n++) {
 	ivar[n] = input->variable->find(var[n]);
 	if (ivar[n] < 0)
-	  error->all(FLERR, "Variable name for fix psoriasis/growth/sc does not exist");
+	  error->all(FLERR, "Variable name for fix psoriasis/growth/ta does not exist");
 	if (!input->variable->equalstyle(ivar[n]))
-	  error->all(FLERR, "Variable for fix psoriasis/growth/sc is invalid style");
+	  error->all(FLERR, "Variable for fix psoriasis/growth/ta is invalid style");
   }
 
   // register fix kinetics with this class
@@ -136,14 +136,14 @@ void FixPGrowthSC::init() {
   if (kinetics == NULL)
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
-  sc_dens = input->variable->compute_equal(ivar[0]);
-  printf("sc_dens value is %f \n", sc_dens);
+  ta_dens = input->variable->compute_equal(ivar[0]);
+  printf("ta_dens value is %f \n", ta_dens);
   abase = input->variable->compute_equal(ivar[1]);
   printf("abase value is %f \n", abase);
-  sc2ta = input->variable->compute_equal(ivar[2]);
-  printf("sc2ta rate is %f \n", sc2ta);
-  sc2gf = input->variable->compute_equal(ivar[3]);
-  printf("sc2gf rate is %f \n", sc2gf);
+  ta2d = input->variable->compute_equal(ivar[2]);
+  printf("ta2d rate is %f \n", ta2d);
+  ta2gf = input->variable->compute_equal(ivar[3]);
+  printf("sc2gf rate is %f \n", ta2gf);
   gf20 = input->variable->compute_equal(ivar[4]);
   printf("gf20 rate is %f \n", gf20);
   il172 = input->variable->compute_equal(ivar[5]);
@@ -154,22 +154,24 @@ void FixPGrowthSC::init() {
   printf("tnfa2 value is %f \n", tnfa2);
   tnfa20 = input->variable->compute_equal(ivar[8]);
   printf("tnfa20 value is %f \n", tnfa20);
+  sc2ta = input->variable->compute_equal(ivar[9]);
+  printf("sc2ta rate is %f \n", sc2ta);
 
 
   bio = kinetics->bio;
 
   if (bio->nnu == 0)
-	error->all(FLERR, "fix_psoriasis/growth/sc requires Nutrients input");
+	error->all(FLERR, "fix_psoriasis/growth/ta requires Nutrients input");
   else if (bio->decay == NULL)
-	error->all(FLERR, "fix_psoriasis/growth/sc requires Decay input");
+	error->all(FLERR, "fix_psoriasis/growth/ta requires Decay input");
   else if (bio->mu == NULL)
-	error->all(FLERR, "fix_psoriasis/growth/sc requires Growth Rate input");
+	error->all(FLERR, "fix_psoriasis/growth/ta requires Growth Rate input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
   nz = kinetics->nz;
 
-  species = memory->create(species, atom->ntypes+1, "sc:species");
+  species = memory->create(species, atom->ntypes+1, "ta:species");
 
   //Get computational domain size
   if (domain->triclinic == 0) {
@@ -200,7 +202,7 @@ void FixPGrowthSC::init() {
 
 /* ---------------------------------------------------------------------- */
 
-void FixPGrowthSC::init_param() {
+void FixPGrowthTA::init_param() {
 	il17, gf, tnfa = 0;
 
   // initialize nutrient
@@ -208,17 +210,17 @@ void FixPGrowthSC::init_param() {
 	if (strcmp(bio->nuname[nu], "il17") == 0)
 	  il17 = nu;
 	if (strcmp(bio->nuname[nu], "tnfa") == 0)
-		  tnfa = nu;
+			  tnfa = nu;
 	if (strcmp(bio->nuname[nu], "gf") == 0)
 		  gf = nu;
   }
 
   if (il17 == 0)
-	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il17");
+	error->all(FLERR, "fix_psoriasis/growth/ta requires nutrient il17");
   if (tnfa == 0)
-  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
+    	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
   if (gf == 0)
-  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient gf");
+  	error->all(FLERR, "fix_psoriasis/growth/ta requires nutrient gf");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -239,9 +241,14 @@ void FixPGrowthSC::init_param() {
 	  else if (strcmp(name, "bm") == 0)
 	  	species[i] = 7;
 	  else
-		error->all(FLERR, "unknown species in fix_psoriasis/growth/sc");
+		error->all(FLERR, "unknown species in fix_psoriasis/growth/ta");
+
+	  if (species[i] == 2){
+		  printf("cell type %i detected \n", species[i]);
+	  }
   }
 }
+
 
 /* ----------------------------------------------------------------------
  metabolism and atom update
@@ -250,7 +257,7 @@ void FixPGrowthSC::init_param() {
 
  todo: place update biomass in here since we are calculating based on cell rather than grid
  ------------------------------------------------------------------------- */
-void FixPGrowthSC::growth(double dt, int gflag) {
+void FixPGrowthTA::growth(double dt, int gflag) {
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
   int *type = atom->type;
@@ -274,11 +281,13 @@ void FixPGrowthSC::growth(double dt, int gflag) {
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
   const double third = 1.0 / 3.0;
 
-  double growrate_sc = 0;
-  double growrate_ta = 0; //sc can divide to a TA cell
+  double growrate_d = 0;
+  double growrate_ta = 0;
 
 //  for(int i=0; i<atom->nlocal; i++)
 //      if (atom->type[i] == 1)  printf("ii=%i %i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
+
+
 
   for (int i = 0; i < nlocal; i++) {
 	if (mask[i] & groupbit) {
@@ -287,80 +296,37 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-      // Stem cell model
-      if (species[t] == 1) {
-		double R1 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]);
-		double R2 = decay[t];
-		double R3 = abase;
-		double R4 = sc2ta * (nus[il17][grid] + nus[tnfa][grid]);
+      // ta cell model
+      if (species[t] == 2) {
+    	  //printf("cell type is %i\n", species[t]);
+    	  //TODO check if it makes sense to include sc2ta in here
+		double R5 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]) + sc2ta * (nus[il17][grid] + nus[tnfa][grid]);
+		double R6 = decay[t];
+		double R7 = abase;
+		double R8 = ta2d *(nus[il17][grid] + nus[tnfa][grid]);
 
-		//nutrient uptake for sc is affected by gf
-		//need to cal density
-		nur[gf][grid] += (sc2gf * (rmass[i]/grid_vol)) - (gf20 * nus[gf][grid]);
+		nur[gf][grid] += (ta2gf * (rmass[i]/grid_vol)) - (gf20 * nus[gf][grid]);
 
-        growrate_sc = R1 - R2 - R3;
-        growrate_ta = R4; //sc can divide to a TA cell
+        growrate_ta = R5 - R6 - R7;
+        growrate_d = R8; //sc can divide to a TA cell
 
         if (!gflag || !external_gflag){
         	continue;
         }
 
-        //printf("rmass BEFORE is now %e\n", rmass[i]);
-		rmass[i] = rmass[i] + (growrate_sc - growrate_ta) * rmass[i] * dt;
-		//printf("rmass is now %e\n", rmass[i]);
+        printf("rmass ta cell %i BEFORE is now %e\n", i, rmass[i]);
+		rmass[i] = rmass[i] + (growrate_ta - growrate_d) * rmass[i] * dt;
+		printf("rmass ta cell %i is now %e\n", i, rmass[i]);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		//printf("radius  is now %e\n", radius[i]);
+		printf("radius ta cell %i is now %e\n", i, radius[i]);
         //outer mass & radius is for sc to ta
-		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
-		//printf("outer mass is %e\n", outer_mass[i]);
-		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
-		//printf("outer radius is %e\n", outer_radius[i]);
+		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * ta_dens + growrate_d * rmass[i] * dt;
+		printf("outer mass ta cell %i is %e\n", i, outer_mass[i]);
+		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / ta_dens), third);
+		printf("outer radius ta cell %i is %e\n", i, outer_radius[i]);
       }
     }
   }
-}
-
-
-/* ----------------------------------------------------------------------
- DINIKA
- calculate the gird concentration for each type of cytokine
-
- for now just use il17 in system
- ------------------------------------------------------------------------- */
-double FixPGrowthSC::calculate_gridmass(int grid_id){ // to edit
-  double **nus = kinetics->nus;
-  double il17_conc = 0;
-
-  il17_conc = nus[il17][grid_id] * vol;
- //printf("cal gridmass %i is %f\n", grid_id, il17_conc);
-
-  return il17_conc;
-}
-
-/* ----------------------------------------------------------------------
- DINIKA
- calculate the number of cells in each grid
-
- based on the grid id and the targeted cell type
- ------------------------------------------------------------------------- */
-int FixPGrowthSC::calculate_gridcell(int grid_id, int t){
-	int cell_count = 0;
-	int *mask = atom->mask;
-	int nlocal = atom->nlocal;
-	int *type = atom->type;
-
-	for (int i = 0; i < nlocal; i++) {
-		if (mask[i] & groupbit) {
-			int pos = kinetics->position(i);
-
-			//if it is within the same grid and is the targeted cell type, add 1
-			if (pos == grid_id && t == type[i]){
-				cell_count += 1;
-			}
-		}
-	}
-//	printf("type: %i cell count in grid %d is %d \n", t, grid_id, cell_count);
-	return cell_count;
 }
 
 /* ----------------------------------------------------------------------
@@ -368,7 +334,7 @@ int FixPGrowthSC::calculate_gridcell(int grid_id, int t){
 
  *note: each grid will have different number of SC and IL
  ------------------------------------------------------------------------- */
-// void FixPGrowthSC::update_cellmass(int grid_id, int t){
+// void FixPGrowthTA::update_cellmass(int grid_id, int t){
 //	 int *mask = atom->mask;
 //	 int nlocal = atom->nlocal;
 //	 int *type = atom->type;
