@@ -187,19 +187,30 @@ void FixPDivideStem::init() {
 
   for (int i = 0; i < nlocal; i++) {
 	    if (atom->mask[i] & groupbit) {
+	    	//printf("type %i atom mask is %i \n", atom->type[i], atom->mask[i]);
+	  	  	//printf("type %i groupbit is %i \n", atom->type[i], groupbit);
 	    	nstem++;
+	    	//printf("nstem value is %i\n", nstem);
 	    }
   }
 
   for (int i = 0; i < nlocal; i++) {
     //this groupbit will allow the input script to set each cell type to divide
     // i.e. if set fix d1 STEM 50 .. , fix d1 TA ... etc
+	  //printf("type %i atom mask is %i \n", atom->type[i], atom->mask[i]);
+	  //printf("type %i groupbit is %i \n", atom->type[i], groupbit);
     if (atom->mask[i] & groupbit) {
+//  	  printf("type %i atom mask is %i \n", atom->type[i], atom->mask[i]);
+//  	  printf("type %i groupbit is %i \n", atom->type[i], groupbit);
+//  	  printf("my pi is %f\n", MY_PI);
       double density = atom->rmass[i] / (4.0 * MY_PI / 3.0 * atom->radius[i] * atom->radius[i] * atom->radius[i]);
+      //printf("density is %f\n",density);
       double newX, newY, newZ;
       // get type
       type_id = atom->type[i];
+      //printf("type_id is %i\n", type_id);
       type_name = bio->tname[type_id];
+      //printf("type_name is %s\n", type_name);
 
       //random generator to set probabilities of division
       std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -209,6 +220,7 @@ void FixPDivideStem::init() {
       for (int i = 0; i < nlocal; i++){
     	  rand = distribution(gen);
       }
+      //printf("random prob is %f\n", rand);
 
       int ta_id = bio->find_typeid("ta");
      // printf("ta id is %i \n", ta_id);
@@ -238,12 +250,18 @@ void FixPDivideStem::init() {
 //		  parentMask = atom->mask[i];
 //		  childMask = atom->mask[i];
 //	  }
-     if (rand < asym && atom->rmass[i] * 2 >= div_dia){
+     if (rand <= asym && atom->rmass[i] * 2 >= div_dia){
     	 parentType = stem_id;
     	 childType = ta_id;
     	 parentMask = atom->mask[i];
     	 childMask = ta_mask;
+     } else {
+    	 parentType = stem_id;
+		 childType = parentType;
+		 parentMask = atom->mask[i];
+		 childMask = parentMask;
      }
+
 
      double splitF = 0.4 + (random->uniform() *0.2);
 	 double parentMass = atom->rmass[i] * splitF;

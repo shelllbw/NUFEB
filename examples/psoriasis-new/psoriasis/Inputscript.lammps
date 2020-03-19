@@ -33,14 +33,14 @@ set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 2 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 10 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
 create_atoms 4 random 5 64564 reg2
-create_atoms 2 random 1 64564 reg3
-create_atoms 3 random 1 64564 reg3
+#create_atoms 2 random 1 64564 reg3
+#create_atoms 3 random 1 64564 reg3
 
 neighbor	5e-7 bin
 
@@ -91,7 +91,7 @@ set type 6 mass 7.853981e-17
 
 
 #variables used in fix division
-variable divDia equal 1.36e-6
+variable divDia equal 2.0e-6
 variable divisionCounter equal 4
 variable selfpro equal 0.1
 variable asym equal 0.8
@@ -134,13 +134,13 @@ variable il2320 equal 0.0001
 ##############Define IBm Commands##############
 
 fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 50
-#fix d1 STEM psoriasis/divide_stem 1 v_divDia v_selfpro v_asym v_sym 64564 demflag 0
-#fix d2 TA psoriasis/divide_ta 6 v_prob1 v_prob2 v_prob3 79966 demflag 0
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20
-fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320
-fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_sc2ta
-fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20
+#fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320
+#fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_sc2ta
+#fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20
+fix d1 STEM psoriasis/divide_stem 1 v_divDia v_selfpro v_asym v_sym 64564 demflag 0
+#fix d2 TA psoriasis/divide_ta 6 v_prob1 v_prob2 v_prob3 79966 demflag 0
 
 ##############Define IBm Computes##############
 
@@ -158,7 +158,7 @@ thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 10 pre no post no every 1 &
+run 5 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
 "timestep 1e-3" &
 "run 1000 pre no post no" &
