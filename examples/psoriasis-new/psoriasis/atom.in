@@ -2,7 +2,7 @@
 
        0 atoms
        7 atom types
-       4 nutrients
+       5 nutrients
 
    0.000000e-04   1e-04  xlo xhi
    0.000000e-04   0.2e-04  ylo yhi
@@ -17,6 +17,7 @@
      2 tnfa l 0 0 0 0 0 0 0
      3 il23 l 0 0 0 0 0 0 0
      4 gf l 0 0 0 0 0 0 0
+     5 ca l 0.002 0.002 0.002 0.002 0.002 0.002 0
 
  Type Name
 
@@ -34,6 +35,7 @@
      tnfa 1.6e-9
      il23 1.6e-9
      gf 1.6e-9
+     ca 1.6e-9
 
  Division Counter
 
@@ -47,7 +49,7 @@
 
  Growth Rate
 
-    stem 2.08451537e-8
+    stem 2.04108796e-8
     ta 2.03263889e-8
     diff 0
     tcell 0.00063657407
@@ -57,7 +59,7 @@
 
  Decay
 
-    stem 2.0989583e-11
+    stem 2.0989583e-10
     ta 4.3195602e-11
     diff 5.8449074e-12
     tcell 0.00001747685
