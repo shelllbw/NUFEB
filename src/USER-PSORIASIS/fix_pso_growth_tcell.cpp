@@ -141,9 +141,9 @@ void FixPGrowthTCELL::init() {
   abase = input->variable->compute_equal(ivar[1]);
   //printf("abase value is %f \n", abase);
   il232 = input->variable->compute_equal(ivar[2]);
-  printf("il232 value is %f \n", il232);
+  //printf("il232 value is %f \n", il232);
   il2320 = input->variable->compute_equal(ivar[3]);
-  printf("il2320 value is %f \n", il2320);
+  //printf("il2320 value is %f \n", il2320);
 
   bio = kinetics->bio;
 
@@ -278,10 +278,14 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
         }
 
 		rmass[i] = rmass[i] * density + growrate_tcell - abase * dt;
-		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * tc_dens + growrate_tcell * rmass[i] * dt;
+        //rmass[i] = rmass[i];
+		radius[i] = radius[i];
+		//radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+		outer_mass[i] = rmass[i];
+		//outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * tc_dens + growrate_tcell * rmass[i] * dt;
 		//printf("outer mass is %e\n", outer_mass[i]);
-		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / tc_dens), third);
+		//outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / tc_dens), third);
+		outer_radius[i] = radius[i];
 		//printf("outer radius is %e\n", outer_radius[i]);
 
       }

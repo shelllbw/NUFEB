@@ -57,7 +57,7 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 8) // dinika mod - from 7 to 8
+  if (narg < 8)
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
@@ -157,9 +157,9 @@ void FixPDivideTa::init() {
       error->all(FLERR, "Variable for fix divide is invalid style");
   }
 
-  selfpro = input->variable->compute_equal(ivar[0]);
+  div_dia = input->variable->compute_equal(ivar[0]);
   asym = input->variable->compute_equal(ivar[1]);
-  sym = input->variable->compute_equal(ivar[2]);
+  max_division_counter = input->variable->compute_equal(ivar[2]);
 
   //dinika's edits - adding division counter
   int nlocal = atom->nlocal;
@@ -190,9 +190,6 @@ void FixPDivideTa::post_integrate() {
   int nlocal = atom->nlocal;
 
   for (int i = 0; i < nlocal; i++) {
-    if (atom->mask[i] == avec->mask_dead)
-      continue;
-
     //this groupbit will allow the input script to set each cell type to divide
     // i.e. if set fix d1 STEM 50 .. , fix d1 TA ... etc
     if (atom->mask[i] & groupbit) {
@@ -204,8 +201,10 @@ void FixPDivideTa::post_integrate() {
       type_name = bio->tname[type_id];
       //set differentiated cell type
       int diff_id = bio->find_typeid("diff");
+      int ta_id = bio->find_typeid("ta");
 
       int parentDivisionCount = avec->d_counter[i];
+      //printf("parent division counter is %i\n", parentDivisionCount);
       int childDivisionCount = 0;
 
       //random generator to set probabilities of division
@@ -217,31 +216,29 @@ void FixPDivideTa::post_integrate() {
     	  rand = distribution(gen);
       }
 
-      //set here first as the max division
-      division_counter = 4;
-
-	  if (parentDivisionCount <= division_counter && selfpro){
-		  parentType = type_id;
-		  childType = type_id;
-		  parentMask = atom->mask[i];
-		  childMask = atom->mask[i];
-		  parentDivisionCount = avec->d_counter[i] + 1;
-		  childDivisionCount = 0;
-	  } else if (parentDivisionCount <= division_counter && asym){
-		  parentType = type_id;
-		  childType = diff_id;
-		  parentMask = atom->mask[i];
-		  childMask = diff_mask;
-		  parentDivisionCount = avec->d_counter[i] + 1;
-		  childDivisionCount = 0;
-	  } else if (parentDivisionCount > division_counter){
-		  parentType = diff_id;
-		  childType = diff_id;
-		  parentMask = diff_mask;
-		  childMask = diff_mask;
-		  parentDivisionCount = avec->d_counter[i] + 1;
-		  childDivisionCount = 0;
-	  }
+      if (atom->rmass[i] * 2 >= div_dia ){
+    	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
+    		  parentType = diff_id;
+    		  childType = diff_id;
+    		  parentMask = diff_mask;
+    		  childMask = diff_mask;
+    		  parentDivisionCount = avec->d_counter[i] + 1;
+    		  childDivisionCount = 0;
+    	  } else if (parentDivisionCount < max_division_counter && rand < asym){ //asymmetric division
+    		  parentType = type_id;
+    		  childType = diff_id;
+    		  parentMask = atom->mask[i];
+    		  childMask = diff_mask;
+    		  parentDivisionCount = avec->d_counter[i] + 1;
+    		  childDivisionCount = 0;
+    	  } else { //self proliferate
+    		  parentType = type_id;
+			  childType = type_id;
+			  parentMask = atom->mask[i];
+			  childMask = atom->mask[i];
+			  parentDivisionCount = avec->d_counter[i] + 1;
+			  childDivisionCount = 0;
+    	  }
 
 		double parentMass = atom->rmass[i];
 		double childMass = atom->rmass[i];
@@ -359,6 +356,7 @@ void FixPDivideTa::post_integrate() {
 
         delete[] coord;
       }
+    }
   }
 
   bigint nblocal = atom->nlocal;

@@ -45,7 +45,7 @@ class FixPDivideTa : public Fix {
   int demflag;
   tagint maxtag_all;
   double xlo,xhi,ylo,yhi,zlo,zhi;
-  double eps_density, div_dia;
+  double div_dia;
   int diff_mask;
 
   /*
@@ -54,12 +54,11 @@ class FixPDivideTa : public Fix {
    * cell type name and id
    * boolean to check if the cell can divide
    * */
-  int type_id;
+  int type_id, max_division_counter;
   char* type_name;
-  double division_counter;
   int parentType, childType;
   int parentMask, childMask;
-  double selfpro, asym, sym;
+  double asym;
 
   class RanPark *random;
   class AtomVecBio *avec;

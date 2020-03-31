@@ -56,11 +56,10 @@ class FixPDivideStem : public Fix {
    * */
   int type_id;
   char* type_name;
-  bool can_divide;
   int parentType, childType;
   int ta_mask;
   int parentMask, childMask;
-  double selfpro, asym, sym;
+  double asym;
 
   class RanPark *random;
   class AtomVecBio *avec;

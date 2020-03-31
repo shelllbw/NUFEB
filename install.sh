@@ -21,12 +21,11 @@ do
        cp Makefile.lammps_vtk8.0 Makefile.lammps
     elif [ $var == "--enable-hdf5" ]; then
        cp Makefile.lammps_hdf5 Makefile.lammps
-    elif [ $var == "--enable-essential" ]; then
-       cp Makefile.lammps_essential Makefile.lammps
     elif [ $var == "--enable-vtk-hdf5" ]; then
        cp Makefile.lammps_hdf5_vtk8.0 Makefile.lammps
        cd ../vtk
        cp Makefile.lammps_vtk8.0 Makefile.lammps
+    elif [ $var == "--serial" ]; then continue
     else
        if [ $var != "--serial" ]; then
           echo "Unknown parameter"
@@ -49,15 +48,30 @@ do
     if [ $var == "--enable-vtk" ] || [ $var == "--enable-vtk-hdf5" ]; then
 	make yes-user-vtk
     fi
+done
+
+echo "Building NUFEB.."
+for var in "$@"
+do 
     if [ $var == "--serial" ]; then
 	cd STUBS
         make
         cd ..
         make -j4 serial
+<<<<<<< HEAD
     else 
         make -j4 mpi
     fi
 done
 
+=======
+        exit 1
+   fi
+done
+
+make -j4 mpi
+exit 1
+
+>>>>>>> master
 #echo "Writing path to .bashrc"
 #echo "export PATH=\$PATH:$currentDir/lammps/src/" >> ~/.bashrc

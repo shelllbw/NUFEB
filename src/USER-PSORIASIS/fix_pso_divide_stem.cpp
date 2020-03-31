@@ -58,23 +58,23 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 9)
+  if (narg < 7)
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[4];
-  ivar = new int[4];
+  var = new char*[2];
+  ivar = new int[2];
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 2; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[8]);
+  seed = force->inumeric(FLERR, arg[6]);
 
   // read optional param
   demflag = 0;
@@ -82,7 +82,7 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   //dinika - set ta_mask to -1
   ta_mask = -1;
 
-  int iarg = 9;
+  int iarg = 7;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -127,7 +127,7 @@ FixPDivideStem::~FixPDivideStem() {
   delete random;
 
   int i;
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < 2; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -150,7 +150,7 @@ void FixPDivideStem::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 4; n++) {
+  for (int n = 0; n < 2; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -159,9 +159,7 @@ void FixPDivideStem::init() {
   }
 
   div_dia = input->variable->compute_equal(ivar[0]);
-  selfpro = input->variable->compute_equal(ivar[1]);
-  asym = input->variable->compute_equal(ivar[2]);
-  sym = input->variable->compute_equal(ivar[3]);
+  asym = input->variable->compute_equal(ivar[1]);
 
   //Dinika's edits
   //modify atom mask
@@ -184,6 +182,7 @@ void FixPDivideStem::init() {
 
   int nlocal = atom->nlocal;
   int nstem = 0;
+  int nbm = 9;
 
   for (int i = 0; i < nlocal; i++) {
 	    if (atom->mask[i] & groupbit) {
@@ -191,26 +190,21 @@ void FixPDivideStem::init() {
 	  	  	//printf("type %i groupbit is %i \n", atom->type[i], groupbit);
 	    	nstem++;
 	    	//printf("nstem value is %i\n", nstem);
+	    } else if (atom->type[i] == 7) {
+	    	//printf("atom type is %i\n", atom->type[i]);
+	    	nbm++;
 	    }
   }
 
   for (int i = 0; i < nlocal; i++) {
     //this groupbit will allow the input script to set each cell type to divide
     // i.e. if set fix d1 STEM 50 .. , fix d1 TA ... etc
-	  //printf("type %i atom mask is %i \n", atom->type[i], atom->mask[i]);
-	  //printf("type %i groupbit is %i \n", atom->type[i], groupbit);
     if (atom->mask[i] & groupbit) {
-//  	  printf("type %i atom mask is %i \n", atom->type[i], atom->mask[i]);
-//  	  printf("type %i groupbit is %i \n", atom->type[i], groupbit);
-//  	  printf("my pi is %f\n", MY_PI);
       double density = atom->rmass[i] / (4.0 * MY_PI / 3.0 * atom->radius[i] * atom->radius[i] * atom->radius[i]);
-      //printf("density is %f\n",density);
       double newX, newY, newZ;
       // get type
       type_id = atom->type[i];
-      //printf("type_id is %i\n", type_id);
       type_name = bio->tname[type_id];
-      //printf("type_name is %s\n", type_name);
 
       //random generator to set probabilities of division
       std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -220,47 +214,34 @@ void FixPDivideStem::init() {
       for (int i = 0; i < nlocal; i++){
     	  rand = distribution(gen);
       }
-      //printf("random prob is %f\n", rand);
 
       int ta_id = bio->find_typeid("ta");
-     // printf("ta id is %i \n", ta_id);
       int stem_id = bio->find_typeid("stem");
       //double sctaMass = avec->cell_mass[i];
 
-//      if (nstem > 50 && nstem < 100 && rand < sym){
-//		//set both parent and child type to be the same
-//		 parentType = ta_id;
-//		 childType = ta_id;
-//		 parentMask = ta_mask;
-//		 childMask = ta_mask;
-//	   }else if (nstem < 100 && rand < asym){
-//		//set parent as sc and child as ta
-//		parentType = stem_id;
-//		childType = ta_id;
-//		parentMask = atom->mask[i];
-//		childMask = ta_mask;
-//	  } else if (nstem < 50 && rand < selfpro){
-//		  parentType = stem_id;
-//		  childType = stem_id;
-//		  parentMask = atom->mask[i];
-//		  childMask = atom->mask[i];
-//	  } else {
-//		  parentType = stem_id;
-//		  childType = stem_id;
-//		  parentMask = atom->mask[i];
-//		  childMask = atom->mask[i];
-//	  }
-     if (rand <= asym && atom->rmass[i] * 2 >= div_dia){
-    	 parentType = stem_id;
-    	 childType = ta_id;
-    	 parentMask = atom->mask[i];
-    	 childMask = ta_mask;
-     } else {
+      //stem cell takes up approximately 5% of the population, for now, 20% of BM as max cap
+      const int max_cap =  nbm * 0.2;
+      //printf("max cap is %i\n", max_cap);
+
+//     if (rand < asym && atom->rmass[i] * 2 >= div_dia){
+   if (atom->rmass[i] * 2 >= div_dia ){
+	  // printf("nstem is %i and max cap is %i\n", nstem, max_cap);
+	   if (nstem < max_cap){
     	 parentType = stem_id;
 		 childType = parentType;
 		 parentMask = atom->mask[i];
 		 childMask = parentMask;
-     }
+   	   } else if (nstem >= max_cap && rand < asym) {
+      	 parentType = stem_id;
+      	 childType = ta_id;
+      	 parentMask = atom->mask[i];
+      	 childMask = ta_mask;
+   	   } else {
+		 parentType = ta_id;
+		 childType = ta_id;
+		 parentMask = ta_mask;
+		 childMask = ta_mask;
+   	   }
 
 
      double splitF = 0.4 + (random->uniform() *0.2);
@@ -376,6 +357,7 @@ void FixPDivideStem::init() {
 	 modify->create_attribute(n);
 
 	 delete[] coord;
+      }
     }
   }
 

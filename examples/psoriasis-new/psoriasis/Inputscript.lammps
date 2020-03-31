@@ -13,7 +13,7 @@ read_data_bio atom.in
 
 variable x equal 100
 variable y equal 20
-variable z equal 30
+variable z equal 10
 
 lattice sc 1e-6 origin 0.5 0.5 0.5
 
@@ -33,13 +33,13 @@ set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 10 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 5 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
 create_atoms 4 random 10 64564 reg2
-create_atoms 2 random 5 64564 reg3
+#create_atoms 2 random 5 64564 reg3
 #create_atoms 3 random 1 64564 reg3
 
 neighbor	5e-7 bin
@@ -75,17 +75,28 @@ set type 6 mass 7.853981e-17
 
 ##############Define DEM Variables&Commands##############
 
-#fix nomove BM move linear 0.0 0.0 0.0 units box
-#velocity BM set 0.0 0.0 0.0 units box
-#fix sf BM setforce 0.0 0.0 0.0
 
-#pair_style  gran/hooke/history 1.e-4 NULL 1.e-5 NULL 0.0 1
-#pair_coeff  * *
+#fix sf BM setforce 0.0 0.0 0.0 region reg
 
-#timestep 1e-3
+pair_style  gran/hooke/history 1.e-4 NULL 1.e-5 NULL 0.0 1
+pair_coeff  * *
 
-#fix 1 all nve/limit 1e-8
-#fix fv all viscous 1e-5
+timestep 1e-3
+
+fix 1 all nve/limit 1e-8
+fix fv all viscous 1e-5
+
+fix nomove BM move linear 0.0 0.0 0.0 units box
+velocity BM set 0.0 0.0 0.0 units box
+
+fix nomovet TCELL move linear 0.0 0.0 0.0 units box
+velocity TCELL set 0.0 0.0 0.0 units box
+
+fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  1e-4
+
+variable kanc equal 50
+
+fix zwa all walladh v_kanc zplane  0.0  1e-04
 
 ##############Define IBm Variables##############
 
@@ -135,12 +146,12 @@ variable il2320 equal 0.0001
 
 fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
-fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_ca20
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320
-fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_sc2ta v_ca20
-#fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20
+fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_ca20
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym 64564 demflag 0
-fix d2 TA psoriasis/divide_ta 6 v_divDia v_asym v_maxDivCount 64564 demflag 0
+#fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_sc2ta v_ca20
+#fix d2 TA psoriasis/divide_ta 6 v_divDia v_asym v_maxDivCount 64564 demflag 0
+#fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20
 
 ##############Define IBm Computes##############
 

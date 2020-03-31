@@ -56,7 +56,7 @@ FixPGrowthSC::FixPGrowthSC(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/sc requires atom style bio");
 
-  if (narg < 12)
+  if (narg < 13)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/sc command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthSC::FixPGrowthSC(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 12;
+  int iarg = 13;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -137,24 +137,25 @@ void FixPGrowthSC::init() {
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
   sc_dens = input->variable->compute_equal(ivar[0]);
-  printf("sc_dens value is %f \n", sc_dens);
+ // printf("sc_dens value is %f \n", sc_dens);
   abase = input->variable->compute_equal(ivar[1]);
-  printf("abase value is %f \n", abase);
+  //printf("abase value is %f \n", abase);
   sc2ta = input->variable->compute_equal(ivar[2]);
-  printf("sc2ta rate is %f \n", sc2ta);
+  //printf("sc2ta rate is %f \n", sc2ta);
   sc2gf = input->variable->compute_equal(ivar[3]);
-  printf("sc2gf rate is %f \n", sc2gf);
+  //printf("sc2gf rate is %f \n", sc2gf);
   gf20 = input->variable->compute_equal(ivar[4]);
-  printf("gf20 rate is %f \n", gf20);
+  //printf("gf20 rate is %f \n", gf20);
   il172 = input->variable->compute_equal(ivar[5]);
-  printf("il172 value is %f \n", il172);
+  //printf("il172 value is %f \n", il172);
   il1720 = input->variable->compute_equal(ivar[6]);
-  printf("il1720 value is %f \n", il1720);
+  //printf("il1720 value is %f \n", il1720);
   tnfa2 = input->variable->compute_equal(ivar[7]);
-  printf("tnfa2 value is %f \n", tnfa2);
+ // printf("tnfa2 value is %f \n", tnfa2);
   tnfa20 = input->variable->compute_equal(ivar[8]);
-  printf("tnfa20 value is %f \n", tnfa20);
-
+  //printf("tnfa20 value is %f \n", tnfa20);
+  ca20 = input->variable->compute_equal(ivar[9]);
+  //printf("ca20 value is %f \n", ca20);
 
   bio = kinetics->bio;
 
@@ -201,7 +202,7 @@ void FixPGrowthSC::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthSC::init_param() {
-	il17, gf, tnfa = 0;
+	il17, gf, tnfa, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
@@ -211,6 +212,8 @@ void FixPGrowthSC::init_param() {
 		  tnfa = nu;
 	if (strcmp(bio->nuname[nu], "gf") == 0)
 		  gf = nu;
+	if (strcmp(bio->nuname[nu], "ca") == 0)
+			  ca = nu;
   }
 
   if (il17 == 0)
@@ -219,6 +222,9 @@ void FixPGrowthSC::init_param() {
   	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
   if (gf == 0)
   	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient gf");
+  if (ca == 0)
+   	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
+
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -278,7 +284,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
   double growrate_ta = 0; //sc can divide to a TA cell
 
 //  for(int i=0; i<atom->nlocal; i++)
-//      if (atom->type[i] == 1)  printf("ii=%i %i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
+//      if (atom->type[i] == 1)  printf("i=%i type=%i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
 
   for (int i = 0; i < nlocal; i++) {
 	if (mask[i] & groupbit) {
@@ -297,6 +303,8 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//nutrient uptake for sc is affected by gf
 		//need to cal density
 		nur[gf][grid] += (sc2gf * (rmass[i]/grid_vol)) - (gf20 * nus[gf][grid]);
+		nur[ca][grid] += -(ca20 * (rmass[i]/grid_vol));
+		//nur[ca][grid] += -(ca20 * nus[ca][grid]);
 
         growrate_sc = R1 - R2 - R3;
         growrate_ta = R4; //sc can divide to a TA cell
@@ -306,7 +314,8 @@ void FixPGrowthSC::growth(double dt, int gflag) {
         }
 
         //printf("rmass BEFORE is now %e\n", rmass[i]);
-		rmass[i] = rmass[i] + (growrate_sc - growrate_ta) * rmass[i] * dt;
+		//rmass[i] = rmass[i] + (growrate_sc - growrate_ta) * rmass[i] * dt;
+        rmass[i] = rmass[i] + rmass[i] * (1 + (growrate_sc - growrate_ta) * dt);
 		//printf("rmass is now %e\n", rmass[i]);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
 		//printf("radius  is now %e\n", radius[i]);
