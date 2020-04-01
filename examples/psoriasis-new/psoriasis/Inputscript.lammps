@@ -78,7 +78,7 @@ set type 6 mass 7.853981e-17
 
 #fix sf BM setforce 0.0 0.0 0.0 region reg
 
-pair_style  gran/hooke/history 1.e-4 NULL 1.e-5 NULL 0.0 1
+pair_style  gran/hooke/history 1 NULL 1.e-5 NULL 0.0 1
 pair_coeff  * *
 
 timestep 1e-3
