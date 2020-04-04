@@ -299,16 +299,17 @@ void FixPGrowthTA::growth(double dt, int gflag) {
       if (species[t] == 2) {
     	  //printf("cell type is %i\n", species[t]);
     	  //TODO check if it makes sense to include sc2ta in here
-		double R5 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]) + sc2ta * (nus[il17][grid] + nus[tnfa][grid]);
-		double R6 = decay[t];
-		double R7 = abase;
-		double R8 = ta2d *(nus[il17][grid] + nus[tnfa][grid]);
+		double R6 = mu[t] * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]) + sc2ta * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
+		double R7 = decay[t];
+		double R8 = abase;
+		double R9 = ta2d *(nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
+		//double R10 = mu[t] * nus[ca][grid];
 
 		nur[gf][grid] += (ta2gf * (rmass[i]/grid_vol)) - (gf20 * nus[gf][grid]);
-		nur[ca][grid] += -(ca20 * (rmass[i]/grid_vol));
+		nur[ca][grid] += -((rmass[i]/grid_vol) * ca20);
 
-        growrate_ta = R5 - R6 - R7;
-        growrate_d = R8; //sc can divide to a TA cell
+        growrate_ta = R6 - R7 - R8;
+        growrate_d = R9; //sc can divide to a TA cell
 
         if (!gflag || !external_gflag){
         	continue;

@@ -295,16 +295,17 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
       // Stem cell model
       if (species[t] == 1) {
-		double R1 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]);
+		double R1 = mu[t] * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
 		double R2 = decay[t];
 		double R3 = abase;
 		double R4 = sc2ta * (nus[il17][grid] + nus[tnfa][grid]);
+		//double R5 = mu[t] * nus[ca][grid];
 
 		//nutrient uptake for sc is affected by gf
 		//need to cal density
 		nur[gf][grid] += (sc2gf * (rmass[i]/grid_vol)) - (gf20 * nus[gf][grid]);
-		nur[ca][grid] += -(ca20 * (rmass[i]/grid_vol));
-		//nur[ca][grid] += -(ca20 * nus[ca][grid]);
+		//nur[ca][grid] += -(ca20 * (rmass[i]/grid_vol));
+		nur[ca][grid] += -((rmass[i]/grid_vol) * ca20);
 
         growrate_sc = R1 - R2 - R3;
         growrate_ta = R4; //sc can divide to a TA cell

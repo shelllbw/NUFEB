@@ -265,8 +265,8 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 
       // t cell model
       if (species[t] == 4) {
-    	double R11 = mu[i] * nus[il23][grid];
-    	double R12 = decay[i];
+    	double R11 = mu[t] * nus[il23][grid];
+    	double R12 = decay[t];
     	double R13 = abase;
 
     	nur[il23][grid] += (il232 * (rmass[i]/grid_vol)) - (il2320 * nus[il23][grid]);
