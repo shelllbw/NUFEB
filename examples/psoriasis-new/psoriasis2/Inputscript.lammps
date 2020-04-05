@@ -15,30 +15,30 @@ variable x equal 100
 variable y equal 20
 variable z equal 10
 
-lattice sc 1e-6 origin 0.5 0.5 0.5
+#lattice sc 1e-6 origin 0.5 0.5 0.5
 
-region reg block 0 $x 0 $y 0 $z
-region reg2 block 0 100 0 20 0 1
-region reg3 block 0 $x 0 $y 5 $z
+#region reg block 0 $x 0 $y 0 $z
+#region reg2 block 0 100 0 20 0 1
+#region reg3 block 0 $x 0 $y 5 $z
 
-variable  xx internal 0.0
-variable  yy internal 0.0
-variable  zz internal 0.0
-variable  v equal "(0.12*v_z*zlat * cos(v_xx/xlat * 2.0*PI*PI/v_x) * cos(v_yy/ylat * 0.75*PI*PI/v_y) + 0.9*v_z*zlat - v_zz  ) > 0.0"
+#variable  xx internal 0.0
+#variable  yy internal 0.0
+#variable  zz internal 0.0
+#variable  v equal "(0.12*v_z*zlat * cos(v_xx/xlat * 2.0*PI*PI/v_x) * cos(v_yy/ylat * 0.75*PI*PI/v_y) + 0.9*v_z*zlat - v_zz  ) > 0.0"
 
 group STEM type 1
 
-create_atoms 7 region reg var v set x xx set y yy set z zz
+#create_atoms 7 region reg var v set x xx set y yy set z zz
 set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 5 64564
+#create_pso_atoms 1 stem 1e-8 150 1.0e-6 5 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
-create_atoms 4 random 10 64564 reg2
+#create_atoms 4 random 10 64564 reg2
 #create_atoms 2 random 5 64564 reg3
 #create_atoms 3 random 1 64564 reg3
 
@@ -78,10 +78,10 @@ set type 6 mass 7.853981e-17
 
 #fix sf BM setforce 0.0 0.0 0.0 region reg
 
-pair_style  gran/hooke/history 0.01 NULL 0.4 NULL 0.0 1
+pair_style  gran/hooke/history 1e-4 NULL 1e-5 NULL 0.0 1
 pair_coeff  * *
 
-timestep 1e-3
+timestep 10
 
 fix 1 all nve/limit 1e-8
 fix fv all viscous 1e-5
@@ -102,7 +102,7 @@ variable kanc equal 50
 
 
 #variables used in fix division
-variable divDia equal 1.5707962e-16
+variable divDia equal 1.36e-6
 variable divisionCounter equal 4
 variable asym equal 0.8
 variable maxDivCount equal 4
@@ -144,13 +144,13 @@ variable il2320 equal 0.0001
 
 ##############Define IBm Commands##############
 
-fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
+fix k1 all kinetics 100 20 4 20 v_diffT v_layer demflag 0 niter 500
 #fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320
-#fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
+fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_ca20
-#fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym 64564 demflag 0
+fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym 64564 demflag 0
 #fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_sc2ta v_ca20
-#fix d2 TA psoriasis/divide_ta 6 v_divDia v_asym v_maxDivCount 64564 demflag 0
+#fix d2 TA psoriasis/divide_ta 100 v_divDia v_asym v_maxDivCount 64564 demflag 0
 #fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20
 
 ##############Define IBm Computes##############
@@ -161,17 +161,12 @@ compute myMass all biomass
 ##############Simulation Output##############
 
 # Use atom_# instead of atom%_#
-dump		du1 all custom/vtk 1001 atom_*.vtu id type diameter x y z
-dump		du2 all grid 1001 grid_%_*.vti con
-thermo_style    custom step cpu atoms c_myNtypes[*]
-thermo		1001
+dump		du1 all custom/vtk 1000 atom_*.vtu id type diameter x y z
+dump		du2 all grid 1000 grid_%_*.vti con
+thermo_style    custom step cpu atoms c_myMass[*]
+thermo		100
 thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 20 pre no post no every 1 &
-"fix_modify k1 demflag 1" &
-"timestep 1e-3" &
-"run 1000 pre no post no" &
-"timestep 36000"  &
-"fix_modify k1 demflag 0"
+run 80000
