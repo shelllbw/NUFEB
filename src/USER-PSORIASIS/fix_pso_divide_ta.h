@@ -58,7 +58,7 @@ class FixPDivideTa : public Fix {
   char* type_name;
   int parentType, childType;
   int parentMask, childMask;
-  double asym;
+  double asym, cell_dens;
 
   class RanPark *random;
   class AtomVecBio *avec;

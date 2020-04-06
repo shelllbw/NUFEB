@@ -57,23 +57,23 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 8)
+  if (narg < 9)
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[3];
-  ivar = new int[3];
+  var = new char*[4];
+  ivar = new int[4];
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 4; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[7]);
+  seed = force->inumeric(FLERR, arg[8]);
 
   // read optional param
   demflag = 0;
@@ -81,7 +81,7 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
   //dinika - set diff mask to -1
   diff_mask = -1;
 
-  int iarg = 8;
+  int iarg = 9;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -126,7 +126,7 @@ FixPDivideTa::~FixPDivideTa() {
   delete random;
 
   int i;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 4; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -149,7 +149,7 @@ void FixPDivideTa::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 3; n++) {
+  for (int n = 0; n < 4; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -159,7 +159,8 @@ void FixPDivideTa::init() {
 
   div_dia = input->variable->compute_equal(ivar[0]);
   asym = input->variable->compute_equal(ivar[1]);
-  max_division_counter = input->variable->compute_equal(ivar[2]);
+  cell_dens = input->variable->compute_equal(ivar[2]);
+  max_division_counter = input->variable->compute_equal(ivar[3]);
 
   //dinika's edits - adding division counter
   int nlocal = atom->nlocal;
@@ -224,38 +225,42 @@ void FixPDivideTa::post_integrate() {
     		  childMask = diff_mask;
     		  parentDivisionCount = avec->d_counter[i] + 1;
     		  childDivisionCount = 0;
-    	  } else if (parentDivisionCount < max_division_counter && rand < asym){ //asymmetric division
-    		  parentType = type_id;
-    		  childType = diff_id;
-    		  parentMask = atom->mask[i];
-    		  childMask = diff_mask;
-    		  parentDivisionCount = avec->d_counter[i] + 1;
-    		  childDivisionCount = 0;
-    	  } else { //self proliferate
-    		  parentType = type_id;
-			  childType = type_id;
-			  parentMask = atom->mask[i];
-			  childMask = atom->mask[i];
-			  parentDivisionCount = avec->d_counter[i] + 1;
-			  childDivisionCount = 0;
+    	  }
+    	  if (parentDivisionCount < max_division_counter && rand < asym){
+    		  if (rand < asym) { //asymmetric division
+				parentType = type_id;
+				childType = diff_id;
+				parentMask = atom->mask[i];
+				childMask = diff_mask;
+				parentDivisionCount = avec->d_counter[i] + 1;
+				childDivisionCount = 0;
+    		  } else { //self proliferate
+				parentType = type_id;
+				childType = type_id;
+				parentMask = atom->mask[i];
+				childMask = atom->mask[i];
+				parentDivisionCount = avec->d_counter[i] + 1;
+				childDivisionCount = 0;
+    		  }
     	  }
 
-		double parentMass = atom->rmass[i];
-		double childMass = atom->rmass[i];
+		double splitF = 0.4 + (random->uniform() *0.2);
+		double parentMass = atom->rmass[i] * splitF;
+		double childMass = atom->rmass[i] - parentMass;
 
-        //outer mass for parent and child
-        double parentOuterMass = avec->outer_mass[i];
-        double childOuterMass = parentOuterMass;
+		//outer mass for parent and child
+		double parentOuterMass = avec->outer_mass[i] * splitF;
+		double childOuterMass = avec->outer_mass[i] - parentOuterMass;
 
-        // forces are the same for both parent and child, x, y and z axis
-        double parentfx = atom->f[i][0];
-        double childfx = atom->f[i][0];
+		// forces are the same for both parent and child, x, y and z axis
+		double parentfx = atom->f[i][0] * splitF;
+		double childfx = atom->f[i][0] - parentfx;
 
-        double parentfy = atom->f[i][1];
-        double childfy = atom->f[i][1];
+		double parentfy = atom->f[i][1] * splitF;
+		double childfy = atom->f[i][1] - parentfy;
 
-        double parentfz = atom->f[i][2];
-        double childfz = atom->f[i][2];
+		double parentfz = atom->f[i][2] * splitF;
+		double childfz = atom->f[i][2] - parentfz;
 
         double thetaD = random->uniform() * 2 * MY_PI;
         double phiD = random->uniform() * (MY_PI);
@@ -269,9 +274,9 @@ void FixPDivideTa::post_integrate() {
         atom->f[i][0] = parentfx;
         atom->f[i][1] = parentfy;
         atom->f[i][2] = parentfz;
-        //todo check what was declared as a parent radius
         atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-        avec->outer_radius[i] = atom->radius[i];
+        //avec->outer_radius[i] = atom->radius[i];
+        avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
         newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
         newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
         newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
@@ -299,7 +304,8 @@ void FixPDivideTa::post_integrate() {
 
         //create child
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-        double childOuterRadius = childRadius;
+        //double childOuterRadius = childRadius;
+        double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
         double* coord = new double[3];
         newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
         newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
