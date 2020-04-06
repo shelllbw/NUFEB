@@ -277,6 +277,7 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
         	continue;
         }
 
+        //todo potential issues with updating cell rmass, radius
 		rmass[i] = rmass[i] * density + growrate_tcell - abase * dt;
         //rmass[i] = rmass[i];
 		radius[i] = radius[i];

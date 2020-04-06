@@ -148,7 +148,7 @@ fix k1 all kinetics 100 20 4 20 v_diffT v_layer demflag 0 niter 500
 #fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_ca20
-fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym 64564 demflag 0
+fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym v_STEMdens 64564 demflag 0
 #fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_sc2ta v_ca20
 #fix d2 TA psoriasis/divide_ta 100 v_divDia v_asym v_maxDivCount 64564 demflag 0
 #fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20

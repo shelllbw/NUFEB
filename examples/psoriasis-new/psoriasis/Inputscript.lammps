@@ -102,7 +102,7 @@ variable kanc equal 50
 
 
 #variables used in fix division
-variable divDia equal 1.5707962e-16
+variable divDia equal 1.36e-6
 variable divisionCounter equal 4
 variable asym equal 0.8
 variable maxDivCount equal 4
