@@ -317,14 +317,16 @@ void FixPGrowthSC::growth(double dt, int gflag) {
         //printf("rmass BEFORE is now %e\n", rmass[i]);
 		//rmass[i] = rmass[i] + (growrate_sc - growrate_ta) * rmass[i] * dt;
         rmass[i] = rmass[i] + rmass[i] * (1 + (growrate_sc - growrate_ta) * dt);
-		//printf("rmass is now %e\n", rmass[i]);
+		//printf("rmass of atom %i is now %e\n", i, rmass[i]);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		//printf("radius  is now %e\n", radius[i]);
+		//printf("radius  of atom %i is now %e\n", i, radius[i]);
         //outer mass & radius is for sc to ta
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
 		//printf("outer mass is %e\n", outer_mass[i]);
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
 		//printf("outer radius is %e\n", outer_radius[i]);
+
+		printf("properties of new sc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
       }
     }
   }

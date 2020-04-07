@@ -1,6 +1,6 @@
   Granular Flow Simulation
 
-       2 atoms
+       5 atoms
        7 atom types
        5 nutrients
 
@@ -11,7 +11,10 @@
  Atoms
 
      1 1 1e-6 150 5e-5 0.2e-4 5e-5 1e-6
-     2 2 1e-6 150 5.5e-5 0.2e-4 5e-5 1e-6
+     2 1 1e-6 150 5.5e-5 0.2e-4 5e-5 1e-6
+     3 1 1e-6 150 6e-5 0.2e-4 5e-5 1e-6
+     4 1 1e-6 150 6.5e-5 0.2e-4 5e-5 1e-6
+     5 2 1e-6 150 7e-5 0.2e-4 5e-5 1e-6
 
 
  Nutrients

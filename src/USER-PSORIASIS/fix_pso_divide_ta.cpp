@@ -217,7 +217,7 @@ void FixPDivideTa::post_integrate() {
     	  rand = distribution(gen);
       }
 
-      if (atom->rmass[i] * 2 >= div_dia ){
+      if (atom->radius[i] * 2 >= div_dia ){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
     		  parentType = diff_id;
     		  childType = diff_id;
