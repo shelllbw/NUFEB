@@ -372,6 +372,7 @@ void FixKineticsMonod::update_biomass(double ***growrate, double dt) {
       int pos = kinetics->position(i);
 
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
+		printf("rmass, radius, outer mass, outer radius BEFORE is %e %e %e %e \n", rmass[i], radius[i], outer_mass[i], outer_radius[i]);
       rmass[i] = rmass[i] * (1 + growrate[t][0][pos] * dt);
 
       if (species[t] == 1) {
@@ -383,6 +384,7 @@ void FixKineticsMonod::update_biomass(double ***growrate, double dt) {
         outer_mass[i] = rmass[i];
         outer_radius[i] = radius[i];
       }
+		printf("rmass, radius, outer mass, outer radius AFTER is %e %e %e %e \n", rmass[i], radius[i], outer_mass[i], outer_radius[i]);
     }
   }
 }

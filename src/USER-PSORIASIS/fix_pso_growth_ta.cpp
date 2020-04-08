@@ -315,17 +315,13 @@ void FixPGrowthTA::growth(double dt, int gflag) {
         	continue;
         }
 
-        //printf("rmass ta cell %i BEFORE is now %e\n", i, rmass[i]);
 		//rmass[i] = rmass[i] + (growrate_ta - growrate_d) * rmass[i] * dt;
-        rmass[i] = rmass[i] + rmass[i] * (1 + (growrate_ta - growrate_d) * dt);
-		//printf("rmass ta cell %i is now %e\n", i, rmass[i]);
-		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		//printf("radius ta cell %i is now %e\n", i, radius[i]);
-        //outer mass & radius is for sc to ta
+        //rmass[i] = rmass[i] + rmass[i] * (1 + (growrate_ta - growrate_d) * dt);
+        //todo check if it is the same case as sc growth
+        rmass[i] = rmass[i] * (1 + (growrate_d - growrate_ta) * dt);
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * ta_dens + growrate_d * rmass[i] * dt;
-		//printf("outer mass ta cell %i is %e\n", i, outer_mass[i]);
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / ta_dens), third);
-		//printf("outer radius ta cell %i is %e\n", i, outer_radius[i]);
+		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
       }
     }
   }

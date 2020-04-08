@@ -298,7 +298,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		double R1 = mu[t] * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
 		double R2 = decay[t];
 		double R3 = abase;
-		double R4 = sc2ta * (nus[il17][grid] + nus[tnfa][grid]);
+		double R4 = sc2ta * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
 		//double R5 = mu[t] * nus[ca][grid];
 
 		//nutrient uptake for sc is affected by gf
@@ -314,18 +314,13 @@ void FixPGrowthSC::growth(double dt, int gflag) {
         	continue;
         }
 
-        //printf("rmass BEFORE is now %e\n", rmass[i]);
-		//rmass[i] = rmass[i] + (growrate_sc - growrate_ta) * rmass[i] * dt;
-        rmass[i] = rmass[i] + rmass[i] * (1 + (growrate_sc - growrate_ta) * dt);
-		//printf("rmass of atom %i is now %e\n", i, rmass[i]);
-		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		//printf("radius  of atom %i is now %e\n", i, radius[i]);
-        //outer mass & radius is for sc to ta
+		printf("rmass, radius, outer mass, outer radius BEFORE is %e %e %e %e \n", rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		//rmass[i] = rmass[i] + (growrate_ta - growrate_sc) * dt * rmass[i];
+		//rmass[i] = rmass[i] * (1 + (growrate_sc - growrate_ta) * dt);
+        rmass[i] = rmass[i] * (1 + (growrate_ta - growrate_sc) * dt);
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
-		//printf("outer mass is %e\n", outer_mass[i]);
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
-		//printf("outer radius is %e\n", outer_radius[i]);
-
+		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
 		printf("properties of new sc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
       }
     }

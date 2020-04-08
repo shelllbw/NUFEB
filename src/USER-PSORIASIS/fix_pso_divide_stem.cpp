@@ -308,7 +308,8 @@ void FixPDivideStem::init() {
 
 
 	 //create child
-	 double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
+	 //double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
+	 double childRadius = atom->radius[i];
 	 double childOuterRadius = childRadius;
      //double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
 	 double* coord = new double[3];

@@ -279,15 +279,9 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 
         //todo potential issues with updating cell rmass, radius
 		rmass[i] = rmass[i] * density + growrate_tcell - abase * dt;
-        //rmass[i] = rmass[i];
-		radius[i] = radius[i];
-		//radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
 		outer_mass[i] = rmass[i];
-		//outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * tc_dens + growrate_tcell * rmass[i] * dt;
-		//printf("outer mass is %e\n", outer_mass[i]);
-		//outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / tc_dens), third);
 		outer_radius[i] = radius[i];
-		//printf("outer radius is %e\n", outer_radius[i]);
+		radius[i] = radius[i];
 
       }
     }
