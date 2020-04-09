@@ -217,13 +217,12 @@ void FixPDivideStem::init() {
       int stem_id = bio->find_typeid("stem");
 
       //stem cell takes up approximately 5% of the population, for now, 20% of BM as max cap
-      int max_cap =  nbm * 0.2;
-      //int max_cap = 10;
+      //int max_cap =  nbm * 0.2;
+      int max_cap = 10;
       //printf("max cap is %i\n", max_cap);
 
       //printf("DIVIDE SC atom radius is %e\n", atom->radius[i]);
    if (atom->radius[i] * 2 >= div_dia ){
-	   //printf("nstem is %i and max cap is %i\n", nstem, max_cap);
 	   if (nstem < max_cap){
     	 parentType = stem_id;
 		 childType = parentType;
