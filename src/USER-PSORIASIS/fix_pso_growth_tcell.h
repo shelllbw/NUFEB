@@ -44,7 +44,7 @@ class FixPGrowthTCELL : public Fix {
   int varg;
   char *itype;
 
-  int il23;
+  int il23, il17, tnfa;
 
   int *species;                     // species index 0 = unknow, 1 = sc, 2 = ta, 3 = d, 4 = tc, 5 = dc
 
@@ -53,7 +53,7 @@ class FixPGrowthTCELL : public Fix {
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
   double tc_dens; //cell density
-  double il232, il2320;
+  double il232, il2320, il172, il1720, tnfa2, tnfa20;
   double abase;
 
   class AtomVecBio *avec;

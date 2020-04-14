@@ -55,8 +55,8 @@
 
  Growth Rate
 
-    stem 1.0e-4
-    ta 1.0e-4
+    stem 1.0e-6
+    ta 2.03263889e-8
     diff 0
     tcell 0.00063657407
     dc 0
@@ -65,8 +65,8 @@
 
  Decay
 
-    stem 2.0989583e-10
-    ta 4.3195602e-11
+    stem 0
+    ta 0
     diff 5.8449074e-12
     tcell 0.00001747685
     dc 0.00001747685

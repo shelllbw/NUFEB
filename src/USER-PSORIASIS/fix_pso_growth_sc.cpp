@@ -138,24 +138,20 @@ void FixPGrowthSC::init() {
 
   sc_dens = input->variable->compute_equal(ivar[0]);
  // printf("sc_dens value is %f \n", sc_dens);
-  abase = input->variable->compute_equal(ivar[1]);
-  //printf("abase value is %f \n", abase);
-  sc2ta = input->variable->compute_equal(ivar[2]);
+  sc2ta = input->variable->compute_equal(ivar[1]);
   //printf("sc2ta rate is %f \n", sc2ta);
-  sc2gf = input->variable->compute_equal(ivar[3]);
+  sc2gf = input->variable->compute_equal(ivar[2]);
   //printf("sc2gf rate is %f \n", sc2gf);
-  gf20 = input->variable->compute_equal(ivar[4]);
+  gf20 = input->variable->compute_equal(ivar[3]);
   //printf("gf20 rate is %f \n", gf20);
-  il172 = input->variable->compute_equal(ivar[5]);
-  //printf("il172 value is %f \n", il172);
-  il1720 = input->variable->compute_equal(ivar[6]);
-  //printf("il1720 value is %f \n", il1720);
-  tnfa2 = input->variable->compute_equal(ivar[7]);
- // printf("tnfa2 value is %f \n", tnfa2);
-  tnfa20 = input->variable->compute_equal(ivar[8]);
-  //printf("tnfa20 value is %f \n", tnfa20);
-  ca20 = input->variable->compute_equal(ivar[9]);
+  abase = input->variable->compute_equal(ivar[4]);
+  //printf("abase value is %f \n", abase);
+  ca20 = input->variable->compute_equal(ivar[5]);
   //printf("ca20 value is %f \n", ca20);
+  il172 = input->variable->compute_equal(ivar[6]);
+  il1720 = input->variable->compute_equal(ivar[7]);
+  tnfa2 = input->variable->compute_equal(ivar[8]);
+  tnfa20 = input->variable->compute_equal(ivar[9]);
 
   bio = kinetics->bio;
 
@@ -274,7 +270,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
-  //double **xdensity = kinetics->xdensity;
+  double **xdensity = kinetics->xdensity;
 
   const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
@@ -299,30 +295,47 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		double R2 = decay[t];
 		double R3 = abase;
 		double R4 = sc2ta * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
-		//double R5 = mu[t] * nus[ca][grid];
+
+		printf("growrate_sc BEFORE: il17 conc : %e tnfa conc :  %e  cal conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[ca][grid]);
 
 		//nutrient uptake for sc is affected by gf
 		//need to cal density
 		nur[gf][grid] += (sc2gf * (rmass[i]/grid_vol)) - (gf20 * nus[gf][grid]);
-		//nur[ca][grid] += -(ca20 * (rmass[i]/grid_vol));
-		nur[ca][grid] += -((rmass[i]/grid_vol) * ca20);
+		nur[ca][grid] += -(ca20 * nus[ca][grid]);
+		nur[il17][grid] += (il172 * (rmass[4]/ grid_vol)) - il1720 * nus[il17][grid] - (R1 + R4) * (rmass[i]/ grid_vol);
+		nur[tnfa][grid] += (tnfa2 * (rmass[4]/ grid_vol)) - il1720 * nus[il17][grid] - (R1 + R4) * (rmass[i]/ grid_vol);
+		//nur[il17][grid] += (il172 * (rmass[4]/ grid_vol)) - il1720 * nus[il17][grid];
+		//nur[tnfa][grid] += (tnfa2 * (rmass[4]/ grid_vol)) - il1720 * nus[il17][grid];
+
+		printf("nur[il17][grid] is %e\n", nur[il17][grid]);
+		printf("nur[tnfa][grid] is %e \n", nur[tnfa][grid]);
+
+		//printf("BEFORE R1 is %e , R4 is %e\n", R1, R4);
+		//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1, R2, R3, R1 - R2 - R3);
+		printf("growrate_sc AFTER: il17 conc : %e tnfa conc :  %e  cal conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[ca][grid]);
 
         growrate_sc = R1 - R2 - R3;
         growrate_ta = R4; //sc can divide to a TA cell
+
+        //printf("AFTER  R1 is %e , R4 is %e\n", R1, R4);
 
         if (!gflag || !external_gflag){
         	continue;
         }
 
-		printf("rmass, radius, outer mass, outer radius BEFORE is %e %e %e %e \n", rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-		//rmass[i] = rmass[i] + (growrate_ta - growrate_sc) * dt * rmass[i];
+        /*
+         * Update biomass
+         * */
+        //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);		//rmass[i] = rmass[i] + (growrate_ta - growrate_sc) * dt * rmass[i];
 		//rmass[i] = rmass[i] * (1 + (growrate_sc - growrate_ta) * dt);
-        rmass[i] = rmass[i] * (1 + (growrate_ta + growrate_sc) * dt);
+        rmass[i] = rmass[i] + rmass[i] * (1 + growrate_sc * dt);
+        //printf("growrate of sc is %e \n", growrate_sc);
+        //rmass[i] = rmass[i] * (1 + growrate_sc * dt);
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		printf("properties of new sc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-		printf("radius and outer radius combined %e\n", radius[i] + outer_radius[i]);
+		//printf("properties of new sc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		//printf("diameter is %e\n", radius[i] * 2);
       }
     }
   }

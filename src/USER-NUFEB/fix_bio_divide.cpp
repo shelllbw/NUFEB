@@ -235,6 +235,8 @@ void FixDivide::post_integrate() {
         atom->x[i][1] = newY;
         atom->x[i][2] = newZ;
 
+   	 //printf("divide_sc PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i]);
+
         //create child
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
         double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / eps_density)), (1.0 / 3.0));
@@ -293,6 +295,8 @@ void FixDivide::post_integrate() {
 
         atom->radius[n] = childRadius;
         avec->outer_radius[n] = childOuterRadius;
+
+   	 //printf("divide_sc CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e \n", n, childMass, childRadius, childOuterMass, childOuterRadius);
 
         modify->create_attribute(n);
 

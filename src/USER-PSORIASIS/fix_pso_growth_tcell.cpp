@@ -56,7 +56,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/tcell requires atom style bio");
 
-  if (narg < 7)
+  if (narg < 11)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/tcell command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 7;
+  int iarg = 11;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -144,6 +144,10 @@ void FixPGrowthTCELL::init() {
   //printf("il232 value is %f \n", il232);
   il2320 = input->variable->compute_equal(ivar[3]);
   //printf("il2320 value is %f \n", il2320);
+  il172 = input->variable->compute_equal(ivar[4]);
+  il1720 = input->variable->compute_equal(ivar[5]);
+  tnfa2 = input->variable->compute_equal(ivar[6]);
+  tnfa20 = input->variable->compute_equal(ivar[7]);
 
   bio = kinetics->bio;
 
@@ -190,16 +194,24 @@ void FixPGrowthTCELL::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthTCELL::init_param() {
-	il23 = 0;
+	il23, il17, tnfa = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
 	if (strcmp(bio->nuname[nu], "il23") == 0)
 	  il23 = nu;
+	if (strcmp(bio->nuname[nu], "il17") == 0)
+	  il17 = nu;
+	if (strcmp(bio->nuname[nu], "tnfa") == 0)
+		  tnfa = nu;
   }
 
   if (il23 == 0)
 	error->all(FLERR, "fix_psoriasis/growth/tcell requires nutrient il23");
+  if (il17 == 0)
+	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il17");
+  if (tnfa == 0)
+  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -268,8 +280,15 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
     	double R11 = mu[t] * nus[il23][grid];
     	double R12 = decay[t];
     	double R13 = abase;
+    	//double R14 = maintain[t] * nus[il17][grid];
 
-    	nur[il23][grid] += (il232 * (rmass[i]/grid_vol)) - (il2320 * nus[il23][grid]);
+    	printf("il172 * (rmass[i]/grid_vol) is %e\n", il172 * (rmass[i]/grid_vol));
+    	printf("il1720 * nus[il17][grid] is %e \n", il1720 * nus[il17][grid]);
+    	nur[il23][grid] += (il232 * (rmass[i]/grid_vol)) - il2320 * nus[il23][grid];
+    	nur[il17][grid] += (il172 * (rmass[i]/ grid_vol)) - il1720 * nus[il17][grid];
+    	nur[tnfa][grid] += (tnfa2 * (rmass[i]/ grid_vol)) - il1720 * nus[il17][grid];
+
+    	printf("growrate_tcell equation is R11 %e - R12 %e - R13 %e = %e\n", R11, R12, R13, R11 - R12 - R13);
 
         growrate_tcell = R11 - R12 - R13;
 

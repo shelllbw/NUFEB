@@ -292,20 +292,28 @@ void FixKineticsMonod::growth(double dt, int gflag) {
         double R5 = eta_het * mu[i] * (nus[isub][grid] / (ks[i][isub] + nus[isub][grid])) * (nus[ino2][grid] / (ks[i][ino2] + nus[ino2][grid])) * (ks[i][io2] / (ks[i][io2] + nus[io2][grid]));
         double R6 = decay[i];
 
-        double R10 = maintain[i] * (nus[io2][grid] / (ks[i][io2] + nus[io2][grid]));
+        //double R10 = maintain[i] * (nus[io2][grid] / (ks[i][io2] + nus[io2][grid]));
         double R13 = (1 / 2.86) * maintain[i] * eta_het * (nus[ino3][grid] / (ks[i][ino3] + nus[ino3][grid])) * (ks[i][io2] / (ks[i][io2] + nus[io2][grid]));
         double R14 = (1 / 1.17) * maintain[i] * eta_het * (nus[ino2][grid] / (ks[i][ino2] + nus[ino2][grid])) * (ks[i][io2] / (ks[i][io2] + nus[io2][grid]));
+
+       // printf("r1 %e, r4 %e, r5 %e R6 %e R10 %e R13 %e R14 %e \n", R1, R4, R5, R6, R10, R13, R14);
+        printf("R1 %e\n", R1);
 
         nur[isub][grid] += ((-1 / yield[i]) * ((R1 + R4 + R5) * xdensity[i][grid]));
       //if (xtype[i][grid] != 0) printf("nuR = %e \n", xtype[i][grid]);
         nur[io2][grid] += (-((1 - yield[i] - yield_eps) / yield[i]) * R1 * xdensity[i][grid]);
         nur[ino2][grid] += -(((1 - yield[i] - yield_eps) / (1.17 * yield[i])) * R5 * xdensity[i][grid]);
         nur[ino3][grid] += -(((1 - yield[i] - yield_eps) / (2.86 * yield[i])) * R4 * xdensity[i][grid]);
-        nur[io2][grid] += -(R10 * xdensity[i][grid]);
+        //nur[io2][grid] += -(R10 * xdensity[i][grid]);
         nur[ino2][grid] += -(R14 * xdensity[i][grid]);
         nur[ino3][grid] += -(R13 * xdensity[i][grid]);
 
-        growrate[i][0][grid] = R1 + R4 + R5 - R6 - R10 - R13 - R14;
+        printf("nus [isub] %e nus [o2] %e nus [no2] %e \n", nus[isub][grid], nus[io2][grid], nus[ino2][grid]);
+        //printf(" nur[io2][grid] %e\n", nur[io2][grid]);
+        //printf(" nur[ino2][grid] %e\n", nur[ino2][grid]);
+
+        //growrate[i][0][grid] = R1 + R4 + R5 - R6 - R10 - R13 - R14;
+        growrate[i][0][grid] = R1 + R4 + R5 - R6 - R13 - R14;
         growrate[i][1][grid] = (yield_eps / yield[i]) * (R1 + R4 + R5);
       } else if (spec == 2) {
         // AOB monod model
@@ -318,6 +326,8 @@ void FixKineticsMonod::growth(double dt, int gflag) {
         nur[inh4][grid] += -(1 / yield[i]) * R2 * xdensity[i][grid];
         nur[ino2][grid] += (1 / yield[i]) * R2 * xdensity[i][grid];
         nur[io2][grid] += -(R11 * xdensity[i][grid]);
+
+        //printf("r2 %e, r7 %e, r11 %e\n", R2, R7, R11);
 
         growrate[i][0][grid] = R2 - R7 - R11;
       } else if (spec == 3) {
@@ -372,19 +382,22 @@ void FixKineticsMonod::update_biomass(double ***growrate, double dt) {
       int pos = kinetics->position(i);
 
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
-		printf("rmass, radius, outer mass, outer radius BEFORE is %e %e %e %e \n", rmass[i], radius[i], outer_mass[i], outer_radius[i]);
       rmass[i] = rmass[i] * (1 + growrate[t][0][pos] * dt);
+      printf("growrate of %i is %e\n", t, growrate[t][0][pos]);
 
       if (species[t] == 1) {
+  		//printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
         outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * eps_dens + growrate[t][1][pos] * rmass[i] * dt;
         outer_radius[i] = pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / eps_dens), third);
         radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+        //printf("AFTER %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+  		//printf("radius and outer radius combined %e\n", radius[i] + outer_radius[i]);
+  		//printf("diameter is %e\n", radius[i] * 2);
       } else {
         radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
         outer_mass[i] = rmass[i];
         outer_radius[i] = radius[i];
       }
-		printf("rmass, radius, outer mass, outer radius AFTER is %e %e %e %e \n", rmass[i], radius[i], outer_mass[i], outer_radius[i]);
     }
   }
 }

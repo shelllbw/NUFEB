@@ -277,8 +277,8 @@ void FixPDivideStem::init() {
 	 atom->f[i][1] = parentfy;
 	 atom->f[i][2] = parentfz;
 	 atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-	 avec->outer_radius[i] = atom->radius[i];
-     //avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
+	 //avec->outer_radius[i] = atom->radius[i];
+     avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
 	 newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
 	 newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
 	 newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
@@ -307,10 +307,10 @@ void FixPDivideStem::init() {
 
 
 	 //create child
-	 //double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-	 double childRadius = atom->radius[i];
-	 double childOuterRadius = childRadius;
-     //double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
+	 double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
+	 //double childRadius = atom->radius[i];
+	 //double childOuterRadius = childRadius;
+     double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
 	 double* coord = new double[3];
 	 newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
 	 newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
