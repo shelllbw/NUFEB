@@ -275,20 +275,22 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 
 	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
+	  //printf("species is %i \n", species[t]);
       // t cell model
       if (species[t] == 4) {
     	double R11 = mu[t] * nus[il23][grid];
     	double R12 = decay[t];
     	double R13 = abase;
-    	//double R14 = maintain[t] * nus[il17][grid];
 
-    	printf("il172 * (rmass[i]/grid_vol) is %e\n", il172 * (rmass[i]/grid_vol));
-    	printf("il1720 * nus[il17][grid] is %e \n", il1720 * nus[il17][grid]);
-    	nur[il23][grid] += (il232 * (rmass[i]/grid_vol)) - il2320 * nus[il23][grid];
-    	nur[il17][grid] += (il172 * (rmass[i]/ grid_vol)) - il1720 * nus[il17][grid];
-    	nur[tnfa][grid] += (tnfa2 * (rmass[i]/ grid_vol)) - il1720 * nus[il17][grid];
+    	//printf("growrate_tcell  BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 
-    	printf("growrate_tcell equation is R11 %e - R12 %e - R13 %e = %e\n", R11, R12, R13, R11 - R12 - R13);
+    	nur[il23][grid] += - R11 * nus[il23][grid];
+    	nur[il17][grid] += (il172 * (rmass[i]/ grid_vol));
+    	nur[tnfa][grid] += (tnfa2 * (rmass[i]/ grid_vol));
+
+    	//printf("growrate_tcell  AFTER: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
+
+    	//printf("growrate_tcell equation is R11 %e - R12 %e - R13 %e = %e\n", R11, R12, R13, R11 - R12 - R13);
 
         growrate_tcell = R11 - R12 - R13;
 
@@ -297,11 +299,12 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
         }
 
         //todo potential issues with updating cell rmass, radius
-		rmass[i] = rmass[i] * density + growrate_tcell - abase * dt;
+        printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		rmass[i] = rmass[i] + rmass[i] * (1 + growrate_tcell * dt);
 		outer_mass[i] = rmass[i];
 		outer_radius[i] = radius[i];
 		radius[i] = radius[i];
-
+		printf("properties of new ta %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
       }
     }
   }

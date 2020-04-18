@@ -89,8 +89,8 @@ fix fv all viscous 1e-5
 fix nomove BM move linear 0.0 0.0 0.0 units box
 velocity BM set 0.0 0.0 0.0 units box
 
-fix nomovet TCELL move linear 0.0 0.0 0.0 units box
-velocity TCELL set 0.0 0.0 0.0 units box
+#fix nomovet TCELL move linear 0.0 0.0 0.0 units box
+#velocity TCELL set 0.0 0.0 0.0 units box
 
 fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  1e-4
 
@@ -119,7 +119,7 @@ variable il172 equal 0.00000578703
 variable il1720 equal 0.0004224537
 variable tnfa2 equal 0.00000578703
 variable tnfa20 equal 0.0004224537
-variable ca20 equal 0.0004224537
+variable ca2 equal 0.015
 
 #variables used in growth/sc
 variable STEMdens equal 30
@@ -148,9 +148,9 @@ variable il2320 equal 0.0001
 fix k1 all kinetics 100 20 4 20 v_diffT v_layer demflag 0 niter 500
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320 v_il172 v_il1720 v_tnfa2 v_tnfa20
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
-fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_gf20 v_abase v_ca20 v_il172 v_il1720 v_tnfa2 v_tnfa20
+fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase v_ca2
 fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym v_STEMdens 64564 demflag 0
-#fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_sc2ta v_ca20
+#fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_abase v_sc2ta v_ca2
 #fix d2 TA psoriasis/divide_ta 100 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
 #fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20
 

@@ -53,7 +53,7 @@ class FixPGrowthTA : public Fix {
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
   double ta_dens; 					//cell density
-  double il172, il1720, tnfa2,tnfa20, ca20;
+  double il172, il1720, tnfa2,tnfa20, ca2;
   double abase, ta2d, ta2gf, gf20, sc2ta;
 
   class AtomVecBio *avec;

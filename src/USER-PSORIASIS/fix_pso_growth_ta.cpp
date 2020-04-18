@@ -56,7 +56,7 @@ FixPGrowthTA::FixPGrowthTA(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/ta requires atom style bio");
 
-  if (narg < 14)
+  if (narg < 9)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/ta command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthTA::FixPGrowthTA(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 14;
+  int iarg = 9;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -137,26 +137,11 @@ void FixPGrowthTA::init() {
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
   ta_dens = input->variable->compute_equal(ivar[0]);
-  //printf("ta_dens value is %f \n", ta_dens);
-  abase = input->variable->compute_equal(ivar[1]);
-  //printf("abase value is %f \n", abase);
-  ta2d = input->variable->compute_equal(ivar[2]);
-  printf("ta2d rate is %f \n", ta2d);
-  ta2gf = input->variable->compute_equal(ivar[3]);
-  //printf("sc2gf rate is %f \n", ta2gf);
-  gf20 = input->variable->compute_equal(ivar[4]);
-  //printf("gf20 rate is %f \n", gf20);
-  il172 = input->variable->compute_equal(ivar[5]);
-  //printf("il172 value is %f \n", il172);
-  il1720 = input->variable->compute_equal(ivar[6]);
-  //printf("il1720 value is %f \n", il1720);
-  tnfa2 = input->variable->compute_equal(ivar[7]);
-  //printf("tnfa2 value is %f \n", tnfa2);
-  tnfa20 = input->variable->compute_equal(ivar[8]);
-  //printf("tnfa20 value is %f \n", tnfa20);
-  sc2ta = input->variable->compute_equal(ivar[9]);
-  //printf("sc2ta rate is %f \n", sc2ta);
-  ca20 = input->variable->compute_equal(ivar[10]);
+  ta2d = input->variable->compute_equal(ivar[1]);
+  ta2gf = input->variable->compute_equal(ivar[2]);
+  abase = input->variable->compute_equal(ivar[3]);
+  sc2ta = input->variable->compute_equal(ivar[4]);
+  ca2 = input->variable->compute_equal(ivar[5]);
 
 
   bio = kinetics->bio;
@@ -299,29 +284,41 @@ void FixPGrowthTA::growth(double dt, int gflag) {
       if (species[t] == 2) {
     	  //printf("cell type is %i\n", species[t]);
     	  //TODO check if it makes sense to include sc2ta in here
-		double R6 = mu[t] * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]) + sc2ta * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
-		double R7 = decay[t];
-		double R8 = abase;
-		double R9 = ta2d *(nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
-		//double R10 = mu[t] * nus[ca][grid];
+		//double R6 = mu[t] * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]) + sc2ta * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
+		double R5_1 = (mu[t] + sc2ta) * nus[il17][grid];
+		double R5_2 = (mu[t] + sc2ta) * nus[tnfa][grid];
+		double R5_3 = (mu[t] + sc2ta) * nus[ca][grid];
+		double R6 = decay[t];
+		double R7 = abase;
+		double R8_1 = ta2d * nus[il17][grid];
+		double R8_2 = ta2d * nus[tnfa][grid];
+		double R8_3 = ta2d * nus[ca][grid];
+		//double R9 = ta2d *(nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
 
-		nur[gf][grid] += (ta2gf * (rmass[i]/grid_vol)) - (gf20 * nus[gf][grid]);
-		nur[ca][grid] += -((rmass[i]/grid_vol) * ca20);
+		//printf("growrate_ta BEFORE: il17 conc : %e tnfa conc :  %e  cal conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[ca][grid]);
 
-        growrate_ta = R6 - R7 - R8;
-        growrate_d = R9; //sc can divide to a TA cell
+		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol);
+		nur[ca][grid] += ca2 * nus[ca][grid] - (R5_3 * (rmass[i]/grid_vol) + R8_3 * (rmass[i]/grid_vol));
+		nur[il17][grid] += - (R5_1 + R8_1) * (rmass[i]/ grid_vol);
+		nur[tnfa][grid] += - (R5_2 + R8_2) * (rmass[i]/ grid_vol);
+
+		//printf("growrate_sc equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2 + R5_3, R6, R7, (R5_1 + R5_2 + R5_3) - R6 - R7);
+		//printf("growrate_ta AFTER: il17 conc : %e tnfa conc :  %e  cal conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[ca][grid]);
+
+        growrate_ta = R5_1 + R5_2 + R5_3 - R6 - R7;
+        growrate_d = R8_1 + R8_2 + R8_3;
 
         if (!gflag || !external_gflag){
         	continue;
         }
 
-		//rmass[i] = rmass[i] + (growrate_ta - growrate_d) * rmass[i] * dt;
-        //rmass[i] = rmass[i] + rmass[i] * (1 + (growrate_ta - growrate_d) * dt);
-        //todo check if it is the same case as sc growth
-        rmass[i] = rmass[i] * (1 + (growrate_d - growrate_ta) * dt);
+        //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+        rmass[i] = rmass[i] + rmass[i] * (1 + growrate_ta * dt);
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * ta_dens + growrate_d * rmass[i] * dt;
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / ta_dens), third);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+		//printf("properties of new ta %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		//printf("diameter is %e\n", radius[i] * 2);
       }
     }
   }
