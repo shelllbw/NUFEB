@@ -226,7 +226,7 @@ void FixPDivideTa::post_integrate() {
     		  parentDivisionCount = avec->d_counter[i] + 1;
     		  childDivisionCount = 0;
     	  }
-    	  if (parentDivisionCount < max_division_counter && rand < asym){
+    	  if (parentDivisionCount < max_division_counter){
     		  if (rand < asym) { //asymmetric division
 				parentType = type_id;
 				childType = diff_id;

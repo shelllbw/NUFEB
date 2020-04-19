@@ -106,6 +106,7 @@ variable divDia equal 1.36e-6
 variable divisionCounter equal 4
 variable asym equal 0.8
 variable maxDivCount equal 4
+variable stemPercent equal 0.1
 
 #variables used in fix kinetics
 variable diffT equal 1e-4
@@ -149,7 +150,7 @@ fix k1 all kinetics 100 20 4 20 v_diffT v_layer demflag 0 niter 500
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320 v_il172 v_il1720 v_tnfa2 v_tnfa20
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase v_ca2
-fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym v_STEMdens 64564 demflag 0
+fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
 #fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_abase v_sc2ta v_ca2
 #fix d2 TA psoriasis/divide_ta 100 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
 #fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20

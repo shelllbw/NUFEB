@@ -58,23 +58,23 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 8)
+  if (narg < 9)
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[3];
-  ivar = new int[3];
+  var = new char*[4];
+  ivar = new int[4];
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 4; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[7]);
+  seed = force->inumeric(FLERR, arg[8]);
 
   // read optional param
   demflag = 0;
@@ -82,7 +82,7 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   //dinika - set ta_mask to -1
   ta_mask = -1;
 
-  int iarg = 8;
+  int iarg = 9;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -127,7 +127,7 @@ FixPDivideStem::~FixPDivideStem() {
   delete random;
 
   int i;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 4; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -150,7 +150,7 @@ void FixPDivideStem::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 3; n++) {
+  for (int n = 0; n < 4; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -161,6 +161,8 @@ void FixPDivideStem::init() {
   div_dia = input->variable->compute_equal(ivar[0]);
   asym = input->variable->compute_equal(ivar[1]);
   cell_dens = input->variable->compute_equal(ivar[2]);
+  stem_percent = input->variable->compute_equal(ivar[3]);
+  //printf("stem percent is %f\n", stem_percent);
 
   //Dinika's edits
   //modify atom mask
@@ -216,10 +218,10 @@ void FixPDivideStem::init() {
       int ta_id = bio->find_typeid("ta");
       int stem_id = bio->find_typeid("stem");
 
-      //stem cell takes up approximately 5% of the population, for now, 20% of BM as max cap
-      //int max_cap =  nbm * 0.2;
-      int max_cap = 10;
-      //printf("max cap is %i\n", max_cap);
+      //stem cell takes up approximately 5% of the population
+      int max_cap =  (nlocal - nbm) * stem_percent;
+      //int max_cap = 10;
+      printf("max cap = %i nlocal : %i nbm : %i \n", max_cap, nlocal, nbm);
 
       //printf("DIVIDE SC atom radius is %e\n", atom->radius[i]);
    if (atom->radius[i] * 2 >= div_dia ){
