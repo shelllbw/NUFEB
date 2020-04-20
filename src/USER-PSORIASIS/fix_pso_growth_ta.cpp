@@ -282,23 +282,22 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 
       // ta cell model
       if (species[t] == 2) {
-    	  //printf("cell type is %i\n", species[t]);
-    	  //TODO check if it makes sense to include sc2ta in here
-		//double R6 = mu[t] * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]) + sc2ta * (nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
-		double R5_1 = (mu[t] + sc2ta) * nus[il17][grid];
-		double R5_2 = (mu[t] + sc2ta) * nus[tnfa][grid];
-		double R5_3 = (mu[t] + sc2ta) * nus[ca][grid];
+//		double R4_1 = sc2ta * nus[il17][grid];
+//		double R4_2 = sc2ta * nus[tnfa][grid];
+//		double R4_3 = sc2ta * nus[ca][grid];
+		double R5_1 = mu[t] * nus[il17][grid];
+		double R5_2 = mu[t] * nus[tnfa][grid];
+		double R5_3 = mu[t]  * nus[ca][grid];
 		double R6 = decay[t];
 		double R7 = abase;
 		double R8_1 = ta2d * nus[il17][grid];
 		double R8_2 = ta2d * nus[tnfa][grid];
 		double R8_3 = ta2d * nus[ca][grid];
-		//double R9 = ta2d *(nus[il17][grid] + nus[tnfa][grid] + nus[ca][grid]);
 
 		//printf("growrate_ta BEFORE: il17 conc : %e tnfa conc :  %e  cal conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[ca][grid]);
 
 		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol);
-		nur[ca][grid] += ca2 * nus[ca][grid] - (R5_3 * (rmass[i]/grid_vol) + R8_3 * (rmass[i]/grid_vol));
+		nur[ca][grid] += ca2 * nus[ca][grid] - (R5_3 + R8_3) * (rmass[i]/grid_vol);
 		nur[il17][grid] += - (R5_1 + R8_1) * (rmass[i]/ grid_vol);
 		nur[tnfa][grid] += - (R5_2 + R8_2) * (rmass[i]/ grid_vol);
 
@@ -312,13 +311,13 @@ void FixPGrowthTA::growth(double dt, int gflag) {
         	continue;
         }
 
-        printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+        //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
         rmass[i] = rmass[i] + rmass[i] * (1 + growrate_ta * dt);
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * ta_dens + growrate_d * rmass[i] * dt;
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / ta_dens), third);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		printf("properties of new ta %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-		printf("diameter is %e\n", radius[i] * 2);
+		//printf("properties of new ta %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		//printf("diameter is %e\n", radius[i] * 2);
       }
     }
   }

@@ -44,7 +44,7 @@ class FixPGrowthDIFF : public Fix {
   int varg;
   char *itype;
 
-  int il17, tnfa;
+  int il17, tnfa,ca;
 
   int *species;                     // species index 0 = unknow, 1 = sc, 2 = ta, 3 = d, 4 = tc, 5 = dc
 
@@ -53,7 +53,7 @@ class FixPGrowthDIFF : public Fix {
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
   double diff_dens; 					//cell density
-  double il172, il1720, tnfa2,tnfa20, ca;
+  double il172, il1720, tnfa2,tnfa20;
   double abase, ta2d, ddesq;
 
   class AtomVecBio *avec;

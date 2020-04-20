@@ -60,6 +60,7 @@ class FixPDivideStem : public Fix {
   int ta_mask;
   int parentMask, childMask;
   double asym, cell_dens, stem_percent;
+  int max_cap;
 
   class RanPark *random;
   class AtomVecBio *avec;

@@ -191,7 +191,8 @@ void FixPDivideStem::init() {
   for (int i = 0; i < nlocal; i++) {
 	if (atom->mask[i] & groupbit) {
 		nstem++;
-	} else if (atom->type[i] == 7) {
+	}
+	if (atom->type[i] == 7) {
 		nbm++;
 	}
   }
@@ -219,9 +220,14 @@ void FixPDivideStem::init() {
       int stem_id = bio->find_typeid("stem");
 
       //stem cell takes up approximately 5% of the population
-      int max_cap =  (nlocal - nbm) * stem_percent;
+      max_cap = round((nlocal - nbm) * stem_percent);
       //int max_cap = 10;
-      printf("max cap = %i nlocal : %i nbm : %i \n", max_cap, nlocal, nbm);
+      //printf("max cap is %i\n", max_cap);
+
+      if (max_cap < 2){
+    	  max_cap = round(nlocal * 0.5);
+      }
+      //printf("max cap = %i nlocal : %i nbm : %i \n", max_cap, nlocal, nbm);
 
       //printf("DIVIDE SC atom radius is %e\n", atom->radius[i]);
    if (atom->radius[i] * 2 >= div_dia ){

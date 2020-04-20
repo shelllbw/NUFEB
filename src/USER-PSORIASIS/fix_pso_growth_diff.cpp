@@ -200,7 +200,7 @@ void FixPGrowthDIFF::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthDIFF::init_param() {
-	il17, tnfa = 0;
+	il17, tnfa,ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
@@ -208,6 +208,8 @@ void FixPGrowthDIFF::init_param() {
 	  il17 = nu;
 	if (strcmp(bio->nuname[nu], "tnfa") == 0)
 			  tnfa = nu;
+	if (strcmp(bio->nuname[nu], "ca") == 0)
+			  ca = nu;
   }
 
   if (il17 == 0)
@@ -288,12 +290,14 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
       // diff cell model
       if (species[t] == 3) {
-		double R9 = mu[i] + ta2d * (nus[il17][grid] + nus[tnfa][grid]); //todo double check eq
+		double R9_1 = mu[i] * nus[il17][grid];
+		double R9_2 = mu[i] * nus[tnfa][grid];
+		double R9_3 = mu[i] * nus[ca][grid];
 		double R10 = decay[t];
 		double R11 = abase;
 		double R12 = ddesq;
 
-        growrate_d = R9 - R10 - R11 - R12;
+        growrate_d = R9_1 + R9_2 + R9_3 - R10 - R11 - R12;
 
         if (!gflag || !external_gflag){
         	continue;
@@ -308,14 +312,8 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
          else
         	rmass[i] = rmass[i];
 
-		printf("rmass diff cell %i is now %e\n", i, rmass[i]);
-		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		printf("radius diff cell %i is now %e\n", i, radius[i]);
-        //outer mass & radius is for sc to ta
-		outer_mass[i] = rmass[i];
-		printf("outer mass diff cell %i is %e\n", i, outer_mass[i]);
-		outer_radius[i] = radius[i];
-		printf("outer radius diff cell %i is %e\n", i, outer_radius[i]);
+        outer_mass[i] = rmass[i];
+        outer_radius[i] = radius[i];
       }
     }
   }
