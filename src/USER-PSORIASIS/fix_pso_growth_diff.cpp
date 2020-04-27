@@ -137,23 +137,13 @@ void FixPGrowthDIFF::init() {
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
   diff_dens = input->variable->compute_equal(ivar[0]);
-  printf("diff_dens value is %f \n", diff_dens);
   abase = input->variable->compute_equal(ivar[1]);
-  printf("abase value is %f \n", abase);
   ta2d = input->variable->compute_equal(ivar[2]);
-  printf("ta2d value is %f \n", ta2d);
   ddesq = input->variable->compute_equal(ivar[3]);
-  printf("ddesq rate is %f \n", ddesq);
   il172 = input->variable->compute_equal(ivar[4]);
-  printf("il172 value is %f \n", il172);
   il1720 = input->variable->compute_equal(ivar[5]);
-  printf("il1720 value is %f \n", il1720);
   tnfa2 = input->variable->compute_equal(ivar[6]);
-  printf("tnfa2 value is %f \n", tnfa2);
   tnfa20 = input->variable->compute_equal(ivar[7]);
-  printf("tnfa20 value is %f \n", tnfa20);
-
-
 
   bio = kinetics->bio;
 
@@ -200,7 +190,7 @@ void FixPGrowthDIFF::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthDIFF::init_param() {
-	il17, tnfa,ca = 0;
+	il17, tnfa, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
@@ -297,14 +287,15 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 		double R11 = abase;
 		double R12 = ddesq;
 
+		nur[ca][grid] += ca2 * nus[ca][grid] - R9_3 * (rmass[i]/grid_vol);
+		nur[il17][grid] += -(R9_1 * (rmass[i]/ grid_vol);
+		nur[tnfa][grid] += -(R9_2 * (rmass[i]/ grid_vol);
+
         growrate_d = R9_1 + R9_2 + R9_3 - R10 - R11 - R12;
 
         if (!gflag || !external_gflag){
         	continue;
         }
-
-        printf("rmass diff cell %i BEFORE is now %e\n", i, rmass[i]);
-        //printf("radius diff cell %i BEFORE is now %e\n", i, radius[i]);
 
         //threshold to make it stop growing
         if (rmass[i] < 7.853981e-17)
@@ -318,38 +309,4 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
     }
   }
 }
-
-/* ----------------------------------------------------------------------
- calculate the SC-TA mass to update to based on each grid
-
- *note: each grid will have different number of SC and IL
- ------------------------------------------------------------------------- */
-// void FixPGrowthDIFF::update_cellmass(int grid_id, int t){
-//	 int *mask = atom->mask;
-//	 int nlocal = atom->nlocal;
-//	 int *type = atom->type;
-//	 double *rmass = atom->rmass;
-//
-//	 double grid_conc = calculate_gridmass(grid_id);
-//	 int stem_count = calculate_gridcell(grid_id, 1);
-//	 int tcell_count = calculate_gridcell(grid_id, 4);
-//
-//	 for (int i = 0; i < nlocal; i++){
-//		 if (mask[i] & groupbit) {
-//			 int pos = kinetics->position(i); //gets the grid_id of cell
-//
-//			 if (pos == grid_id && t == type[i]){
-//				 double update_sctamass_by = (grid_conc / stem_count) * growrate[t][0][pos];
-//				 avec->cell_mass[i] = rmass[i] + (rmass[i] * update_sctamass_by);
-//				 rmass[i] = avec->cell_mass[i];
-//			 }
-//
-//			 if (pos == grid_id && t == type[i]){
-//				 double update_tcellmass_by = (grid_conc / tcell_count) * growrate[t][0][pos];
-//				 avec->cell_mass[i] = rmass[i] + (rmass[i] * update_tcellmass_by);
-//				 rmass[i] = avec->cell_mass[i];
-//			 }
-//		 }
-//	 }
-//}
 

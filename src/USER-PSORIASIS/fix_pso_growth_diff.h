@@ -61,8 +61,7 @@ class FixPGrowthDIFF : public Fix {
   class BIO *bio;
 
   void init_param();
-  int calculate_gridcell(int, int);
- // void update_cellmass(int, int);
+//  int calculate_gridcell(int, int);
 };
 
 }

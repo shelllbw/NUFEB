@@ -42,14 +42,23 @@ create_atoms 4 random 10 64564 reg2
 #create_atoms 2 random 5 64564 reg3
 #create_atoms 3 random 1 64564 reg3
 
-neighbor	5e-7 bin
-
 group TA type 2
 group DIFF type 3
 group TCELL type 4
 group DC type 5
 group APOP type 6
 group BM type 7
+
+group BASE union BM TCELL
+group OTHERS union STEM TA DIFF
+#group PROLIF union STEM TA
+
+fix fz1 BASE freeze
+fix nomove BASE move linear 0.0 0.0 0.0 units box
+#velocity BASE set 0.0 0.0 0.0 units box
+
+neighbor	5e-7 bin
+neigh_modify delay 0 exclude group BASE BASE
 
 set type 2 density 150
 set type 2 diameter 1.0e-6
@@ -71,30 +80,30 @@ set type 6 density 150
 set type 6 diameter 1.0e-6
 set type 6 mass 7.853981e-17
 
-
-
 ##############Define DEM Variables&Commands##############
 
 
-pair_style  gran/hooke/history 1e-4 NULL 1e-5 NULL 0.0 1
+pair_style  gran/hooke/history 1e-4 NULL 1e-4 NULL 0.0 1
 pair_coeff  * *
 
 timestep 1e-3
 
-fix 1 all nve/limit 1e-8
-fix fv all viscous 1e-5
+#fix freeze BASE setforce 0.0 0.0 0.0
+#fix nomove BASE move linear 0.0 0.0 0.0 units box
+velocity BASE set 0.0 0.0 0.0 units box
 
-fix nomove BM move linear 0.0 0.0 0.0 units box
-velocity BM set 0.0 0.0 0.0 units box
+#fix 1 all nve/limit 1e-10
+#fix fv all viscous 1e-5
 
-fix nomovet TCELL move linear 0.0 0.0 0.0 units box
-velocity TCELL set 0.0 0.0 0.0 units box
+fix 2 BASE nve/limit 0
+fix fv2 BASE viscous 5e-6
+
+fix 1 OTHERS nve/limit 2e-6
+fix fv1 OTHERS viscous 8e-6
 
 fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  1e-4
 
 variable kanc equal 50
-
-#fix zwa all walladh v_kanc zplane  0.0  1e-04
 
 ##############Define IBm Variables##############
 
@@ -104,7 +113,7 @@ variable divDia equal 1.36e-6
 variable divisionCounter equal 4
 variable asym equal 0.8
 variable maxDivCount equal 4
-variable stemPercent equal 0.1
+variable stemPercent equal 0.05
 
 #variables used in fix kinetics
 variable diffT equal 1e-4
@@ -112,7 +121,8 @@ variable layer equal -1
 variable tol equal 1e-5
 
 #common variables used in growth
-variable abase equal 4.16666667e-8
+#variable abase equal 4.16666667e-8
+variable abase equal 0
 variable il172 equal 0.00000578703
 variable il1720 equal 0.0004224537
 variable tnfa2 equal 0.00000578703
@@ -148,8 +158,8 @@ fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320 v_il1
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase v_ca2
 fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
-#fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_gf20 v_abase v_il172 v_il1720 v_tnfa2 v_tnfa20 v_sc2ta v_ca20
-#fix d2 TA psoriasis/divide_ta 6 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
+fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_abase v_sc2ta v_ca2
+fix d2 TA psoriasis/divide_ta 100 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
 #fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20
 
 ##############Define IBm Computes##############
@@ -168,7 +178,7 @@ thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 20 pre no post no every 1 &
+run 50 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
 "timestep 1e-3" &
 "run 1000 pre no post no" &
