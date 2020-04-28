@@ -50,8 +50,8 @@ group APOP type 6
 group BM type 7
 
 group BASE union BM TCELL
-group OTHERS union STEM TA DIFF
-#group PROLIF union STEM TA
+#group OTHERS union STEM TA DIFF
+group PROLIF union STEM TA
 
 fix fz1 BASE freeze
 fix nomove BASE move linear 0.0 0.0 0.0 units box
@@ -98,8 +98,11 @@ velocity BASE set 0.0 0.0 0.0 units box
 fix 2 BASE nve/limit 0
 fix fv2 BASE viscous 5e-6
 
-fix 1 OTHERS nve/limit 2e-6
-fix fv1 OTHERS viscous 8e-6
+fix 1 PROLIF nve/limit 2.5e-8
+fix fv1 PROLIF viscous 5e-5
+
+fix 3 DIFF nve/limit 2.5e-7
+fix fv3 DIFF viscous 5e-6
 
 fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  1e-4
 
