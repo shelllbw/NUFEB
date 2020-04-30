@@ -289,7 +289,8 @@ void FixPDivideStem::init() {
      avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
 	 newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
 	 newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
-	 newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
+	 //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
+	 newZ = oldZ;
 	 if (newX - avec->outer_radius[i] < xlo) {
 		 newX = xlo + avec->outer_radius[i];
 	 } else if (newX + avec->outer_radius[i] > xhi) {
@@ -322,7 +323,12 @@ void FixPDivideStem::init() {
 	 double* coord = new double[3];
 	 newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
 	 newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
-	 newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
+	 //newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
+	 newZ = oldZ;
+	 if (childType == ta_id){
+		 newZ = oldZ + childOuterRadius;
+		 //printf("child newz is stem %e\n", newZ);
+	 }
 	 if (newX - childOuterRadius < xlo) {
 		 newX = xlo + childOuterRadius;
 	 } else if (newX + childOuterRadius > xhi) {
@@ -335,8 +341,10 @@ void FixPDivideStem::init() {
 	 }
 	 if (newZ - childOuterRadius < zlo) {
 		 newZ = zlo + childOuterRadius;
+		 printf("enters here 1 \n");
 	 } else if (newZ + childOuterRadius > zhi) {
 		 newZ = zhi - childOuterRadius;
+		 printf("enters here 2 \n");
 	 }
 	 //coordinates should be the same as parent
 	 coord[0] = newX;

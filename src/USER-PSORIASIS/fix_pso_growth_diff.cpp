@@ -288,8 +288,8 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 		double R12 = ddesq;
 
 		nur[ca][grid] += ca2 * nus[ca][grid] - R9_3 * (rmass[i]/grid_vol);
-		nur[il17][grid] += -(R9_1 * (rmass[i]/ grid_vol);
-		nur[tnfa][grid] += -(R9_2 * (rmass[i]/ grid_vol);
+		nur[il17][grid] += -(R9_1 * (rmass[i]/ grid_vol));
+		nur[tnfa][grid] += -(R9_2 * (rmass[i]/ grid_vol));
 
         growrate_d = R9_1 + R9_2 + R9_3 - R10 - R11 - R12;
 

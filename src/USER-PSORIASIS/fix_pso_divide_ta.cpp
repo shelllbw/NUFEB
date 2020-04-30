@@ -279,7 +279,8 @@ void FixPDivideTa::post_integrate() {
         avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
         newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
         newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
-        newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
+        //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
+        newZ = oldZ;
         if (newX - avec->outer_radius[i] < xlo) {
           newX = xlo + avec->outer_radius[i];
         } else if (newX + avec->outer_radius[i] > xhi) {
@@ -309,7 +310,11 @@ void FixPDivideTa::post_integrate() {
         double* coord = new double[3];
         newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
         newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
-        newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
+        //newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
+        newZ = oldZ;
+		 if (childType == diff_id){
+			 newZ = oldZ + childOuterRadius;
+		 }
         if (newX - childOuterRadius < xlo) {
           newX = xlo + childOuterRadius;
         } else if (newX + childOuterRadius > xhi) {
@@ -322,8 +327,10 @@ void FixPDivideTa::post_integrate() {
         }
         if (newZ - childOuterRadius < zlo) {
           newZ = zlo + childOuterRadius;
+          printf("enters here 3 \n");
         } else if (newZ + childOuterRadius > zhi) {
           newZ = zhi - childOuterRadius;
+          printf("enters here 4 \n");
         }
         //coordinates should be the same as parent
         coord[0] = newX;

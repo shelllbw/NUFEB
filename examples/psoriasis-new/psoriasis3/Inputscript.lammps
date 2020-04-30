@@ -13,7 +13,7 @@ read_data_bio atom.in
 
 variable x equal 100
 variable y equal 20
-variable z equal 30
+variable z equal 20
 
 lattice sc 1e-6 origin 0.5 0.5 0.5
 
@@ -24,11 +24,13 @@ region reg3 block 0 $x 0 $y 5 $z
 variable  xx internal 0.0
 variable  yy internal 0.0
 variable  zz internal 0.0
-variable  v equal "(0.12*v_z*zlat * cos(v_xx/xlat * 2.0*PI*PI/v_x) * cos(v_yy/ylat * 0.75*PI*PI/v_y) + 0.9*v_z*zlat - v_zz  ) > 0.0"
+variable  v equal "(0.4*v_z*zlat * cos(v_xx/xlat * 0.5*PI*4.0/v_x) + 0.7*v_z*zlat - v_zz ) > 0.0"
+
 
 group STEM type 1
 
 create_atoms 7 region reg var v set x xx set y yy set z zz
+#create_atoms 7 region reg
 set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
@@ -159,10 +161,10 @@ variable il2320 equal 0.0001
 fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320 v_il172 v_il1720 v_tnfa2 v_tnfa20
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
-fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase v_ca2
-fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
-fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_abase v_sc2ta v_ca2
-fix d2 TA psoriasis/divide_ta 100 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
+#fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase v_ca2
+#fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
+#fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_abase v_sc2ta v_ca2
+#fix d2 TA psoriasis/divide_ta 100 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
 #fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20
 
 ##############Define IBm Computes##############
