@@ -303,6 +303,9 @@ void FixPDivideTa::post_integrate() {
         atom->mask[i] = parentMask;
         avec->d_counter[i] = parentDivisionCount;
 
+   	 //printf("divide_ta PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e division count %i \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i], parentDivisionCount);
+
+
         //create child
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
         //double childOuterRadius = childRadius;
@@ -364,6 +367,8 @@ void FixPDivideTa::post_integrate() {
         atom->type[n] = childType;
         atom->mask[n] = childMask;
         avec->d_counter[n] = childDivisionCount;
+
+   	 //printf("divide_sc CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e division counter %i \n", n, childMass, childRadius, childOuterMass, childOuterRadius, childDivisionCount);
 
         modify->create_attribute(n);
 

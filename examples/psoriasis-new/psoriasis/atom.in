@@ -4,9 +4,9 @@
        7 atom types
        5 nutrients
 
-   0.000000e-04   1e-04  xlo xhi
+   0.000000e-04   0.5e-04  xlo xhi
    0.000000e-04   0.2e-04  ylo yhi
-   0.000000e-04   1e-04  zlo zhi
+   0.000000e-04   0.6e-04  zlo zhi
 
  Atoms
 
@@ -17,7 +17,7 @@
      2 tnfa l 0 0 0 0 0 0 0
      3 il23 l 0 0 0 0 0 0 0
      4 gf l 0 0 0 0 0 0 0
-     5 ca l 0.015 0.015 0.015 0.015 0.015 0.015 0
+     5 ca l 0 0 0 0 0 0.015 0
 
  Type Name
 

@@ -312,7 +312,7 @@ void FixPDivideStem::init() {
 	 atom->type[i] = parentType;
 	 atom->mask[i] = parentMask;
 
-	// printf("divide_sc PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i]);
+	 //printf("divide_sc PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i]);
 
 
 	 //create child
