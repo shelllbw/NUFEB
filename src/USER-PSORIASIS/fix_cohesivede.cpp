@@ -42,7 +42,7 @@ using namespace FixConst;
 FixCohede::FixCohede(LAMMPS *lmp, int narg, char **arg) :
   Fix(lmp, narg, arg)
 {
-  if (narg != 9) error->all(FLERR,"Illegal fix cohesivede command");
+  if (narg != 13) error->all(FLERR,"Illegal fix cohesivede command");
 
   //a1 > a2
   a1 = atof(arg[3]);
@@ -51,6 +51,10 @@ FixCohede::FixCohede(LAMMPS *lmp, int narg, char **arg) :
   smax = atof(arg[6]);
   opt = atoi(arg[7]);
   a2 = atof(arg[8]);
+  a3 = atof(arg[9]);
+  a4 = atof(arg[10]);
+  a5 = atof(arg[11]);
+  a6 = atof(arg[12]);
   
   nmax = 0;
   nvalues = 7;   // Number of output columns : PID FX FY FZ NX NY NZ
@@ -253,8 +257,18 @@ void FixCohede::post_force(int vflag)
 		  int ti = atom->type[i]; //i's type
 		  int tj = atom->type[j]; //j's type
 		  if      (strcmp(bio->tname[ti],"bm") == 0 && strcmp(bio->tname[tj],"stem") == 0) ah = a1;
-		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a2;
 		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a1;
+		  else if (strcmp(bio->tname[ti],"bm") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a2;
+		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a2;
+		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
+		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
+		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a4;
+		  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a4;
+		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a5;
+		  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a5;
+		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a6;
+		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a6;
+		  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a6;
 		  else ah = 0;
 	  
   if (rsq < (radsum + smax)*(radsum + smax)){
@@ -278,7 +292,6 @@ void FixCohede::post_force(int vflag)
 
 		if (newton_pair || j < nlocal){
 	      f[j][0] -= ccelx;
-	      f[j][1] -= ccely;
 	      f[j][2] -= ccelz;
 	    }
 	  }
@@ -507,12 +520,23 @@ else if (opt ==1){
 	  radsum = radi + radj;
 	  
 		  //YUQING
-  int ti = atom->type[i]; //i's type
-  int tj = atom->type[j]; //j's type
-  if      (strcmp(bio->tname[ti],"bm") == 0 && strcmp(bio->tname[tj],"stem") == 0) ah = a1;
-  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a2;
-  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a1;
-  else ah = 0;
+	  int ti = atom->type[i]; //i's type
+	  int tj = atom->type[j]; //j's type
+
+	  if      (strcmp(bio->tname[ti],"bm") == 0 && strcmp(bio->tname[tj],"stem") == 0) ah = a1;
+	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a1;
+	  else if (strcmp(bio->tname[ti],"bm") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a2;
+	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a2;
+	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
+	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
+	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a4;
+	  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a4;
+	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a5;
+	  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a5;
+	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a6;
+	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a6;
+	  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a6;
+	  else ah = 0;
 
   if (rsq < (radsum + smax)*(radsum + smax)){
 	    r = sqrt(rsq);

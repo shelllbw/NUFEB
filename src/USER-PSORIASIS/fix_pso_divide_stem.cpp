@@ -303,8 +303,10 @@ void FixPDivideStem::init() {
 	 }
 	 if (newZ - avec->outer_radius[i] < zlo) {
 		 newZ = zlo + avec->outer_radius[i];
+		 printf("enters here 1 parent type %i \n", parentType);
 	 } else if (newZ + avec->outer_radius[i] > zhi) {
 		 newZ = zhi - avec->outer_radius[i];
+		 printf("enters here 2 parent type %i \n", parentType);
 	 }
 	 atom->x[i][0] = newX;
 	 atom->x[i][1] = newY;
@@ -341,10 +343,10 @@ void FixPDivideStem::init() {
 	 }
 	 if (newZ - childOuterRadius < zlo) {
 		 newZ = zlo + childOuterRadius;
-		 printf("enters here 1 \n");
+		 printf("enters here 3 type: %i \n", childType);
 	 } else if (newZ + childOuterRadius > zhi) {
 		 newZ = zhi - childOuterRadius;
-		 printf("enters here 2 \n");
+		 printf("enters here 4 type: %i \n", childType);
 	 }
 	 //coordinates should be the same as parent
 	 coord[0] = newX;

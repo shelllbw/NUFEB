@@ -46,8 +46,7 @@ class FixCohede : public Fix {
   double lam; // London retardation wavelength
   double smin; //minimum separation
  
-  double a1;
-  double a2;
+  double a1, a2, a3, a4, a5, a6;
   
   //YUQING
   class BIO *bio;

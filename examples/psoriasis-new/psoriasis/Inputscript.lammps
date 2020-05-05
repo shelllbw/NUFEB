@@ -99,7 +99,8 @@ fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-
 
 variable kanc equal 50
 
-fix fco all cohesivede 1e-13 1 1e-8 1e-6 1 5e-15
+# a1 = bm-sc  a2 = bm-ta a3 = sc-ta  a4 =sc-diff  a5 = ta-diff a6 = same cell type
+fix fco all cohesivede 1.6e-17 1 1e-8 5e-7 1 1.6e-19 1.6e-20 1.6e-25 1.6e-20 2.5e-17
 
 ##############Define IBm Variables##############
 
