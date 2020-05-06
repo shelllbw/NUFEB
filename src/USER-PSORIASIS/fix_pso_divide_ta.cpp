@@ -217,7 +217,7 @@ void FixPDivideTa::post_integrate() {
     	  rand = distribution(gen);
       }
 
-      if (atom->radius[i] * 2 >= div_dia ){
+      if (atom->radius[i] * 2 >= div_dia){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
     		  parentType = diff_id;
     		  childType = diff_id;
@@ -226,8 +226,8 @@ void FixPDivideTa::post_integrate() {
     		  parentDivisionCount = avec->d_counter[i] + 1;
     		  childDivisionCount = 0;
     	  }
-    	  if (parentDivisionCount < max_division_counter){
-    		  if (rand < asym) { //asymmetric division
+    	  if (parentDivisionCount < max_division_counter && rand < asym){
+    		  //if (rand < asym) { //asymmetric division
 				parentType = type_id;
 				childType = diff_id;
 				parentMask = atom->mask[i];
@@ -241,7 +241,7 @@ void FixPDivideTa::post_integrate() {
 				childMask = atom->mask[i];
 				parentDivisionCount = avec->d_counter[i] + 1;
 				childDivisionCount = 0;
-    		  }
+    		  //}
     	  }
 
 		double splitF = 0.4 + (random->uniform() *0.2);
@@ -281,6 +281,9 @@ void FixPDivideTa::post_integrate() {
         newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
         //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
         newZ = oldZ;
+		 if (parentType == diff_id){
+			 newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
+		 }
         if (newX - avec->outer_radius[i] < xlo) {
           newX = xlo + avec->outer_radius[i];
         } else if (newX + avec->outer_radius[i] > xhi) {
@@ -318,7 +321,7 @@ void FixPDivideTa::post_integrate() {
         //newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
         newZ = oldZ;
 		 if (childType == diff_id){
-			 newZ = oldZ + childOuterRadius;
+			 newZ = oldZ + (childOuterRadius * cos(phiD) * DELTA);
 		 }
         if (newX - childOuterRadius < xlo) {
           newX = xlo + childOuterRadius;

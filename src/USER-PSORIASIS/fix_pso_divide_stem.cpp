@@ -291,6 +291,10 @@ void FixPDivideStem::init() {
 	 newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
 	 //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
 	 newZ = oldZ;
+	 if (parentType == ta_id){
+		 newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
+		 //printf("child newz is stem %e\n", newZ);
+	 }
 	 if (newX - avec->outer_radius[i] < xlo) {
 		 newX = xlo + avec->outer_radius[i];
 	 } else if (newX + avec->outer_radius[i] > xhi) {
@@ -328,8 +332,9 @@ void FixPDivideStem::init() {
 	 //newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
 	 newZ = oldZ;
 	 if (childType == ta_id){
-		 newZ = oldZ + childOuterRadius;
+		 newZ = oldZ + (childOuterRadius * cos(phiD) * DELTA);
 		 //printf("child newz is stem %e\n", newZ);
+		 //printf("if using just + outerradius %e\n", oldZ + childOuterRadius);
 	 }
 	 if (newX - childOuterRadius < xlo) {
 		 newX = xlo + childOuterRadius;

@@ -258,17 +258,18 @@ void FixCohede::post_force(int vflag)
 		  int tj = atom->type[j]; //j's type
 		  if      (strcmp(bio->tname[ti],"bm") == 0 && strcmp(bio->tname[tj],"stem") == 0) ah = a1;
 		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a1;
-		  else if (strcmp(bio->tname[ti],"bm") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a2;
-		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a2;
-		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
-		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
-		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a4;
-		  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a4;
-		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a5;
-		  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a5;
-		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a6;
-		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a6;
-		  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a6;
+		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a2;
+//		  else if (strcmp(bio->tname[ti],"bm") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a2;
+//		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a2;
+//		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
+//		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
+//		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a4;
+//		  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a4;
+//		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a5;
+//		  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a5;
+//		  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a6;
+//		  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a6;
+//		  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a6;
 		  else ah = 0;
 	  
   if (rsq < (radsum + smax)*(radsum + smax)){
@@ -525,17 +526,18 @@ else if (opt ==1){
 
 	  if      (strcmp(bio->tname[ti],"bm") == 0 && strcmp(bio->tname[tj],"stem") == 0) ah = a1;
 	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a1;
-	  else if (strcmp(bio->tname[ti],"bm") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a2;
-	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a2;
-	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
-	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
-	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a4;
-	  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a4;
-	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a5;
-	  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a5;
-	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a6;
-	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a6;
-	  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a6;
+	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a2;
+//	  else if (strcmp(bio->tname[ti],"bm") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a2;
+//	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"bm")== 0) ah = a2;
+//	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
+//	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a3;
+//	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a4;
+//	  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a4;
+//	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a5;
+//	  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a5;
+//	  else if (strcmp(bio->tname[ti],"stem") == 0 &&  strcmp(bio->tname[tj],"stem")== 0) ah = a6;
+//	  else if (strcmp(bio->tname[ti],"ta") == 0 &&  strcmp(bio->tname[tj],"ta")== 0) ah = a6;
+//	  else if (strcmp(bio->tname[ti],"diff") == 0 &&  strcmp(bio->tname[tj],"diff")== 0) ah = a6;
 	  else ah = 0;
 
   if (rsq < (radsum + smax)*(radsum + smax)){

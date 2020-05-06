@@ -1,4 +1,6 @@
 # NUFEB simulation
+# PSORIASIS4 - pair_style to prevent cells going into BM
+# todo - cohesive forces
 
 atom_style	bio
 atom_modify	map array sort 100 5.0e-7
@@ -11,7 +13,7 @@ units si
 comm_modify	vel yes
 read_data_bio atom.in
 
-variable x equal 50
+variable x equal 100
 variable y equal 20
 variable z equal 15
 
@@ -33,7 +35,7 @@ set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 15 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 50 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
@@ -100,7 +102,7 @@ fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-
 variable kanc equal 50
 
 # a1 = bm-sc  a2 = bm-ta a3 = sc-ta  a4 =sc-diff  a5 = ta-diff a6 = same cell type
-fix fco all cohesivede 1.6e-17 1 1e-8 5e-7 1 1.6e-19 1.6e-20 1.6e-25 1.6e-20 2.5e-17
+#fix fco all cohesivede 1.6e-20 1 1e-8 1e-6 1 1.6e-21 1.6e-21 0 1.6e-21 1.6e-18
 
 ##############Define IBm Variables##############
 
@@ -150,7 +152,7 @@ variable il2320 equal 0.0001
 
 ##############Define IBm Commands##############
 
-fix k1 all kinetics 1 10 4 12 v_diffT v_layer demflag 0 niter 5000
+fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320 v_il172 v_il1720 v_tnfa2 v_tnfa20
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase v_ca2
