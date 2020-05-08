@@ -189,6 +189,14 @@ void FixPDivideTa::post_integrate() {
     return;
 
   int nlocal = atom->nlocal;
+  int nta = 0;
+
+  //get the total number of stem cells in the system
+  for (int i = 0; i < nlocal; i++) {
+	if (atom->mask[i] & groupbit) {
+		nta++;
+	}
+  }
 
   for (int i = 0; i < nlocal; i++) {
     //this groupbit will allow the input script to set each cell type to divide
@@ -217,6 +225,11 @@ void FixPDivideTa::post_integrate() {
     	  rand = distribution(gen);
       }
 
+      //calculate a single splice of z axis
+      //double slayer =  (xhi - xlo) * (yhi - ylo) * atom->radius[i] * 2;
+      //double scapacity = (atom->radius[i] * 2 / slayer) * 0.000008;
+      //printf("slayer = %e    scapacity = %e \n", slayer, scapacity);
+
       if (atom->radius[i] * 2 >= div_dia){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
     		  parentType = diff_id;
@@ -225,23 +238,21 @@ void FixPDivideTa::post_integrate() {
     		  childMask = diff_mask;
     		  parentDivisionCount = avec->d_counter[i] + 1;
     		  childDivisionCount = 0;
-    	  }
-    	  if (parentDivisionCount < max_division_counter && rand < asym){
-    		  //if (rand < asym) { //asymmetric division
-				parentType = type_id;
-				childType = diff_id;
-				parentMask = atom->mask[i];
-				childMask = diff_mask;
-				parentDivisionCount = avec->d_counter[i] + 1;
-				childDivisionCount = 0;
-    		  } else { //self proliferate
-				parentType = type_id;
-				childType = type_id;
-				parentMask = atom->mask[i];
-				childMask = atom->mask[i];
-				parentDivisionCount = avec->d_counter[i] + 1;
-				childDivisionCount = 0;
-    		  //}
+    	  } else if (parentDivisionCount < max_division_counter && rand < asym){
+			//asymmetric division
+			parentType = type_id;
+			childType = diff_id;
+			parentMask = atom->mask[i];
+			childMask = diff_mask;
+			parentDivisionCount = avec->d_counter[i] + 1;
+			childDivisionCount = 0;
+		  } else { //self proliferate
+			parentType = type_id;
+			childType = type_id;
+			parentMask = atom->mask[i];
+			childMask = atom->mask[i];
+			parentDivisionCount = avec->d_counter[i] + 1;
+			childDivisionCount = 0;
     	  }
 
 		double splitF = 0.4 + (random->uniform() *0.2);
@@ -277,11 +288,17 @@ void FixPDivideTa::post_integrate() {
         atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
         //avec->outer_radius[i] = atom->radius[i];
         avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
-        newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
-        newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
+//        newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
+//        newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
         //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
-        newZ = oldZ;
-		 if (parentType == diff_id){
+        if (parentType == ta_id) {
+        	newX = oldX;
+        	newY = oldY;
+        	newZ = oldZ;
+        }
+		 if (parentType == diff_id) {
+			 newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
+			 newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
 			 newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
 		 }
         if (newX - avec->outer_radius[i] < xlo) {
@@ -319,9 +336,11 @@ void FixPDivideTa::post_integrate() {
         newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
         newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
         //newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
-        newZ = oldZ;
+        if (childType == ta_id) {
+        	newZ = oldZ;
+        }
 		 if (childType == diff_id){
-			 newZ = oldZ + (childOuterRadius * cos(phiD) * DELTA);
+			 newZ = oldZ - (avec->outer_radius[i] * cos(phiD) * DELTA);
 		 }
         if (newX - childOuterRadius < xlo) {
           newX = xlo + childOuterRadius;

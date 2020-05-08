@@ -221,37 +221,34 @@ void FixPDivideStem::init() {
 
       //stem cell takes up approximately 5% of the population
       max_cap = round((nlocal - nbm) * stem_percent);
-      //int max_cap = 10;
-      //printf("max cap is %i\n", max_cap);
 
       if (max_cap < 2){
     	  max_cap = round(nlocal * 0.5);
       }
       //printf("max cap = %i nlocal : %i nbm : %i \n", max_cap, nlocal, nbm);
 
+      //calculate a single splice of z axis
+      //double slayer =  (xhi - xlo) * (yhi - ylo) * atom->radius[i] * 2;
+      //double scapacity = (atom->radius[i] * 2 / slayer) * 0.000002;
+      //printf("slayer = %e    scapacity = %e \n", slayer, scapacity);
+
       //printf("DIVIDE SC atom radius is %e\n", atom->radius[i]);
-   if (atom->radius[i] * 2 >= div_dia ){
+   if (atom->radius[i] * 2 >= div_dia){
 	   if (nstem < max_cap){
     	 parentType = stem_id;
 		 childType = parentType;
 		 parentMask = atom->mask[i];
 		 childMask = parentMask;
-   	   }
-
-	   if (nstem >= max_cap){
-		   if (rand < asym){
-			  // printf("asym is %f\n", rand);
+   	   }else if (nstem >= max_cap && rand < asym){
 			 parentType = stem_id;
 			 childType = ta_id;
 			 parentMask = atom->mask[i];
 			 childMask = ta_mask;
-		   } else {
-			 //printf("sym is %f\n", rand);
+	   } else {
 			 parentType = ta_id;
 			 childType = ta_id;
 			 parentMask = ta_mask;
 			 childMask = ta_mask;
-		   }
 	   }
 
      double splitF = 0.4 + (random->uniform() *0.2);
@@ -287,13 +284,18 @@ void FixPDivideStem::init() {
 	 atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
 	 //avec->outer_radius[i] = atom->radius[i];
      avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
-	 newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
-	 newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
+	 //newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
+	 //newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
 	 //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
-	 newZ = oldZ;
+	 newX = oldX;
+	 newY = oldY;
+	 if (parentType == stem_id){
+		 newZ = oldZ;
+	 }
 	 if (parentType == ta_id){
+//		 newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
+//		 newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
 		 newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
-		 //printf("child newz is stem %e\n", newZ);
 	 }
 	 if (newX - avec->outer_radius[i] < xlo) {
 		 newX = xlo + avec->outer_radius[i];
@@ -330,11 +332,11 @@ void FixPDivideStem::init() {
 	 newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
 	 newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
 	 //newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
-	 newZ = oldZ;
+	 if (childType == stem_id){
+		 newZ = oldZ;
+	 }
 	 if (childType == ta_id){
-		 newZ = oldZ + (childOuterRadius * cos(phiD) * DELTA);
-		 //printf("child newz is stem %e\n", newZ);
-		 //printf("if using just + outerradius %e\n", oldZ + childOuterRadius);
+		 newZ = oldZ - (avec->outer_radius[i] * cos(phiD) * DELTA);
 	 }
 	 if (newX - childOuterRadius < xlo) {
 		 newX = xlo + childOuterRadius;

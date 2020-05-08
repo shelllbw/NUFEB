@@ -33,7 +33,7 @@ set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 100 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 200 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
@@ -111,6 +111,7 @@ variable divisionCounter equal 4
 variable asym equal 0.8
 variable maxDivCount equal 4
 variable stemPercent equal 0.05
+variable sym equal 0.2
 
 #variables used in fix kinetics
 variable diffT equal 1e-4
