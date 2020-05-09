@@ -291,15 +291,12 @@ void FixPDivideTa::post_integrate() {
 //        newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
 //        newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
         //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
+        newX = oldX;
+        newY = oldY;
         if (parentType == ta_id) {
-        	newX = oldX;
-        	newY = oldY;
         	newZ = oldZ;
-        }
-		 if (parentType == diff_id) {
-			 newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
-			 newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
-			 newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
+        } else {
+			newZ = oldZ + atom->radius[i];
 		 }
         if (newX - avec->outer_radius[i] < xlo) {
           newX = xlo + avec->outer_radius[i];
@@ -333,15 +330,19 @@ void FixPDivideTa::post_integrate() {
         //double childOuterRadius = childRadius;
         double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
         double* coord = new double[3];
-        newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
-        newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
-        //newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
+//		newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
+//		newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
+//        newX = oldX + atom->radius[i];
+//        newY = oldY + atom->radius[i];
         if (childType == ta_id) {
+        	newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
+        	newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
         	newZ = oldZ;
-        }
-		 if (childType == diff_id){
-			 newZ = oldZ - (avec->outer_radius[i] * cos(phiD) * DELTA);
-		 }
+        } else {
+        	newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
+        	newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
+			newZ = oldZ + atom->radius[i];
+		}
         if (newX - childOuterRadius < xlo) {
           newX = xlo + childOuterRadius;
         } else if (newX + childOuterRadius > xhi) {

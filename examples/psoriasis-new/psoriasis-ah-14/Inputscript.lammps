@@ -13,7 +13,7 @@ read_data_bio atom.in
 
 variable x equal 50
 variable y equal 20
-variable z equal 15
+variable z equal 20
 
 lattice sc 1e-6 origin 0.5 0.5 0.5
 
@@ -33,7 +33,7 @@ set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 200 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 350 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
@@ -83,7 +83,7 @@ set type 6 mass 7.853981e-17
 ##############Define DEM Variables&Commands##############
 
 
-pair_style  gran/hooke/history 2000 NULL 2000 NULL 0.0 1
+pair_style  gran/hooke/history 1500 NULL 1500 NULL 0.0 1
 pair_coeff  * *
 
 timestep 1e-3
@@ -95,12 +95,12 @@ velocity BASE set 0.0 0.0 0.0 units box
 fix 1 all nve/limit 1e-8
 fix fv1 all viscous 1e-5
 
-fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
+fix zw all wall/gran hooke/history 1500 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
 
 variable kanc equal 50
 
 # a1 = bm-sc  a2 = bm-ta a3 = sc-ta  a4 =sc-diff  a5 = ta-diff a6 = same cell type
-fix fco all cohesivede 1.6e-14 1 1e-8 2e-6 1 1.6e-14 1.6e-21 0 1.6e-21 1.6e-18
+fix fco all cohesivede 2.55e-12 1 1e-8 2e-6 1 2.55e-12 1.6e-21 0 1.6e-21 1.6e-18
 
 ##############Define IBm Variables##############
 
@@ -155,9 +155,9 @@ fix k1 all kinetics 1 10 4 12 v_diffT v_layer demflag 0 niter 5000
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320 v_il172 v_il1720 v_tnfa2 v_tnfa20
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase v_ca2
-fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
+fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
 fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_abase v_sc2ta v_ca2
-fix d2 TA psoriasis/divide_ta 100 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
+fix d2 TA psoriasis/divide_ta 1 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
 #fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20
 
 ##############Define IBm Computes##############
@@ -168,8 +168,8 @@ compute myMass all biomass
 ##############Simulation Output##############
 
 # Use atom_# instead of atom%_#
-dump		du1 all custom/vtk 1001 atom_*.vtu id type diameter x y z
-dump		du2 all grid 1001 grid_%_*.vti con
+dump		du1 all custom/vtk 500 atom_*.vtu id type diameter x y z
+dump		du2 all grid 500 grid_%_*.vti con
 thermo_style    custom step cpu atoms c_myNtypes[*]
 thermo		1001
 thermo_modify	lost ignore
@@ -178,7 +178,11 @@ thermo_modify	lost ignore
 
 run 50 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
+"fix_modify d1 demflag 1" &
+"fix_modify d2 demflag 1" &
 "timestep 1e-3" &
 "run 1000 pre no post no" &
 "timestep 3600"  &
-"fix_modify k1 demflag 0"
+"fix_modify k1 demflag 0" &
+"fix_modify d1 demflag 0" &
+"fix_modify d2 demflag 0"
