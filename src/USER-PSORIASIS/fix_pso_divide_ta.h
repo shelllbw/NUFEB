@@ -59,11 +59,16 @@ class FixPDivideTa : public Fix {
   int parentType, childType;
   int parentMask, childMask;
   double asym, cell_dens;
+  int ca;
+  int nx, ny, nz;
+  double stepx, stepy, stepz;       // grids size
+  double vol;                       // grid volume and gas volume
 
   class RanPark *random;
   class AtomVecBio *avec;
   class BIO *bio;
   class FixFluid *nufebFoam;
+  class FixKinetics *kinetics;
 };
 
 }

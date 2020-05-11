@@ -56,7 +56,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/diff requires atom style bio");
 
-  if (narg < 11)
+  if (narg < 7)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/diff command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 11;
+  int iarg = 7;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -138,12 +138,8 @@ void FixPGrowthDIFF::init() {
 
   diff_dens = input->variable->compute_equal(ivar[0]);
   abase = input->variable->compute_equal(ivar[1]);
-  ta2d = input->variable->compute_equal(ivar[2]);
-  ddesq = input->variable->compute_equal(ivar[3]);
-  il172 = input->variable->compute_equal(ivar[4]);
-  il1720 = input->variable->compute_equal(ivar[5]);
-  tnfa2 = input->variable->compute_equal(ivar[6]);
-  tnfa20 = input->variable->compute_equal(ivar[7]);
+  ddesq = input->variable->compute_equal(ivar[2]);
+  ca2 = input->variable->compute_equal(ivar[3]);
 
   bio = kinetics->bio;
 
@@ -206,6 +202,8 @@ void FixPGrowthDIFF::init_param() {
 	error->all(FLERR, "fix_psoriasis/growth/diff requires nutrient il17");
   if (tnfa == 0)
     	error->all(FLERR, "fix_psoriasis/growth/diff requires nutrient tnfa");
+  if (ca == 0)
+   	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -260,16 +258,11 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
-  //double **xdensity = kinetics->xdensity;
-
   const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
   const double third = 1.0 / 3.0;
 
   double growrate_d = 0;
-
-//  for(int i=0; i<atom->nlocal; i++)
-//      if (atom->type[i] == 1)  printf("ii=%i %i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
 
   for (int i = 0; i < nlocal; i++) {
 	if (mask[i] & groupbit) {
@@ -287,9 +280,9 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 		double R11 = abase;
 		double R12 = ddesq;
 
-		nur[ca][grid] += ca2 * nus[ca][grid] - R9_3 * (rmass[i]/grid_vol);
 		nur[il17][grid] += -(R9_1 * (rmass[i]/ grid_vol));
 		nur[tnfa][grid] += -(R9_2 * (rmass[i]/ grid_vol));
+		nur[ca][grid] += ca2 * nus[ca][grid] - R9_3 * (rmass[i]/grid_vol);
 
         growrate_d = R9_1 + R9_2 + R9_3 - R10 - R11 - R12;
 
@@ -305,6 +298,7 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
         outer_mass[i] = rmass[i];
         outer_radius[i] = radius[i];
+        radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
       }
     }
   }

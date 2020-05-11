@@ -53,8 +53,8 @@ class FixPGrowthDIFF : public Fix {
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
   double diff_dens; 					//cell density
-  double il172, il1720, tnfa2,tnfa20, ca2;
-  double abase, ta2d, ddesq;
+  double ca2, ca20;
+  double abase, ddesq;
 
   class AtomVecBio *avec;
   class FixKinetics *kinetics;

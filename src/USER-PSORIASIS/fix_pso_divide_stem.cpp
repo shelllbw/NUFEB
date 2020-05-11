@@ -37,6 +37,7 @@
 #include "variable.h"
 #include "modify.h"
 #include "group.h"
+#include "fix_bio_kinetics.h"
 
 
 using namespace LAMMPS_NS;
@@ -58,23 +59,23 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 9)
+  if (narg < 10)
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[4];
-  ivar = new int[4];
+  var = new char*[5];
+  ivar = new int[5];
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[8]);
+  seed = force->inumeric(FLERR, arg[9]);
 
   // read optional param
   demflag = 0;
@@ -82,7 +83,20 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   //dinika - set ta_mask to -1
   ta_mask = -1;
 
-  int iarg = 9;
+  kinetics = NULL;
+
+  int nfix = modify->nfix;
+  for (int j = 0; j < nfix; j++) {
+	if (strcmp(modify->fix[j]->style, "kinetics") == 0) {
+	  kinetics = static_cast<FixKinetics *>(lmp->modify->fix[j]);
+	  break;
+	}
+  }
+
+  if (kinetics == NULL)
+	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
+
+  int iarg = 10;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -114,6 +128,13 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
     zlo = domain->boxlo_bound[2];
     zhi = domain->boxhi_bound[2];
   }
+
+  stepx = (xhi - xlo) / nx;
+  stepy = (yhi - ylo) / ny;
+  stepz = (zhi - zlo) / nz;
+
+  vol = stepx * stepy * stepz;
+
   // instance of nufeb biology
   bio = avec->bio;
   // force reneighbor list
@@ -127,7 +148,7 @@ FixPDivideStem::~FixPDivideStem() {
   delete random;
 
   int i;
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < 5; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -150,7 +171,7 @@ void FixPDivideStem::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 4; n++) {
+  for (int n = 0; n < 5; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -162,7 +183,7 @@ void FixPDivideStem::init() {
   asym = input->variable->compute_equal(ivar[1]);
   cell_dens = input->variable->compute_equal(ivar[2]);
   stem_percent = input->variable->compute_equal(ivar[3]);
-  //printf("stem percent is %f\n", stem_percent);
+  caThreshold = input->variable->compute_equal(ivar[4]);
 
   //Dinika's edits
   //modify atom mask
@@ -173,6 +194,16 @@ void FixPDivideStem::init() {
     }
   }
   if (ta_mask < 0) error->all(FLERR, "Cannot get TA group.");
+
+	ca = 0;
+	// initialize nutrient
+	for (int nu = 1; nu <= bio->nnu; nu++) {
+		if (strcmp(bio->nuname[nu], "ca") == 0)
+				  ca = nu;
+	}
+
+	if (ca == 0) error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
+
 }
 
   void FixPDivideStem::post_integrate() {
@@ -227,19 +258,37 @@ void FixPDivideStem::init() {
       }
       //printf("max cap = %i nlocal : %i nbm : %i \n", max_cap, nlocal, nbm);
 
-      //calculate a single splice of z axis
-      //double slayer =  (xhi - xlo) * (yhi - ylo) * atom->radius[i] * 2;
-      //double scapacity = (atom->radius[i] * 2 / slayer) * 0.000002;
-      //printf("slayer = %e    scapacity = %e \n", slayer, scapacity);
+      //getting calcium concentration in the grid atom is in
+      double grid_vol = kinetics->stepx * kinetics->stepy * kinetics->stepz;
+      double **nus = kinetics->nus;
+      int grid = kinetics->position(i); //find grid that atom is in
+      //printf("calcium conc is %e \n", nus[ca][grid]);
+      //caThreshold = 4e-7;
 
-      //printf("DIVIDE SC atom radius is %e\n", atom->radius[i]);
+      //find grid above cell's location to determine where it is roughly in the skin
+      //based on the calcium concentration, cell will decide if it should change to a stem or TA cell
+//      if (nus[ca][grid] > nus[ca][grid+1]){
+//    	  caThreshold = nus[ca][grid+1];
+//    	  printf("current conc is %e     grid+1 is %e \n", nus[ca][grid], caThreshold);
+//      } else if (nus[ca][grid] > nus[ca][grid-1]){
+//    	  caThreshold = nus[ca][grid-1];
+//    	  printf("current conc is %e     grid+1 is %e \n", nus[ca][grid], caThreshold);
+//      }
+
+      //printf("current conc is %e     grid+1 is %e     grid-1 is %e \n", nus[ca][grid], nus[ca][grid+1], nus[ca][grid-1]);
+
    if (atom->radius[i] * 2 >= div_dia){
 	   if (nstem < max_cap){
     	 parentType = stem_id;
 		 childType = parentType;
 		 parentMask = atom->mask[i];
 		 childMask = parentMask;
-   	   }else if (nstem >= max_cap && rand < asym){
+//	   } else if (nstem >= max_cap && nus[ca][grid] < caThreshold){
+//			 parentType = ta_id;
+//			 childType = ta_id;
+//			 parentMask = ta_mask;
+//			 childMask = ta_mask;
+   	   } else if (nstem >= max_cap && rand < asym){
 			 parentType = stem_id;
 			 childType = ta_id;
 			 parentMask = atom->mask[i];
@@ -249,6 +298,11 @@ void FixPDivideStem::init() {
 			 childType = ta_id;
 			 parentMask = ta_mask;
 			 childMask = ta_mask;
+//	   } else {
+//	    	 parentType = stem_id;
+//			 childType = parentType;
+//			 parentMask = atom->mask[i];
+//			 childMask = parentMask;
 	   }
 
      double splitF = 0.4 + (random->uniform() *0.2);
@@ -282,7 +336,6 @@ void FixPDivideStem::init() {
 	 atom->f[i][1] = parentfy;
 	 atom->f[i][2] = parentfz;
 	 atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-	 //avec->outer_radius[i] = atom->radius[i];
      avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
 	 newX = oldX;
 	 newY = oldY;
@@ -320,24 +373,13 @@ void FixPDivideStem::init() {
 	 //create child
 	 double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
 	 //double childRadius = atom->radius[i];
-	 //double childOuterRadius = childRadius;
      double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
 	 double* coord = new double[3];
-//	 newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
-//	 newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
-	 //newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
-
-	 //newX = oldX + atom->radius[i];
-	 //newY = oldY + atom->radius[i];
-//	 printf("X AXIS using formula %e 				using radius %e \n ", newX, oldX + atom->radius[i]);
-//	 printf("Y AXIS using formula %e 				using radius %e \n ", newY, oldY + atom->radius[i]);
+	 newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
+	 newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
 	 if (childType == stem_id){
-		 newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
-		 newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
 		 newZ = oldZ;
 	 } else {
-		 newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
-		 newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
 		 newZ = oldZ + atom->radius[i];
 	 }
 	 if (newX - childOuterRadius < xlo) {

@@ -37,6 +37,8 @@
 #include "variable.h"
 #include "modify.h"
 #include "group.h"
+#include "fix_bio_kinetics.h"
+
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
@@ -81,6 +83,20 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
   //dinika - set diff mask to -1
   diff_mask = -1;
 
+  kinetics = NULL;
+
+  int nfix = modify->nfix;
+  for (int j = 0; j < nfix; j++) {
+	if (strcmp(modify->fix[j]->style, "kinetics") == 0) {
+	  kinetics = static_cast<FixKinetics *>(lmp->modify->fix[j]);
+	  break;
+	}
+  }
+
+  if (kinetics == NULL)
+	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
+
+
   int iarg = 9;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
@@ -113,6 +129,13 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
     zlo = domain->boxlo_bound[2];
     zhi = domain->boxhi_bound[2];
   }
+
+  stepx = (xhi - xlo) / nx;
+  stepy = (yhi - ylo) / ny;
+  stepz = (zhi - zlo) / nz;
+
+  vol = stepx * stepy * stepz;
+
   // instance of nufeb biology
   bio = avec->bio;
   // force reneighbor list
@@ -177,6 +200,14 @@ void FixPDivideTa::init() {
     }
   }
   if (diff_mask < 0) error->all(FLERR, "Cannot get DIFF group.");
+
+	ca = 0;
+	// initialize nutrient
+	for (int nu = 1; nu <= bio->nnu; nu++) {
+		if (strcmp(bio->nuname[nu], "ca") == 0)
+				  ca = nu;
+	}
+	if (ca == 0) error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
 }
 
 void FixPDivideTa::post_integrate() {
@@ -225,10 +256,12 @@ void FixPDivideTa::post_integrate() {
     	  rand = distribution(gen);
       }
 
-      //calculate a single splice of z axis
-      //double slayer =  (xhi - xlo) * (yhi - ylo) * atom->radius[i] * 2;
-      //double scapacity = (atom->radius[i] * 2 / slayer) * 0.000008;
-      //printf("slayer = %e    scapacity = %e \n", slayer, scapacity);
+      //getting calcium concentration in the grid atom is in
+      double grid_vol = kinetics->stepx * kinetics->stepy * kinetics->stepz;
+      double **nus = kinetics->nus;
+      int grid = kinetics->position(i); //find grid that atom is in
+      //printf("calcium conc is %e \n", nus[ca][grid]);
+      double caThreshold = 1.8e-6;
 
       if (atom->radius[i] * 2 >= div_dia){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
@@ -286,10 +319,7 @@ void FixPDivideTa::post_integrate() {
         atom->f[i][1] = parentfy;
         atom->f[i][2] = parentfz;
         atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-        //avec->outer_radius[i] = atom->radius[i];
         avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
-//        newX = oldX + (avec->outer_radius[i] * cos(thetaD) * sin(phiD) * DELTA);
-//        newY = oldY + (avec->outer_radius[i] * sin(thetaD) * sin(phiD) * DELTA);
         //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
         newX = oldX;
         newY = oldY;
@@ -327,20 +357,13 @@ void FixPDivideTa::post_integrate() {
 
         //create child
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-        //double childOuterRadius = childRadius;
         double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
         double* coord = new double[3];
-//		newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
-//		newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
-//        newX = oldX + atom->radius[i];
-//        newY = oldY + atom->radius[i];
+		newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
+		newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
         if (childType == ta_id) {
-        	newX = oldX - (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
-        	newY = oldY - (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
         	newZ = oldZ;
         } else {
-        	newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
-        	newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
 			newZ = oldZ + atom->radius[i];
 		}
         if (newX - childOuterRadius < xlo) {
