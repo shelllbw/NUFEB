@@ -62,7 +62,9 @@ class FixPDivideTa : public Fix {
   int ca;
   int nx, ny, nz;
   double stepx, stepy, stepz;       // grids size
+  int snxx, snyy, snzz;                   // # of local grids in x, y and z
   double vol;                       // grid volume and gas volume
+  double caThreshold1, caThreshold2;
 
   class RanPark *random;
   class AtomVecBio *avec;

@@ -130,11 +130,19 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
     zhi = domain->boxhi_bound[2];
   }
 
+  nx = kinetics->nx;
+  ny = kinetics->ny;
+  nz = kinetics->nz;
+
   stepx = (xhi - xlo) / nx;
   stepy = (yhi - ylo) / ny;
   stepz = (zhi - zlo) / nz;
 
   vol = stepx * stepy * stepz;
+
+  snxx = kinetics->subn[0] + 2;
+  snyy = kinetics->subn[1] + 2;
+  snzz = kinetics->subn[2] + 2;
 
   // instance of nufeb biology
   bio = avec->bio;
@@ -257,11 +265,21 @@ void FixPDivideTa::post_integrate() {
       }
 
       //getting calcium concentration in the grid atom is in
-      double grid_vol = kinetics->stepx * kinetics->stepy * kinetics->stepz;
       double **nus = kinetics->nus;
       int grid = kinetics->position(i); //find grid that atom is in
-      //printf("calcium conc is %e \n", nus[ca][grid]);
-      double caThreshold = 1.8e-6;
+      double dheight = xhi * 0.6;
+      int ndgrids = dheight/stepz;
+      int dgrid = zlo + ndgrids;
+      double sheight = xhi * 0.4;
+      int nsgrids = sheight/stepz; // this give the number of grids till threshold
+      int sgrid = zlo + nsgrids; // calculate the height of that max grid
+      if (atom->x[i][2] >= dgrid){
+    	  caThreshold1 = nus[ca][dgrid];
+      } else {
+    	  caThreshold2 = nus[ca][sgrid];
+      }
+
+      //printf("d height is %e  	sheight is %e 	atom->x[i][2] is %e \n",  dheight, sheight, atom->x[i][2]);
 
       if (atom->radius[i] * 2 >= div_dia){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
@@ -269,24 +287,33 @@ void FixPDivideTa::post_integrate() {
     		  childType = diff_id;
     		  parentMask = diff_mask;
     		  childMask = diff_mask;
-    		  parentDivisionCount = avec->d_counter[i] + 1;
-    		  childDivisionCount = 0;
-    	  } else if (parentDivisionCount < max_division_counter && rand < asym){
-			//asymmetric division
-			parentType = type_id;
-			childType = diff_id;
-			parentMask = atom->mask[i];
-			childMask = diff_mask;
-			parentDivisionCount = avec->d_counter[i] + 1;
-			childDivisionCount = 0;
+    	  //} else if (atom->x[i][2] > dheight) {
+    	  } else if (nus[ca][grid] > caThreshold1) {
+    		  parentType = diff_id;
+    		  childType = diff_id;
+    		  parentMask = diff_mask;
+    		  childMask = diff_mask;
+    	  //} else if (atom->x[i][2] <= sheight){
+    	  } else if(nus[ca][grid] <= caThreshold2) {
+    		  parentType = type_id;
+    		  childType = type_id;
+    		  parentMask = atom->mask[i];
+    		  childMask = atom->mask[i];
+//    	  } else if (parentDivisionCount < max_division_counter && rand < asym){
+//			//asymmetric division
+//			parentType = type_id;
+//			childType = diff_id;
+//			parentMask = atom->mask[i];
+//			childMask = diff_mask;
 		  } else { //self proliferate
 			parentType = type_id;
 			childType = type_id;
 			parentMask = atom->mask[i];
 			childMask = atom->mask[i];
-			parentDivisionCount = avec->d_counter[i] + 1;
-			childDivisionCount = 0;
     	  }
+
+		parentDivisionCount = avec->d_counter[i] + 1;
+		childDivisionCount = 0;
 
 		double splitF = 0.4 + (random->uniform() *0.2);
 		double parentMass = atom->rmass[i] * splitF;

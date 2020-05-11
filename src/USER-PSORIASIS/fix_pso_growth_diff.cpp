@@ -278,7 +278,7 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 		double R9_3 = mu[i] * nus[ca][grid];
 		double R10 = decay[t];
 		double R11 = abase;
-		double R12 = ddesq;
+		double R12 = ddesq; //desquamation should occur when diff cells reach zhi
 
 		nur[il17][grid] += -(R9_1 * (rmass[i]/ grid_vol));
 		nur[tnfa][grid] += -(R9_2 * (rmass[i]/ grid_vol));
