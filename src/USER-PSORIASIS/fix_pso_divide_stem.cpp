@@ -267,8 +267,8 @@ void FixPDivideStem::init() {
       //getting calcium concentration in the grid atom is in
       double **nus = kinetics->nus;
       int grid = kinetics->position(i); //find grid that atom is in
-      double cheight = zhi * 0.4; // stratum basale height
-      int ngrids = cheight/stepz; // this give the number of grids till threshold
+      double sbheight = zhi * 0.4; // stratum basale height
+      int ngrids = sbheight/stepz; // this give the number of grids till threshold
       int cgrid = zlo + ngrids; // calculate the height of that max grid
       caThreshold = nus[ca][cgrid];
       //printf("cheight is %e    ngrids is    %i     cgrid is %i \n", cheight, ngrids, cgrid);
@@ -281,13 +281,12 @@ void FixPDivideStem::init() {
 		 childType = parentType;
 		 parentMask = atom->mask[i];
 		 childMask = parentMask;
-	   //} else if (atom->x[i][2] > cheight){ //if stem cell is above a certain height, it should chnage to a TA cell
-	   }else if (nus[ca][grid] > caThreshold) {
+	   } else if (atom->x[i][2] > sbheight){ //if stem cell is above a certain height, it should chnage to a TA cell
+	   //}else if (nus[ca][grid] > caThreshold) {
 			 parentType = ta_id;
 			 childType = ta_id;
 			 parentMask = ta_mask;
 			 childMask = ta_mask;
-			 //printf("enters here \n");
    	   } else if (nstem >= max_cap && rand < asym){
 			 parentType = stem_id;
 			 childType = ta_id;

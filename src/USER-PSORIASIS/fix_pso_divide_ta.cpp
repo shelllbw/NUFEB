@@ -267,44 +267,38 @@ void FixPDivideTa::post_integrate() {
       //getting calcium concentration in the grid atom is in
       double **nus = kinetics->nus;
       int grid = kinetics->position(i); //find grid that atom is in
-      double dheight = xhi * 0.6;
-      int ndgrids = dheight/stepz;
-      int dgrid = zlo + ndgrids;
-      double sheight = xhi * 0.4;
-      int nsgrids = sheight/stepz; // this give the number of grids till threshold
-      int sgrid = zlo + nsgrids; // calculate the height of that max grid
-      if (atom->x[i][2] >= dgrid){
-    	  caThreshold1 = nus[ca][dgrid];
+      double ssheight = zhi * 0.6;
+      int nssgrids = ssheight/stepz;
+      int ssgrid = zlo + nssgrids;
+      double sbheight = zhi * 0.4;
+      int nsbgrids = sbheight/stepz; // this give the number of grids till threshold
+      int sbgrid = zlo + nsbgrids; // calculate the height of that max grid
+      if (atom->x[i][2] >= ssgrid){
+    	  caThreshold1 = nus[ca][ssgrid];
       } else {
-    	  caThreshold2 = nus[ca][sgrid];
+    	  caThreshold2 = nus[ca][sbgrid];
       }
 
       //printf("d height is %e  	sheight is %e 	atom->x[i][2] is %e \n",  dheight, sheight, atom->x[i][2]);
 
       if (atom->radius[i] * 2 >= div_dia){
-    	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
+    	  if (parentDivisionCount >= max_division_counter || atom->x[i][2] > ssheight){ //if TA cell division counter has reached the max, only divide to diff cells
     		  parentType = diff_id;
     		  childType = diff_id;
     		  parentMask = diff_mask;
     		  childMask = diff_mask;
-    	  //} else if (atom->x[i][2] > dheight) {
-    	  } else if (nus[ca][grid] > caThreshold1) {
-    		  parentType = diff_id;
-    		  childType = diff_id;
-    		  parentMask = diff_mask;
-    		  childMask = diff_mask;
-    	  //} else if (atom->x[i][2] <= sheight){
-    	  } else if(nus[ca][grid] <= caThreshold2) {
-    		  parentType = type_id;
-    		  childType = type_id;
-    		  parentMask = atom->mask[i];
-    		  childMask = atom->mask[i];
-//    	  } else if (parentDivisionCount < max_division_counter && rand < asym){
-//			//asymmetric division
-//			parentType = type_id;
-//			childType = diff_id;
-//			parentMask = atom->mask[i];
-//			childMask = diff_mask;
+    	  } else if (parentDivisionCount < max_division_counter && rand < asym && atom->x[i][2] > sbheight){
+			//asymmetric division
+			parentType = type_id;
+			childType = diff_id;
+			parentMask = atom->mask[i];
+			childMask = diff_mask;
+//    	  } else if (atom->x[i][2] <= sbheight){
+//    	 // } else if(nus[ca][grid] <= caThreshold2) {
+//    		  parentType = type_id;
+//    		  childType = type_id;
+//    		  parentMask = atom->mask[i];
+//    		  childMask = atom->mask[i];
 		  } else { //self proliferate
 			parentType = type_id;
 			childType = type_id;
