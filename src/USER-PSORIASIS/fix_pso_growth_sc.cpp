@@ -299,18 +299,10 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//printf("growrate_sc BEFORE: il17 conc : %e tnfa conc :  %e  cal conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[ca][grid]);
 
 		//nutrient uptake for sc is affected by gf
-		//need to cal density
-		//nur[gf][grid] += (sc2gf * (rmass[i]/grid_vol)) - (gf20 * nus[gf][grid]);
 		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol);
-		nur[ca][grid] += ca2 * nus[ca][grid] - (R1_3 + R4_3) * (rmass[i]/grid_vol);
-		nur[il17][grid] += - (R1_1 + R4_1) * (rmass[i]/ grid_vol);
-		nur[tnfa][grid] += - (R1_2 + R4_2) * (rmass[i]/ grid_vol);
-		//nur[il17][grid] += (il172 * (rmass[4]/ grid_vol)) - il1720 * nus[il17][grid];
-		//nur[tnfa][grid] += (tnfa2 * (rmass[4]/ grid_vol)) - il1720 * nus[il17][grid];
-
-//		printf("nur[il17][grid] is %e\n", nur[il17][grid]);
-//		printf("nur[tnfa][grid] is %e \n", nur[tnfa][grid]);
-//		printf("nur[ca][grid %e \n", nur[ca][grid]);
+		nur[ca][grid] -= (R1_3 + R4_3) * (rmass[i]/grid_vol);
+		nur[il17][grid] -=  (R1_1 + R4_1) * (rmass[i]/ grid_vol);
+		nur[tnfa][grid] -=  (R1_2 + R4_2) * (rmass[i]/ grid_vol);
 
 		//printf("BEFORE R1 is %e , R4 is %e\n", R1, R4);
 		//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1_1 + R1_2 + R1_3, R2, R3, (R1_1 + R1_2 + R1_3) - R2 - R3);

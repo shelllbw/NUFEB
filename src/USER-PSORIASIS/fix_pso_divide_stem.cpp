@@ -267,7 +267,7 @@ void FixPDivideStem::init() {
       //getting calcium concentration in the grid atom is in
       double **nus = kinetics->nus;
       int grid = kinetics->position(i); //find grid that atom is in
-      double sbheight = zhi * 0.4; // stratum basale height
+      double sbheight = (zhi-1e-6) * 0.36; // stratum basale height
       int ngrids = sbheight/stepz; // this give the number of grids till threshold
       int cgrid = zlo + ngrids; // calculate the height of that max grid
       caThreshold = nus[ca][cgrid];

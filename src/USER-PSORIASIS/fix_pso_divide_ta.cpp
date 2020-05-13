@@ -267,10 +267,10 @@ void FixPDivideTa::post_integrate() {
       //getting calcium concentration in the grid atom is in
       double **nus = kinetics->nus;
       int grid = kinetics->position(i); //find grid that atom is in
-      double ssheight = zhi * 0.6;
+      double ssheight = (zhi-1e-6) * 0.6;
       int nssgrids = ssheight/stepz;
       int ssgrid = zlo + nssgrids;
-      double sbheight = zhi * 0.4;
+      double sbheight = (zhi-1e-6) * 0.36;
       int nsbgrids = sbheight/stepz; // this give the number of grids till threshold
       int sbgrid = zlo + nsbgrids; // calculate the height of that max grid
       if (atom->x[i][2] >= ssgrid){
@@ -344,11 +344,12 @@ void FixPDivideTa::post_integrate() {
         //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
         newX = oldX;
         newY = oldY;
-        if (parentType == ta_id) {
-        	newZ = oldZ;
-        } else {
-			newZ = oldZ + atom->radius[i];
-		 }
+        newZ = oldZ;
+//        if (parentType == ta_id) {
+//        	newZ = oldZ;
+//        } else {
+//			newZ = oldZ + atom->radius[i];
+//		 }
         if (newX - avec->outer_radius[i] < xlo) {
           newX = xlo + avec->outer_radius[i];
         } else if (newX + avec->outer_radius[i] > xhi) {
@@ -383,9 +384,9 @@ void FixPDivideTa::post_integrate() {
 		newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
 		newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
         if (childType == ta_id) {
-        	newZ = oldZ;
+        	newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
         } else {
-			newZ = oldZ + atom->radius[i];
+			newZ = oldZ + (childOuterRadius * cos(phiD) * DELTA);
 		}
         if (newX - childOuterRadius < xlo) {
           newX = xlo + childOuterRadius;
