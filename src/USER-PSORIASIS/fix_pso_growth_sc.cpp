@@ -300,7 +300,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 		//nutrient uptake for sc is affected by gf
 		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol);
-		nur[ca][grid] -= (R1_3 + R4_3) * (rmass[i]/grid_vol);
+		nur[ca][grid] -= ca2 * nus[ca][grid] + (R1_3 + R4_3) * (rmass[i]/grid_vol);
 		nur[il17][grid] -=  (R1_1 + R4_1) * (rmass[i]/ grid_vol);
 		nur[tnfa][grid] -=  (R1_2 + R4_2) * (rmass[i]/ grid_vol);
 

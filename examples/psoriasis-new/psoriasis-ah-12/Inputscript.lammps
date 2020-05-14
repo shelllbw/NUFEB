@@ -83,7 +83,7 @@ set type 6 mass 7.853981e-17
 ##############Define DEM Variables&Commands##############
 
 
-pair_style  gran/hooke/history 1750 NULL 1750 NULL 0.0 1
+pair_style  gran/hooke/history 2000 NULL 2000 NULL 0.0 1
 pair_coeff  * *
 
 #pair_style lj/cut 0.0
@@ -113,7 +113,7 @@ fix fv1 all viscous 1e-5
 
 #fix grav1 STEM gravity 100.0 spherical 180.0 -180.0
 
-fix zw all wall/gran hooke/history 1750 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
+fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
 #fix zw all wall/lj126 zlo 0.0 1.0 1.0 3.8 zhi 0.6e-4 1.0 1.0 3.8
 
 variable kanc equal 50
