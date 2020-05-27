@@ -201,15 +201,6 @@ void FixPDivideStem::init() {
     }
   }
   if (ta_mask < 0) error->all(FLERR, "Cannot get TA group.");
-
-	ca = 0;
-	// initialize nutrient
-	for (int nu = 1; nu <= bio->nnu; nu++) {
-		if (strcmp(bio->nuname[nu], "ca") == 0)
-				  ca = nu;
-	}
-
-	if (ca == 0) error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
 }
 
   void FixPDivideStem::post_integrate() {
@@ -262,18 +253,9 @@ void FixPDivideStem::init() {
       if (max_cap < 2){
     	  max_cap = round(nlocal * 0.5);
       }
-      //printf("max cap = %i nlocal : %i nbm : %i \n", max_cap, nlocal, nbm);
 
-      //getting calcium concentration in the grid atom is in
-      double **nus = kinetics->nus;
       int grid = kinetics->position(i); //find grid that atom is in
-      double sbheight = (zhi-1e-6) * 0.36; // stratum basale height
-      int ngrids = sbheight/stepz; // this give the number of grids till threshold
-      int cgrid = zlo + ngrids; // calculate the height of that max grid
-      caThreshold = nus[ca][cgrid];
-      //printf("cheight is %e    ngrids is    %i     cgrid is %i \n", cheight, ngrids, cgrid);
-      //printf("cal threshold is %e   cal conc of atom is %e\n", caThreshold, nus[ca][grid]);
-      //printf("current conc is %e     grid+1 is %e     grid-1 is %e \n", nus[ca][grid], nus[ca][grid+1], nus[ca][grid-1]);
+      double sbheight = (zhi-1.6e-5) * 0.4; // stratum basale height
 
    if (atom->radius[i] * 2 >= div_dia){
 	   if (nstem < max_cap){
@@ -281,8 +263,7 @@ void FixPDivideStem::init() {
 		 childType = parentType;
 		 parentMask = atom->mask[i];
 		 childMask = parentMask;
-	   } else if (atom->x[i][2] > sbheight){ //if stem cell is above a certain height, it should chnage to a TA cell
-	   //}else if (nus[ca][grid] > caThreshold) {
+	   } else if (atom->x[i][2] > sbheight){ //if stem cell is above a certain height, it should change to a TA cell
 			 parentType = ta_id;
 			 childType = ta_id;
 			 parentMask = ta_mask;

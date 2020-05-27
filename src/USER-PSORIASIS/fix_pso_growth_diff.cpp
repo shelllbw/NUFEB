@@ -56,7 +56,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/diff requires atom style bio");
 
-  if (narg < 7)
+  if (narg < 6)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/diff command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 7;
+  int iarg = 6;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -139,7 +139,6 @@ void FixPGrowthDIFF::init() {
   diff_dens = input->variable->compute_equal(ivar[0]);
   abase = input->variable->compute_equal(ivar[1]);
   ddesq = input->variable->compute_equal(ivar[2]);
-  ca2 = input->variable->compute_equal(ivar[3]);
 
   bio = kinetics->bio;
 
@@ -186,7 +185,7 @@ void FixPGrowthDIFF::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthDIFF::init_param() {
-	il17, tnfa, ca = 0;
+	il17, tnfa = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
@@ -194,16 +193,12 @@ void FixPGrowthDIFF::init_param() {
 	  il17 = nu;
 	if (strcmp(bio->nuname[nu], "tnfa") == 0)
 			  tnfa = nu;
-	if (strcmp(bio->nuname[nu], "ca") == 0)
-			  ca = nu;
   }
 
   if (il17 == 0)
 	error->all(FLERR, "fix_psoriasis/growth/diff requires nutrient il17");
   if (tnfa == 0)
     	error->all(FLERR, "fix_psoriasis/growth/diff requires nutrient tnfa");
-  if (ca == 0)
-   	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -272,28 +267,19 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
 	  //different heights for diff cells
-	  double sbheight = (zhi-1e-6) * 0.36;
-	  double ssheight = (zhi-1e-6) * 0.6;
-	  double sgheight = (zhi-1e-6) * 0.84;
-	  double sc1height = (zhi-1e-6) * 0.948;
-	  double sc2height = (zhi-1e-6) * 1;
+	  double sbheight = (zhi-1.6e-5) * 0.4;
+	  double ssheight = (zhi-1.6e-5) * 0.6;
+	  double sgheight = (zhi-1.6e-5) * 0.84;
+	  double sc1height = (zhi-1.6e-5) * 0.948;
+	  double sc2height = (zhi-1.6e-5) * 1;
 
-	  //printf("heights sb %f    ss %f    sg %f    sc1 %f     sc2 %f\n", sbheight, ssheight, sgheight, sc1height, sc2height);
+	  //printf("heights sb %e    ss %e    sg %e    sc1 %e     sc2 %e\n", sbheight, ssheight, sgheight, sc1height, sc2height);
 
       // diff cell model
       if (species[t] == 3) {
-//		double R9_1 = mu[i] * nus[il17][grid];
-//		double R9_2 = mu[i] * nus[tnfa][grid];
-		double R9_3 = mu[i] * nus[ca][grid];
 		double R10 = decay[t];
 		double R11 = abase;
 		double R12 = ddesq; //desquamation should occur when diff cells reach zhi
-
-//		nur[il17][grid] += -(R9_1 * (rmass[i]/ grid_vol));
-//		nur[tnfa][grid] += -(R9_2 * (rmass[i]/ grid_vol));
-		//nur[ca][grid] += ca2 * nus[ca][grid] - R9_3 * (rmass[i]/grid_vol);
-
-        //growrate_d = R9_1 + R9_2 + R9_3 - R10 - R11 - R12;
 
         if (!gflag || !external_gflag){
         	continue;
@@ -301,20 +287,16 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
         //if diff cell is below the ss layer
         if (atom->x[i][2] < ssheight){
-        	nur[ca][grid] -= R9_3 * (rmass[i]/grid_vol);
-        	growrate_d = R9_3 - R10 - R11;
+        	growrate_d = R10 - R11;
         	rmass[i] = rmass[i] + growrate_d * rmass[i] * dt;
         } else if (atom->x[i][2] > sgheight) { //if diff cell is at the sg layer
-			nur[ca][grid] += R9_3 * (rmass[i]/grid_vol);
-			growrate_d = R9_3 - R10 - R11;
+			growrate_d = R10 - R11;
 			rmass[i] = rmass[i] + growrate_d * rmass[i] * dt;
 		} else if (atom->x[i][2] > sc1height) { //if diff cell is at the sc layer before shedding
-			nur[ca][grid] +=  R9_3 * (rmass[i]/grid_vol); //calcium secreted by diff cells
-			growrate_d = (R9_3 + R10 + R11);
+			growrate_d = R10 + R11;
 			rmass[i] = rmass[i] - growrate_d * rmass[i] * dt;
 		} else if (atom->x[i][2] > sc2height) { //if diff cell is at the layer for shedding
-			//nur[ca][grid] += R9_3 * (rmass[i]/grid_vol);
-			growrate_d = (R9_3 + R10 + R11);
+			growrate_d = R10 + R11;
 			rmass[i] = rmass[i] - growrate_d * rmass[i] * dt;
 		} else {
 			  rmass[i] = rmass[i];

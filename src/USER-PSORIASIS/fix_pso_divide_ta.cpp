@@ -208,14 +208,6 @@ void FixPDivideTa::init() {
     }
   }
   if (diff_mask < 0) error->all(FLERR, "Cannot get DIFF group.");
-
-	ca = 0;
-	// initialize nutrient
-	for (int nu = 1; nu <= bio->nnu; nu++) {
-		if (strcmp(bio->nuname[nu], "ca") == 0)
-				  ca = nu;
-	}
-	if (ca == 0) error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
 }
 
 void FixPDivideTa::post_integrate() {
@@ -264,20 +256,10 @@ void FixPDivideTa::post_integrate() {
     	  rand = distribution(gen);
       }
 
-      //getting calcium concentration in the grid atom is in
-      double **nus = kinetics->nus;
+
       int grid = kinetics->position(i); //find grid that atom is in
-      double ssheight = (zhi-1e-6) * 0.6;
-      int nssgrids = ssheight/stepz;
-      int ssgrid = zlo + nssgrids;
-      double sbheight = (zhi-1e-6) * 0.36;
-      int nsbgrids = sbheight/stepz; // this give the number of grids till threshold
-      int sbgrid = zlo + nsbgrids; // calculate the height of that max grid
-      if (atom->x[i][2] >= ssgrid){
-    	  caThreshold1 = nus[ca][ssgrid];
-      } else {
-    	  caThreshold2 = nus[ca][sbgrid];
-      }
+      double ssheight = (zhi-1.6e-5) * 0.6;
+      double sbheight = (zhi-1.6e-5) * 0.4;
 
       //printf("d height is %e  	sheight is %e 	atom->x[i][2] is %e \n",  dheight, sheight, atom->x[i][2]);
 
@@ -287,14 +269,13 @@ void FixPDivideTa::post_integrate() {
     		  childType = diff_id;
     		  parentMask = diff_mask;
     		  childMask = diff_mask;
-    	  } else if (parentDivisionCount < max_division_counter && rand < asym && atom->x[i][2] > sbheight){
+    	  } else if (parentDivisionCount < max_division_counter && rand < asym){
 			//asymmetric division
 			parentType = type_id;
 			childType = diff_id;
 			parentMask = atom->mask[i];
 			childMask = diff_mask;
 //    	  } else if (atom->x[i][2] <= sbheight){
-//    	 // } else if(nus[ca][grid] <= caThreshold2) {
 //    		  parentType = type_id;
 //    		  childType = type_id;
 //    		  parentMask = atom->mask[i];
@@ -344,12 +325,12 @@ void FixPDivideTa::post_integrate() {
         //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
         newX = oldX;
         newY = oldY;
-        newZ = oldZ;
-//        if (parentType == ta_id) {
-//        	newZ = oldZ;
-//        } else {
-//			newZ = oldZ + atom->radius[i];
-//		 }
+//        newZ = oldZ;
+        if (parentType == ta_id) {
+        	newZ = oldZ;
+        } else {
+			newZ = oldZ + atom->radius[i];
+		 }
         if (newX - avec->outer_radius[i] < xlo) {
           newX = xlo + avec->outer_radius[i];
         } else if (newX + avec->outer_radius[i] > xhi) {

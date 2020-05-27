@@ -86,21 +86,29 @@ set type 6 mass 7.853981e-17
 pair_style  gran/hooke/history 2000 NULL 2000 NULL 0.0 1
 pair_coeff  * *
 
-#pair_style lj/cut 0.0
-#pair_coeff * *
+pair_style  gran/hooke/history 1500 NULL 1500 NULL 0.0 1
+pair_coeff 1 7
 
-#pair_style lj/cut 3.5
-#pair_coeff * * 1 1
-#pair_coeff 1 1 3.5e-5 2.5 3.5
+#pair_style  gran/hooke/history 1500 NULL 1500 NULL 0.0 1
+#pair_coeff 2 7
 
-#pair_style lj/cut 5.5
-#pair_coeff 1 2 3.32e-6 3.5 5.5
+pair_style  gran/hooke/history 2500 NULL 2500 NULL 0.0 1
+pair_coeff  3 7
 
-#pair_style lj/cut 3.8
-#pair_coeff 2 3 0.472 3.2 3.8
+#pair_style  gran/hooke/history 1750 NULL 1750 NULL 0.0 1
+#pair_coeff 1 1
 
-#pair_style lj/cut 5.5
-#pair_coeff 1 3 0.472 4.3 5.5
+#pair_style  gran/hooke/history 1500 NULL 1500 NULL 0.0 1
+#pair_coeff 1 2
+
+#pair_style  gran/hooke/history 1500 NULL 1500 NULL 0.0 1
+#pair_coeff 1 3
+
+#pair_style  granular
+#pair_coeff  * * hooke  2000 2000 tangential linear_history NULL 1.0 0.0 damping mass_velocity
+
+#pair gran/hooke/history 1000.0 500.0 50.0 50.0 0.4 1
+#pair_coeff * * hooke 1000.0 50.0 tangential linear_history 500.0 1.0 0.4 damping mass_velocity
 
 timestep 1e-3
 
@@ -114,12 +122,13 @@ fix fv1 all viscous 1e-5
 #fix grav1 STEM gravity 100.0 spherical 180.0 -180.0
 
 fix zw all wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
-#fix zw all wall/lj126 zlo 0.0 1.0 1.0 3.8 zhi 0.6e-4 1.0 1.0 3.8
+fix zwb STEM wall/gran hooke/history 1750 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
+fix zwd DIFF wall/gran hooke/history 2500 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
 
 variable kanc equal 50
 
 # a1 = bm-sc  a2 = bm-ta a3 = sc-ta  a4 =sc-diff  a5 = ta-diff a6 = same cell type
-fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1-14 1.6e-15 0 1.6e-15 1.6e-12
+fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1-14 1.6e-15 0 1.6e-15 1.6e-13
 
 ##############Define IBm Variables##############
 
@@ -173,11 +182,11 @@ variable il2320 equal 0.0001
 fix k1 all kinetics 1 10 4 12 v_diffT v_layer demflag 0 niter 5000
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320 v_il172 v_il1720 v_tnfa2 v_tnfa20
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
-fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase v_ca2
+fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
-fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_abase v_sc2ta v_ca2
+fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_abase
 fix d2 TA psoriasis/divide_ta 1 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
-fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ddesq v_ca2
+fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ddesq
 
 ##############Define IBm Computes##############
 
