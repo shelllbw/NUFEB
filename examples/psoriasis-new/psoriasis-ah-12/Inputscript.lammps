@@ -2,7 +2,7 @@
 
 atom_style	bio
 atom_modify	map array sort 100 5.0e-7
-boundary	pp pp ff
+boundary	ff ff ff
 newton		off
 processors  * * 1
 
