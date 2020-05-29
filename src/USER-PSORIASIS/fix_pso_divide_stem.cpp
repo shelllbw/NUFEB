@@ -239,10 +239,7 @@ void FixPDivideStem::init() {
       std::random_device rd;  //Will be used to obtain a seed for the random number engine
       std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
       std::uniform_real_distribution<double>  distribution(0.0, 1.0);
-      double rand = 0.0;
-      for (int i = 0; i < nlocal; i++){
-    	  rand = distribution(gen);
-      }
+      double rand = distribution(gen);
 
       int ta_id = bio->find_typeid("ta");
       int stem_id = bio->find_typeid("stem");

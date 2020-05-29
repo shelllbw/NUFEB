@@ -251,11 +251,7 @@ void FixPDivideTa::post_integrate() {
       std::random_device rd;  //Will be used to obtain a seed for the random number engine
       std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
       std::uniform_real_distribution<double>  distribution(0.0, 1.0);
-      double rand = 0.0;
-      for (int i = 0; i < nlocal; i++){
-    	  rand = distribution(gen);
-      }
-
+      double rand = distribution(gen);
 
       int grid = kinetics->position(i); //find grid that atom is in
       double ssheight = (zhi-1.6e-5) * 0.6;
@@ -264,22 +260,22 @@ void FixPDivideTa::post_integrate() {
       //printf("d height is %e  	sheight is %e 	atom->x[i][2] is %e \n",  dheight, sheight, atom->x[i][2]);
 
       if (atom->radius[i] * 2 >= div_dia){
-    	  if (parentDivisionCount >= max_division_counter || atom->x[i][2] > ssheight){ //if TA cell division counter has reached the max, only divide to diff cells
+    	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
     		  parentType = diff_id;
-    		  childType = diff_id;
+    		  childType = ta_id;
     		  parentMask = diff_mask;
-    		  childMask = diff_mask;
-    	  } else if (parentDivisionCount < max_division_counter && rand < asym){
+    		  childMask = atom->mask[i];
+    	  } else if (atom->x[i][2] > ssheight){
+    		  parentType = diff_id;
+			  childType = diff_id;
+			  parentMask = diff_mask;
+			  childMask = diff_mask;
+      	  }	else if (parentDivisionCount < max_division_counter && rand < asym && atom->x[i][2] > sbheight ){
 			//asymmetric division
 			parentType = type_id;
 			childType = diff_id;
 			parentMask = atom->mask[i];
 			childMask = diff_mask;
-//    	  } else if (atom->x[i][2] <= sbheight){
-//    		  parentType = type_id;
-//    		  childType = type_id;
-//    		  parentMask = atom->mask[i];
-//    		  childMask = atom->mask[i];
 		  } else { //self proliferate
 			parentType = type_id;
 			childType = type_id;
@@ -355,7 +351,7 @@ void FixPDivideTa::post_integrate() {
         atom->mask[i] = parentMask;
         avec->d_counter[i] = parentDivisionCount;
 
-   	 //printf("divide_ta PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e division count %i \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i], parentDivisionCount);
+   	// printf("divide_ta PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e division count %i, type %i \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i], parentDivisionCount, parentType);
 
 
         //create child
@@ -419,7 +415,7 @@ void FixPDivideTa::post_integrate() {
         atom->mask[n] = childMask;
         avec->d_counter[n] = childDivisionCount;
 
-   	 //printf("divide_sc CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e division counter %i \n", n, childMass, childRadius, childOuterMass, childOuterRadius, childDivisionCount);
+   	// printf("divide_sc CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e division counter %i type %i \n", n, childMass, childRadius, childOuterMass, childOuterRadius, childDivisionCount, childType);
 
         modify->create_attribute(n);
 

@@ -286,21 +286,39 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
         }
 
         //if diff cell is below the ss layer
-        if (atom->x[i][2] < ssheight){
+//        if (atom->x[i][2] < ssheight){
+//        	growrate_d = R10 - R11;
+//        	//rmass[i] = rmass[i] + growrate_d * rmass[i] * dt;
+//        	rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
+//        } else if (atom->x[i][2] > sgheight) { //if diff cell is at the sg layer
+//			growrate_d = R10 - R11;
+//			//rmass[i] = rmass[i] + growrate_d * rmass[i] * dt;
+//			rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
+//		} else if (atom->x[i][2] > sc1height) { //if diff cell is at the sc layer before shedding
+//			growrate_d = R10 - R11 - R12;
+//			//rmass[i] = rmass[i] - growrate_d * rmass[i] * dt;
+//			rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
+//		} else if (atom->x[i][2] > sc2height) { //if diff cell is at the layer for shedding
+//			growrate_d = R10 - R11 - R12;
+//			//rmass[i] = rmass[i] - growrate_d * rmass[i] * dt;
+//			rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
+//		} else {
+//			  rmass[i] = rmass[i];
+//		}
+
+
+        if (atom->x[i][2] < sc1height) {
         	growrate_d = R10 - R11;
-        	rmass[i] = rmass[i] + growrate_d * rmass[i] * dt;
-        } else if (atom->x[i][2] > sgheight) { //if diff cell is at the sg layer
-			growrate_d = R10 - R11;
-			rmass[i] = rmass[i] + growrate_d * rmass[i] * dt;
-		} else if (atom->x[i][2] > sc1height) { //if diff cell is at the sc layer before shedding
-			growrate_d = R10 + R11;
-			rmass[i] = rmass[i] - growrate_d * rmass[i] * dt;
-		} else if (atom->x[i][2] > sc2height) { //if diff cell is at the layer for shedding
-			growrate_d = R10 + R11;
-			rmass[i] = rmass[i] - growrate_d * rmass[i] * dt;
-		} else {
-			  rmass[i] = rmass[i];
-		}
+        	rmass[i] = rmass[i] + rmass[i] *  growrate_d * dt;
+        	//printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
+        } else if (atom->x[i][2] > sc1height) {
+        	growrate_d = R10 - R11 - R12;
+        	rmass[i] = rmass[i] + rmass[i] * growrate_d * dt;
+        	//printf("growrate_d 2 is %e rmass is %e \n", growrate_d, rmass[i]);
+        } else {
+        	rmass[i] = rmass[i];
+        }
+
         outer_mass[i] = rmass[i];
         outer_radius[i] = radius[i];
         radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
