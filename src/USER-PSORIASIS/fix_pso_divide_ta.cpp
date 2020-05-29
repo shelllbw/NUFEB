@@ -257,7 +257,7 @@ void FixPDivideTa::post_integrate() {
       double ssheight = (zhi-1.6e-5) * 0.6;
       double sbheight = (zhi-1.6e-5) * 0.4;
 
-      //printf("d height is %e  	sheight is %e 	atom->x[i][2] is %e \n",  dheight, sheight, atom->x[i][2]);
+      //printf("  	sheight is %e 	atom->x[i][2] is %e \n",  ssheight, atom->x[i][2]);
 
       if (atom->radius[i] * 2 >= div_dia){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
