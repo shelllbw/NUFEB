@@ -2,7 +2,7 @@
 
 atom_style	bio
 atom_modify	map array sort 100 5.0e-7
-boundary	ff ff ff
+boundary	pp pp ff
 newton		off
 processors  * * 1
 
@@ -12,13 +12,14 @@ comm_modify	vel yes
 read_data_bio atom.in
 
 variable x equal 50
-variable y equal 20
+variable y equal 40
 variable z equal 20
 
 lattice sc 1e-6 origin 0.5 0.5 0.5
 
 region reg block 0 $x 0 $y 0 $z
-region reg2 block 0 50 0 20 0 1
+#region reg2 block 0 50 0 20 0 1
+region reg2 block 0 $x 0 $y 0 1
 #region reg3 block 0 $x 0 $y 5 $z
 
 variable  xx internal 0.0
@@ -33,14 +34,12 @@ set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 600 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 800 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
-create_atoms 4 random 5 64564 reg2
-#create_atoms 2 random 5 64564 reg3
-#create_atoms 3 random 1 64564 reg3
+create_atoms 4 random 20 64564 reg2
 
 group TA type 2
 group DIFF type 3
@@ -169,7 +168,7 @@ variable il2320 equal 0.0001
 
 ##############Define IBm Commands##############
 
-fix k1 all kinetics 1 10 4 12 v_diffT v_layer demflag 0 niter 5000
+fix k1 all kinetics 1 10 8 12 v_diffT v_layer demflag 0 niter 5000
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320 v_il172 v_il1720 v_tnfa2 v_tnfa20
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase
