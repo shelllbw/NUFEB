@@ -392,6 +392,8 @@ void FixPDivideTa::post_integrate() {
         n = atom->nlocal - 1;
 
         atom->tag[n] = 0;
+        atom->type[n] = childType;
+        atom->mask[n] = childMask;
         atom->image[n] = atom->image[i];
 
         atom->v[n][0] = atom->v[i][0];
@@ -401,6 +403,10 @@ void FixPDivideTa::post_integrate() {
         atom->f[n][1] = atom->f[i][1];
         atom->f[n][2] = atom->f[i][2];
 
+        atom->omega[n][0] = atom->omega[i][0];
+        atom->omega[n][1] = atom->omega[i][1];
+        atom->omega[n][2] = atom->omega[i][2];
+
         atom->rmass[n] = childMass;
         avec->outer_mass[n] = childOuterMass;
 
@@ -408,11 +414,13 @@ void FixPDivideTa::post_integrate() {
         atom->f[n][1] = childfy;
         atom->f[n][2] = childfz;
 
+        atom->torque[n][0] = atom->torque[i][0];
+        atom->torque[n][1] = atom->torque[i][1];
+        atom->torque[n][2] = atom->torque[i][2];
+
         atom->radius[n] = childRadius;
         avec->outer_radius[n] = childOuterRadius;
 
-        atom->type[n] = childType;
-        atom->mask[n] = childMask;
         avec->d_counter[n] = childDivisionCount;
 
    	// printf("divide_sc CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e division counter %i type %i \n", n, childMass, childRadius, childOuterMass, childOuterRadius, childDivisionCount, childType);

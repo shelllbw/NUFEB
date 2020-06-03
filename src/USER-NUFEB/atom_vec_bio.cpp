@@ -618,6 +618,8 @@ int AtomVecBio::pack_border_vel(int n, int *list, double *buf,
         //dinika's edits
         buf[m++] = d_counter[j];
         buf[m++] = cell_mass[j];
+
+        //printf("outer radius %e outer mass %e velocity x %e y %e z %e \n", outer_radius[i], outer_mass[i], v[j][0], v[j][1], v[j][2]);
       }
     } else {
       dvx = pbc[0]*h_rate[0] + pbc[5]*h_rate[5] + pbc[4]*h_rate[4];

@@ -385,16 +385,11 @@ void FixKineticsMonod::update_biomass(double ***growrate, double dt) {
 
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
       rmass[i] = rmass[i] * (1 + growrate[t][0][pos] * dt);
-      printf("growrate of %i is %e\n", t, growrate[t][0][pos]);
 
       if (species[t] == 1) {
-  		//printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
         outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * eps_dens + growrate[t][1][pos] * rmass[i] * dt;
         outer_radius[i] = pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / eps_dens), third);
         radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-        //printf("AFTER %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-  		//printf("radius and outer radius combined %e\n", radius[i] + outer_radius[i]);
-  		//printf("diameter is %e\n", radius[i] * 2);
       } else {
         radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
         outer_mass[i] = rmass[i];

@@ -310,37 +310,3 @@ void FixPGrowthTA::growth(double dt, int gflag) {
   }
 }
 
-/* ----------------------------------------------------------------------
- calculate the SC-TA mass to update to based on each grid
-
- *note: each grid will have different number of SC and IL
- ------------------------------------------------------------------------- */
-// void FixPGrowthTA::update_cellmass(int grid_id, int t){
-//	 int *mask = atom->mask;
-//	 int nlocal = atom->nlocal;
-//	 int *type = atom->type;
-//	 double *rmass = atom->rmass;
-//
-//	 double grid_conc = calculate_gridmass(grid_id);
-//	 int stem_count = calculate_gridcell(grid_id, 1);
-//	 int tcell_count = calculate_gridcell(grid_id, 4);
-//
-//	 for (int i = 0; i < nlocal; i++){
-//		 if (mask[i] & groupbit) {
-//			 int pos = kinetics->position(i); //gets the grid_id of cell
-//
-//			 if (pos == grid_id && t == type[i]){
-//				 double update_sctamass_by = (grid_conc / stem_count) * growrate[t][0][pos];
-//				 avec->cell_mass[i] = rmass[i] + (rmass[i] * update_sctamass_by);
-//				 rmass[i] = avec->cell_mass[i];
-//			 }
-//
-//			 if (pos == grid_id && t == type[i]){
-//				 double update_tcellmass_by = (grid_conc / tcell_count) * growrate[t][0][pos];
-//				 avec->cell_mass[i] = rmass[i] + (rmass[i] * update_tcellmass_by);
-//				 rmass[i] = avec->cell_mass[i];
-//			 }
-//		 }
-//	 }
-//}
-

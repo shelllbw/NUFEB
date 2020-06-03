@@ -61,9 +61,6 @@ class FixPGrowthSC : public Fix {
   class BIO *bio;
 
   void init_param();
-  double calculate_gridmass(int);
-  int calculate_gridcell(int, int);
- // void update_cellmass(int, int);
 };
 
 }

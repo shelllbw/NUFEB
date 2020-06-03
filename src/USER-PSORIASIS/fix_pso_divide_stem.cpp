@@ -245,36 +245,41 @@ void FixPDivideStem::init() {
       int stem_id = bio->find_typeid("stem");
 
       //stem cell takes up approximately 5% of the population
-      max_cap = round((nlocal - nbm) * stem_percent);
+//      max_cap = round((nlocal - nbm) * stem_percent);
+//
+//      if (max_cap < 2){
+//    	  max_cap = round(nlocal * 0.5);
+//      }
 
-      if (max_cap < 2){
-    	  max_cap = round(nlocal * 0.5);
-      }
-
-      int grid = kinetics->position(i); //find grid that atom is in
       double sbheight = (zhi-1.6e-5) * 0.4; // stratum basale height
 
    if (atom->radius[i] * 2 >= div_dia){
-	   if (nstem < max_cap){
-    	 parentType = stem_id;
-		 childType = parentType;
-		 parentMask = atom->mask[i];
-		 childMask = parentMask;
-	   } else if (atom->x[i][2] > sbheight){ //if stem cell is above a certain height, it should change to a TA cell
+//	   if (nstem < max_cap){
+//    	 parentType = stem_id;
+//		 childType = parentType;
+//		 parentMask = atom->mask[i];
+//		 childMask = parentMask;
+//	   } else if (atom->x[i][2] > sbheight){ //if stem cell is above a certain height, it should change to a TA cell
+	   if (atom->x[i][2] > sbheight) {
 			 parentType = ta_id;
 			 childType = ta_id;
 			 parentMask = ta_mask;
 			 childMask = ta_mask;
-   	   } else if (nstem >= max_cap && rand < asym){
+   	   } else if (rand < asym){
 			 parentType = stem_id;
 			 childType = ta_id;
 			 parentMask = atom->mask[i];
 			 childMask = ta_mask;
+//	   } else {
+//			 parentType = ta_id;
+//			 childType = ta_id;
+//			 parentMask = ta_mask;
+//			 childMask = ta_mask;
 	   } else {
-			 parentType = ta_id;
-			 childType = ta_id;
-			 parentMask = ta_mask;
-			 childMask = ta_mask;
+		   parentType = stem_id;
+		   childType = parentType;
+		   parentMask = atom->mask[i];
+		   childMask = parentMask;
 	   }
 
      double splitF = 0.4 + (random->uniform() *0.2);
@@ -381,6 +386,8 @@ void FixPDivideStem::init() {
 	 n = atom->nlocal - 1;
 
 	 atom->tag[n] = 0;
+	 atom->type[n] = childType;
+	 atom->mask[n] = childMask;
 	 atom->image[n] = atom->image[i];
 
 	 atom->v[n][0] = atom->v[i][0];
@@ -390,6 +397,10 @@ void FixPDivideStem::init() {
 	 atom->f[n][1] = atom->f[i][1];
 	 atom->f[n][2] = atom->f[i][2];
 
+	 atom->omega[n][0] = atom->omega[i][0];
+	 atom->omega[n][1] = atom->omega[i][1];
+	 atom->omega[n][2] = atom->omega[i][2];
+
 	 atom->rmass[n] = childMass;
 	 avec->outer_mass[n] = childOuterMass;
 
@@ -397,12 +408,12 @@ void FixPDivideStem::init() {
 	 atom->f[n][1] = childfy;
 	 atom->f[n][2] = childfz;
 
+     atom->torque[n][0] = atom->torque[i][0];
+     atom->torque[n][1] = atom->torque[i][1];
+     atom->torque[n][2] = atom->torque[i][2];
+
 	 atom->radius[n] = childRadius;
 	 avec->outer_radius[n] = childOuterRadius;
-
-	 atom->type[n] = childType;
-	 atom->mask[n] = childMask;
-
 
 	 //printf("divide_sc CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e \n", n, childMass, childRadius, childOuterMass, childOuterRadius);
 
