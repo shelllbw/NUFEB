@@ -61,8 +61,6 @@ class FixPGrowthTCELL : public Fix {
   class BIO *bio;
 
   void init_param();
-  double calculate_gridmass(int);
-  int calculate_gridcell(int, int);
 };
 
 }

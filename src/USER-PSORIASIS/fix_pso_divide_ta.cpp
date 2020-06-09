@@ -270,7 +270,7 @@ void FixPDivideTa::post_integrate() {
 			  childType = diff_id;
 			  parentMask = diff_mask;
 			  childMask = diff_mask;
-      	  }	else if (parentDivisionCount < max_division_counter && rand < asym && atom->x[i][2] > sbheight ){
+      	  }	else if (parentDivisionCount < max_division_counter && rand < asym && atom->x[i][2] > sbheight){
 			//asymmetric division
 			parentType = type_id;
 			childType = diff_id;
@@ -290,7 +290,6 @@ void FixPDivideTa::post_integrate() {
 		double parentMass = atom->rmass[i] * splitF;
 		double childMass = atom->rmass[i] - parentMass;
 
-		//outer mass for parent and child
 		double parentOuterMass = avec->outer_mass[i] * splitF;
 		double childOuterMass = avec->outer_mass[i] - parentOuterMass;
 
@@ -316,17 +315,19 @@ void FixPDivideTa::post_integrate() {
         atom->f[i][0] = parentfx;
         atom->f[i][1] = parentfy;
         atom->f[i][2] = parentfz;
+
         atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
         avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
-        //newZ = oldZ + (avec->outer_radius[i] * cos(phiD) * DELTA);
-        newX = oldX;
-        newY = oldY;
-//        newZ = oldZ;
+
+    	newX = oldX;
+    	newY = oldY;
+
         if (parentType == ta_id) {
         	newZ = oldZ;
         } else {
 			newZ = oldZ + atom->radius[i];
-		 }
+		}
+
         if (newX - avec->outer_radius[i] < xlo) {
           newX = xlo + avec->outer_radius[i];
         } else if (newX + avec->outer_radius[i] > xhi) {
@@ -351,20 +352,23 @@ void FixPDivideTa::post_integrate() {
         atom->mask[i] = parentMask;
         avec->d_counter[i] = parentDivisionCount;
 
-   	// printf("divide_ta PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e division count %i, type %i \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i], parentDivisionCount, parentType);
+   	 //printf("divide_ta PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e division count %i, type %i \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i], parentDivisionCount, parentType);
 
 
         //create child
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
         double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
         double* coord = new double[3];
-		newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
-		newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
+
+        newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
+        newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
+
         if (childType == ta_id) {
-        	newZ = oldZ - (childOuterRadius * cos(phiD) * DELTA);
-        } else {
-			newZ = oldZ + (childOuterRadius * cos(phiD) * DELTA);
+			newZ = oldZ;
+		} else {
+			newZ = oldZ + atom->radius[i];
 		}
+
         if (newX - childOuterRadius < xlo) {
           newX = xlo + childOuterRadius;
         } else if (newX + childOuterRadius > xhi) {
@@ -423,8 +427,10 @@ void FixPDivideTa::post_integrate() {
 
         avec->d_counter[n] = childDivisionCount;
 
-   	// printf("divide_sc CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e division counter %i type %i \n", n, childMass, childRadius, childOuterMass, childOuterRadius, childDivisionCount, childType);
+   	 //printf("divide_ta CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e division counter %i type %i \n", n, childMass, childRadius, childOuterMass, childOuterRadius, childDivisionCount, childType);
 
+       // printf("divide_ta CHILD %i type %i atom->omega[n][0] %e atom->omega[n][1] %e atom->omega[n][2] %e\n", n, childType, atom->omega[n][0], atom->omega[n][1], atom->omega[n][2]);
+        //printf("divide_ta CHILD %i type %i atom->torque[n][0] %e atom->torque[n][1] %e atom->torque[n][2] %e\n", n, childType, atom->torque[n][0], atom->torque[n][1], atom->torque[n][2]);
         modify->create_attribute(n);
 
         delete[] coord;

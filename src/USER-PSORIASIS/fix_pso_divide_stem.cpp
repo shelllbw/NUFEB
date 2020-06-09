@@ -256,9 +256,9 @@ void FixPDivideStem::init() {
    if (atom->radius[i] * 2 >= div_dia){
 //	   if (nstem < max_cap){
 //    	 parentType = stem_id;
-//		 childType = parentType;
+//		 childType = stem_id;
 //		 parentMask = atom->mask[i];
-//		 childMask = parentMask;
+//		 childMask = atom->mask[i];
 //	   } else if (atom->x[i][2] > sbheight){ //if stem cell is above a certain height, it should change to a TA cell
 	   if (atom->x[i][2] > sbheight) {
 			 parentType = ta_id;
@@ -266,20 +266,15 @@ void FixPDivideStem::init() {
 			 parentMask = ta_mask;
 			 childMask = ta_mask;
    	   } else if (rand < asym){
-			 parentType = stem_id;
-			 childType = ta_id;
-			 parentMask = atom->mask[i];
-			 childMask = ta_mask;
-//	   } else {
-//			 parentType = ta_id;
-//			 childType = ta_id;
-//			 parentMask = ta_mask;
-//			 childMask = ta_mask;
+			 parentType = ta_id;
+			 childType = stem_id;
+			 parentMask = ta_mask;
+			 childMask = atom->mask[i];
 	   } else {
 		   parentType = stem_id;
-		   childType = parentType;
+		   childType = stem_id;
 		   parentMask = atom->mask[i];
-		   childMask = parentMask;
+		   childMask = atom->mask[i];
 	   }
 
      double splitF = 0.4 + (random->uniform() *0.2);
@@ -312,8 +307,10 @@ void FixPDivideStem::init() {
 	 atom->f[i][0] = parentfx;
 	 atom->f[i][1] = parentfy;
 	 atom->f[i][2] = parentfz;
+
 	 atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
      avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
+
 	 newX = oldX;
 	 newY = oldY;
 	 if (parentType == stem_id){
@@ -344,21 +341,21 @@ void FixPDivideStem::init() {
 	 atom->type[i] = parentType;
 	 atom->mask[i] = parentMask;
 
-	 //printf("divide_sc PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i]);
+	 //printf("divide_sc PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e  type: %i \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i], parentType);
 
 
 	 //create child
 	 double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-	 //double childRadius = atom->radius[i];
      double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
 	 double* coord = new double[3];
 	 newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
 	 newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
-	 if (childType == stem_id){
+//	 if (childType == stem_id){
 		 newZ = oldZ;
-	 } else {
-		 newZ = oldZ + atom->radius[i];
-	 }
+//	 } else {
+//		 newZ = oldZ + atom->radius[i];
+//	 }
+
 	 if (newX - childOuterRadius < xlo) {
 		 newX = xlo + childOuterRadius;
 	 } else if (newX + childOuterRadius > xhi) {
@@ -415,7 +412,8 @@ void FixPDivideStem::init() {
 	 atom->radius[n] = childRadius;
 	 avec->outer_radius[n] = childOuterRadius;
 
-	 //printf("divide_sc CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e \n", n, childMass, childRadius, childOuterMass, childOuterRadius);
+	 //printf("divide_sc CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e type: %i \n", n, childMass, childRadius, childOuterMass, childOuterRadius, childType);
+     //printf("divide_sc CHILD %i type %i atom->torque[n][0] %e atom->torque[n][1] %e atom->torque[n][2] %e\n", n, childType, atom->torque[n][0], atom->torque[n][1], atom->torque[n][2]);
 
 	 modify->create_attribute(n);
 

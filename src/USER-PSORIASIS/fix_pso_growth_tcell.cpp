@@ -56,7 +56,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/tcell requires atom style bio");
 
-  if (narg < 11)
+  if (narg < 7)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/tcell command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 11;
+  int iarg = 7;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -140,14 +140,9 @@ void FixPGrowthTCELL::init() {
   //printf("sc_dens value is %f \n", sc_dens);
   abase = input->variable->compute_equal(ivar[1]);
   //printf("abase value is %f \n", abase);
-  il232 = input->variable->compute_equal(ivar[2]);
-  //printf("il232 value is %f \n", il232);
-  il2320 = input->variable->compute_equal(ivar[3]);
   //printf("il2320 value is %f \n", il2320);
-  il172 = input->variable->compute_equal(ivar[4]);
-  il1720 = input->variable->compute_equal(ivar[5]);
-  tnfa2 = input->variable->compute_equal(ivar[6]);
-  tnfa20 = input->variable->compute_equal(ivar[7]);
+  il172 = input->variable->compute_equal(ivar[2]);
+  tnfa2 = input->variable->compute_equal(ivar[3]);
 
   bio = kinetics->bio;
 
@@ -209,9 +204,9 @@ void FixPGrowthTCELL::init_param() {
   if (il23 == 0)
 	error->all(FLERR, "fix_psoriasis/growth/tcell requires nutrient il23");
   if (il17 == 0)
-	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il17");
+	error->all(FLERR, "fix_psoriasis/growth/tcell requires nutrient il17");
   if (tnfa == 0)
-  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
+  	error->all(FLERR, "fix_psoriasis/growth/tcell requires nutrient tnfa");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -309,46 +304,3 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
     }
   }
 }
-
-
-/* ----------------------------------------------------------------------
- DINIKA
- calculate the gird concentration for each type of cytokine
-
- for now just use il17 in system
- ------------------------------------------------------------------------- */
-double FixPGrowthTCELL::calculate_gridmass(int grid_id){ // to edit
-  double **nus = kinetics->nus;
-  double il23_conc = 0;
-
-  il23_conc = nus[il23][grid_id] * vol;
-
-  return il23_conc;
-}
-
-/* ----------------------------------------------------------------------
- DINIKA
- calculate the number of cells in each grid
-
- based on the grid id and the targeted cell type
- ------------------------------------------------------------------------- */
-int FixPGrowthTCELL::calculate_gridcell(int grid_id, int t){
-	int cell_count = 0;
-	int *mask = atom->mask;
-	int nlocal = atom->nlocal;
-	int *type = atom->type;
-
-	for (int i = 0; i < nlocal; i++) {
-		if (mask[i] & groupbit) {
-			int pos = kinetics->position(i);
-
-			//if it is within the same grid and is the targeted cell type, add 1
-			if (pos == grid_id && t == type[i]){
-				cell_count += 1;
-			}
-		}
-	}
-//	printf("type: %i cell count in grid %d is %d \n", t, grid_id, cell_count);
-	return cell_count;
-}
-

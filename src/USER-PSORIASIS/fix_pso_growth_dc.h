@@ -15,60 +15,52 @@
 
 #ifdef FIX_CLASS
 
-FixStyle(psoriasis/divide_ta,FixPDivideTa)
+FixStyle(psoriasis/growth/dc,FixPGrowthDC)
 
 #else
 
-#ifndef LMP_FIX_PDIVIDETA_H
-#define LMP_FIX_PDIVIDETA_H
+#ifndef LMP_FIX_PGROWTHDC_H
+#define LMP_FIX_PGROWTHDC_H
 
 #include "fix.h"
 
 namespace LAMMPS_NS {
 
-class FixPDivideTa : public Fix {
+class FixPGrowthDC : public Fix {
  public:
  
-  FixPDivideTa(class LAMMPS *, int, char **);
-  ~FixPDivideTa();
+	FixPGrowthDC(class LAMMPS *, int, char **);
+  ~FixPGrowthDC();
   int setmask();
   void init();
-  void post_integrate();
-  int modify_param(int, char **);
-  double uniformP();
+  void growth(double, int);
+
+  int external_gflag;
 
  private:
   char **var;
   int *ivar;
 
-  int seed;
-  int demflag;
-  tagint maxtag_all;
-  double xlo,xhi,ylo,yhi,zlo,zhi;
-  double div_dia;
-  int diff_mask;
+  int varg;
+  char *itype;
 
-  /*
-   * Dinika's edits
-   *
-   * cell type name and id
-   * boolean to check if the cell can divide
-   * */
-  int type_id, max_division_counter;
-  char* type_name;
-  int parentType, childType;
-  int parentMask, childMask;
-  double asym, cell_dens;
-  int nx, ny, nz;
+  int il23, il17, tnfa, gf;				//cytokines involved
+
+  int *species;                     // species index 0 = unknow, 1 = sc, 2 = ta, 3 = d, 4 = tc, 5 = dc
+
   double stepx, stepy, stepz;       // grids size
-  int snxx, snyy, snzz;                   // # of local grids in x, y and z
+  double xlo,xhi,ylo,yhi,zlo,zhi;   // computational domain size
+  int nx, ny, nz;
   double vol;                       // grid volume and gas volume
+  double dc_dens; //cell density
+  double dcvm, dckp, dcact, il232;
+  double abase;
 
-  class RanPark *random;
   class AtomVecBio *avec;
-  class BIO *bio;
-  class FixFluid *nufebFoam;
   class FixKinetics *kinetics;
+  class BIO *bio;
+
+  void init_param();
 };
 
 }

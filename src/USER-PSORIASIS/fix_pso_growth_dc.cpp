@@ -14,7 +14,7 @@
  See the README file in the top-level LAMMPS directory.
  ------------------------------------------------------------------------- */
 
-#include "fix_pso_growth_diff.h"
+#include "fix_pso_growth_dc.h"
 
 #include <math.h>
 #include <string.h>
@@ -50,14 +50,14 @@ using namespace std;
 
 /* ---------------------------------------------------------------------- */
 
-FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
+FixPGrowthDC::FixPGrowthDC(LAMMPS *lmp, int narg, char **arg) :
 	Fix(lmp, narg, arg) {
   avec = (AtomVecBio *) atom->style_match("bio");
   if (!avec)
-	error->all(FLERR, "Fix psoriasis/growth/diff requires atom style bio");
+	error->all(FLERR, "Fix psoriasis/growth/dc requires atom style bio");
 
-  if (narg < 6)
-	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/diff command");
+  if (narg < 8)
+	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/dc command");
 
   varg = narg-3;
   var = new char*[varg];
@@ -73,21 +73,21 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 6;
+  int iarg = 8;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
 	  if (external_gflag != 0 && external_gflag != 1)
-		error->all(FLERR, "Illegal fix psoriasis/growth/diff command: gflag");
+		error->all(FLERR, "Illegal fix psoriasis/growth/dc command: gflag");
 	  iarg += 2;
 	} else
-	  error->all(FLERR, "Illegal fix psoriasis/growth/diff command");
+	  error->all(FLERR, "Illegal fix psoriasis/growth/dc command");
   }
 }
 
 /* ---------------------------------------------------------------------- */
 
-FixPGrowthDIFF::~FixPGrowthDIFF() {
+FixPGrowthDC::~FixPGrowthDC() {
   int i;
   for (i = 0; i < varg; i++) {
 	delete[] var[i];
@@ -100,7 +100,7 @@ FixPGrowthDIFF::~FixPGrowthDIFF() {
 
 /* ---------------------------------------------------------------------- */
 
-int FixPGrowthDIFF::setmask() {
+int FixPGrowthDC::setmask() {
   int mask = 0;
   mask |= PRE_FORCE;
   return mask;
@@ -110,16 +110,16 @@ int FixPGrowthDIFF::setmask() {
  if need to restore per-atom quantities, create new fix STORE styles
  ------------------------------------------------------------------------- */
 
-void FixPGrowthDIFF::init() {
+void FixPGrowthDC::init() {
   if (!atom->radius_flag)
 	error->all(FLERR, "Fix requires atom attribute diameter");
 
   for (int n = 0; n < varg; n++) {
 	ivar[n] = input->variable->find(var[n]);
 	if (ivar[n] < 0)
-	  error->all(FLERR, "Variable name for fix psoriasis/growth/diff does not exist");
+	  error->all(FLERR, "Variable name for fix psoriasis/growth/dc does not exist");
 	if (!input->variable->equalstyle(ivar[n]))
-	  error->all(FLERR, "Variable for fix psoriasis/growth/diff is invalid style");
+	  error->all(FLERR, "Variable for fix psoriasis/growth/dc is invalid style");
   }
 
   // register fix kinetics with this class
@@ -136,24 +136,29 @@ void FixPGrowthDIFF::init() {
   if (kinetics == NULL)
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
-  diff_dens = input->variable->compute_equal(ivar[0]);
+  dc_dens = input->variable->compute_equal(ivar[0]);
+  //printf("dc_dens value is %f \n", sc_dens);
   abase = input->variable->compute_equal(ivar[1]);
-  ddesq = input->variable->compute_equal(ivar[2]);
+  //printf("abase value is %f \n", abase);
+  dckp = input->variable->compute_equal(ivar[2]);
+  dcact = input->variable->compute_equal(ivar[3]);
+  il232 = input->variable->compute_equal(ivar[4]);
+
 
   bio = kinetics->bio;
 
   if (bio->nnu == 0)
-	error->all(FLERR, "fix_psoriasis/growth/diff requires Nutrients input");
+	error->all(FLERR, "fix_psoriasis/growth/dc requires Nutrients input");
   else if (bio->decay == NULL)
-	error->all(FLERR, "fix_psoriasis/growth/diff requires Decay input");
+	error->all(FLERR, "fix_psoriasis/growth/dc requires Decay input");
   else if (bio->mu == NULL)
-	error->all(FLERR, "fix_psoriasis/growth/diff requires Growth Rate input");
+	error->all(FLERR, "fix_psoriasis/growth/dc requires Growth Rate input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
   nz = kinetics->nz;
 
-  species = memory->create(species, atom->ntypes+1, "diff:species");
+  species = memory->create(species, atom->ntypes+1, "dc:species");
 
   //Get computational domain size
   if (domain->triclinic == 0) {
@@ -184,21 +189,29 @@ void FixPGrowthDIFF::init() {
 
 /* ---------------------------------------------------------------------- */
 
-void FixPGrowthDIFF::init_param() {
-	il17, tnfa = 0;
+void FixPGrowthDC::init_param() {
+	il23, il17, tnfa, gf = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
+	if (strcmp(bio->nuname[nu], "il23") == 0)
+	  il23 = nu;
 	if (strcmp(bio->nuname[nu], "il17") == 0)
 	  il17 = nu;
 	if (strcmp(bio->nuname[nu], "tnfa") == 0)
-			  tnfa = nu;
+		  tnfa = nu;
+	if (strcmp(bio->nuname[nu], "gf") == 0)
+		  gf = nu;
   }
 
+  if (il23 == 0)
+	error->all(FLERR, "fix_psoriasis/growth/dc requires nutrient il23");
   if (il17 == 0)
-	error->all(FLERR, "fix_psoriasis/growth/diff requires nutrient il17");
+	error->all(FLERR, "fix_psoriasis/growth/dc requires nutrient il17");
   if (tnfa == 0)
-    	error->all(FLERR, "fix_psoriasis/growth/diff requires nutrient tnfa");
+  	error->all(FLERR, "fix_psoriasis/growth/dc requires nutrient tnfa");
+  if (gf == 0)
+    	error->all(FLERR, "fix_psoriasis/growth/dc requires nutrient gf");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -219,11 +232,7 @@ void FixPGrowthDIFF::init_param() {
 	  else if (strcmp(name, "bm") == 0)
 	  	species[i] = 7;
 	  else
-		error->all(FLERR, "unknown species in fix_psoriasis/growth/diff");
-
-	  if (species[i] == 3){
-		  printf("cell type %i detected \n", species[i]);
-	  }
+		error->all(FLERR, "unknown species in fix_psoriasis/growth/dc");
   }
 }
 
@@ -232,10 +241,8 @@ void FixPGrowthDIFF::init_param() {
  metabolism and atom update
  for each cell type -> growth and decay rates are used (mu[i], decay[i])
  nutrient reaction rate is then calculated
-
- todo: place update biomass in here since we are calculating based on cell rather than grid
  ------------------------------------------------------------------------- */
-void FixPGrowthDIFF::growth(double dt, int gflag) {
+void FixPGrowthDC::growth(double dt, int gflag) {
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
   int *type = atom->type;
@@ -247,17 +254,17 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
   double *outer_radius = avec->outer_radius;
   double grid_vol = kinetics->stepx * kinetics->stepy * kinetics->stepz;
 
+  const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
+  const double four_thirds_pi = 4.0 * MY_PI / 3.0;
+  const double third = 1.0 / 3.0;
+
   double *mu = bio->mu;
   double *decay = bio->decay;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
-  const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
-  const double four_thirds_pi = 4.0 * MY_PI / 3.0;
-  const double third = 1.0 / 3.0;
-
-  double growrate_d = 0;
+  double growrate_dc = 0;
 
   for (int i = 0; i < nlocal; i++) {
 	if (mask[i] & groupbit) {
@@ -266,62 +273,35 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
 	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-	  //different heights for diff cells
-	  double sbheight = (zhi-1.6e-5) * 0.4;
-	  double ssheight = (zhi-1.6e-5) * 0.6;
-	  double sgheight = (zhi-1.6e-5) * 0.84;
-	  double sc1height = (zhi-1.6e-5) * 0.948;
-	  double sc2height = (zhi-1.6e-5) * 1;
+	  //printf("species is %i \n", species[t]);
+      // dc cell model
+      if (species[t] == 5) {
+    	double R13 = (mu[t] * nus[gf][grid] / (dckp + nus[gf][grid])) + dcact;
+    	double R14 = decay[t];
+    	double R15 = abase;
 
-	  //printf("heights sb %e    ss %e    sg %e    sc1 %e     sc2 %e\n", sbheight, ssheight, sgheight, sc1height, sc2height);
+    	//printf("growrate_tcell  BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 
-      // diff cell model
-      if (species[t] == 3) {
-		double R10 = decay[t];
-		double R11 = abase;
-		double R12 = ddesq; //desquamation should occur when diff cells reach zhi
+    	nur[gf][grid] -= R13 * nus[gf][grid];
+    	nur[il23][grid] += (il232 * (rmass[i]/ grid_vol));
+
+    	//printf("growrate_tcell  AFTER: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
+
+    	//printf("growrate_tcell equation is R11 %e - R12 %e - R13 %e = %e\n", R11, R12, R13, R11 - R12 - R13);
+
+        growrate_dc = R13 - R14 - R15;
 
         if (!gflag || !external_gflag){
         	continue;
         }
 
-        //if diff cell is below the ss layer
-//        if (atom->x[i][2] < ssheight){
-//        	growrate_d = R10 - R11;
-//        	//rmass[i] = rmass[i] + growrate_d * rmass[i] * dt;
-//        	rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
-//        } else if (atom->x[i][2] > sgheight) { //if diff cell is at the sg layer
-//			growrate_d = R10 - R11;
-//			//rmass[i] = rmass[i] + growrate_d * rmass[i] * dt;
-//			rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
-//		} else if (atom->x[i][2] > sc1height) { //if diff cell is at the sc layer before shedding
-//			growrate_d = R10 - R11 - R12;
-//			//rmass[i] = rmass[i] - growrate_d * rmass[i] * dt;
-//			rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
-//		} else if (atom->x[i][2] > sc2height) { //if diff cell is at the layer for shedding
-//			growrate_d = R10 - R11 - R12;
-//			//rmass[i] = rmass[i] - growrate_d * rmass[i] * dt;
-//			rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
-//		} else {
-//			  rmass[i] = rmass[i];
-//		}
-
-
-        if (atom->x[i][2] < sc1height) {
-        	growrate_d = R10 - R11;
-        	rmass[i] = rmass[i] + rmass[i] *  growrate_d * dt;
-        	//printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
-        } else if (atom->x[i][2] > sc1height) {
-        	growrate_d = R10 - R11 - R12;
-        	rmass[i] = rmass[i] + rmass[i] * growrate_d * dt;
-        	//printf("growrate_d 2 is %e rmass is %e \n", growrate_d, rmass[i]);
-        } else {
-        	rmass[i] = rmass[i];
-        }
-        radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-        outer_mass[i] = rmass[i];
-        outer_radius[i] = radius[i];
-
+        //todo potential issues with updating cell rmass, radius
+        //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		rmass[i] = rmass[i] + rmass[i] * (1 + growrate_dc * dt);
+		outer_mass[i] = rmass[i];
+		outer_radius[i] = radius[i];
+		radius[i] = radius[i];
+		//printf("properties of new dc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
       }
     }
   }
