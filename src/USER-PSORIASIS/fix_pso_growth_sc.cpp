@@ -137,13 +137,9 @@ void FixPGrowthSC::init() {
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
   sc_dens = input->variable->compute_equal(ivar[0]);
- // printf("sc_dens value is %f \n", sc_dens);
-  sc2ta = input->variable->compute_equal(ivar[1]);
-  //printf("sc2ta rate is %f \n", sc2ta);
-  sc2gf = input->variable->compute_equal(ivar[2]);
-  //printf("sc2gf rate is %f \n", sc2gf);
-  abase = input->variable->compute_equal(ivar[3]);
-  //printf("abase value is %f \n", abase);
+  abase = input->variable->compute_equal(ivar[1]);
+  sc2ta = input->variable->compute_equal(ivar[2]);
+  sc2gf = input->variable->compute_equal(ivar[3]);
 
   bio = kinetics->bio;
 

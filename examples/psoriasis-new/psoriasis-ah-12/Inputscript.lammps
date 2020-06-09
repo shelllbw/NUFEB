@@ -126,7 +126,6 @@ variable divisionCounter equal 4
 variable asym equal 0.8
 variable maxDivCount equal 4
 variable stemPercent equal 0.05
-variable caThreshold equal 4.2e-7
 
 #variables used in fix kinetics
 variable diffT equal 1e-4
@@ -135,11 +134,6 @@ variable tol equal 1e-5
 
 #common variables used in growth
 variable abase equal 4.16666667e-8
-variable il172 equal 0.00000578703
-variable il1720 equal 0.0004224537
-variable tnfa2 equal 0.00000578703
-variable tnfa20 equal 0.0004224537
-variable ca2 equal 0.00000578703
 
 #variables used in growth/sc
 variable STEMdens equal 30
@@ -158,21 +152,26 @@ variable ddesq equal 5.50104167e-8
 
 #variables used in growth/tcell
 variable TCELLdens equal 30
-variable dcvm equal 0
+variable il172 equal 0.00000578703
+variable tnfa2 equal 0.00000578703
+
+#variables used in growth/dc
+variable DCdens equal 30
 variable dckp equal 0
+variable dcact equal 0
 variable il232 equal 0.00001157407
-variable il2320 equal 0.0001
 
 ##############Define IBm Commands##############
 
 fix k1 all kinetics 1 10 4 12 v_diffT v_layer demflag 0 niter 5000
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il172 v_tnfa2
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
-fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase
+fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abase v_sc2ta v_sc2gf 
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
-fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_abase
+fix kgta TA psoriasis/growth/ta v_TAdens v_abase v_ta2d v_ta2gf
 fix d2 TA psoriasis/divide_ta 1 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
 fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ddesq
+#fix kgdc DC psoriasis/growth/dc v_DCdens v_abase v_dckp v_dcact v_il232
 #fix p1 HET kinetics/pressure 4 INE NULL 25
 
 ##############Define IBm Computes##############

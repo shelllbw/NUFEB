@@ -137,10 +137,7 @@ void FixPGrowthTCELL::init() {
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
   tc_dens = input->variable->compute_equal(ivar[0]);
-  //printf("sc_dens value is %f \n", sc_dens);
   abase = input->variable->compute_equal(ivar[1]);
-  //printf("abase value is %f \n", abase);
-  //printf("il2320 value is %f \n", il2320);
   il172 = input->variable->compute_equal(ivar[2]);
   tnfa2 = input->variable->compute_equal(ivar[3]);
 

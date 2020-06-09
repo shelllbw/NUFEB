@@ -137,9 +137,9 @@ void FixPGrowthTA::init() {
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
   ta_dens = input->variable->compute_equal(ivar[0]);
-  ta2d = input->variable->compute_equal(ivar[1]);
-  ta2gf = input->variable->compute_equal(ivar[2]);
-  abase = input->variable->compute_equal(ivar[3]);
+  abase = input->variable->compute_equal(ivar[1]);
+  ta2d = input->variable->compute_equal(ivar[2]);
+  ta2gf = input->variable->compute_equal(ivar[3]);
 
   bio = kinetics->bio;
 

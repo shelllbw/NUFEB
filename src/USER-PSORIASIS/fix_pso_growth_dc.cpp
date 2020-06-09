@@ -137,9 +137,7 @@ void FixPGrowthDC::init() {
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
   dc_dens = input->variable->compute_equal(ivar[0]);
-  //printf("dc_dens value is %f \n", sc_dens);
   abase = input->variable->compute_equal(ivar[1]);
-  //printf("abase value is %f \n", abase);
   dckp = input->variable->compute_equal(ivar[2]);
   dcact = input->variable->compute_equal(ivar[3]);
   il232 = input->variable->compute_equal(ivar[4]);
