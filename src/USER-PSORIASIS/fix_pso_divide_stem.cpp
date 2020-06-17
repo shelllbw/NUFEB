@@ -245,37 +245,44 @@ void FixPDivideStem::init() {
       int stem_id = bio->find_typeid("stem");
 
       //stem cell takes up approximately 5% of the population
-//      max_cap = round((nlocal - nbm) * stem_percent);
-//
-//      if (max_cap < 2){
-//    	  max_cap = round(nlocal * 0.5);
-//      }
+      max_cap = round((nlocal - nbm) * stem_percent);
 
-      double sbheight = (zhi-1.6e-5) * 0.4; // stratum basale height
+      if (max_cap < 2){
+    	  max_cap = round(nlocal * 0.5);
+      }
+
+      //double sbheight = (zhi-1.6e-5) * 0.4; // stratum basale height
+      double sbheight = zhi * 0.4;
 
    if (atom->radius[i] * 2 >= div_dia){
-//	   if (nstem < max_cap){
-//    	 parentType = stem_id;
-//		 childType = stem_id;
-//		 parentMask = atom->mask[i];
-//		 childMask = atom->mask[i];
-//	   } else if (atom->x[i][2] > sbheight){ //if stem cell is above a certain height, it should change to a TA cell
-	   if (atom->x[i][2] > sbheight) {
-			 parentType = ta_id;
-			 childType = ta_id;
-			 parentMask = ta_mask;
-			 childMask = ta_mask;
-   	   } else if (rand < asym){
-			 parentType = ta_id;
-			 childType = stem_id;
-			 parentMask = ta_mask;
-			 childMask = atom->mask[i];
-	   } else {
+	  if (rand < (1 - asym)/2 && atom->x[i][2] < sbheight){
 		   parentType = stem_id;
 		   childType = stem_id;
 		   parentMask = atom->mask[i];
 		   childMask = atom->mask[i];
+		   selfcounter++;
+	  } else if (atom->x[i][2] > sbheight) {
+		  // printf("enters sym \n");
+			 parentType = ta_id;
+			 childType = ta_id;
+			 parentMask = ta_mask;
+			 childMask = ta_mask;
+			 symcounter++;
+//   	   } else if (1 - rand < (1-asym)/ 2){
+//			 parentType = ta_id;
+//			 childType = ta_id;
+//			 parentMask = ta_mask;
+//			 childMask = ta_mask;
+//			 symcounter++;
+	   } else {
+		   parentType = ta_id;
+		   childType = stem_id;
+		   parentMask = ta_mask;
+		   childMask = atom->mask[i];
+		   asymcounter++;
 	   }
+
+		 printf("symcounter %i , selfcounter %i asymcounter %i TOTAL divisions_sc %i \n", symcounter, selfcounter, asymcounter, symcounter + selfcounter + asymcounter);
 
      double splitF = 0.4 + (random->uniform() *0.2);
 	 double parentMass = atom->rmass[i] * splitF;
@@ -413,7 +420,7 @@ void FixPDivideStem::init() {
 	 avec->outer_radius[n] = childOuterRadius;
 
 	 //printf("divide_sc CHILD %i : rmass %e, radius %e, outer mass %e, outer radius %e type: %i \n", n, childMass, childRadius, childOuterMass, childOuterRadius, childType);
-     //printf("divide_sc CHILD %i type %i atom->torque[n][0] %e atom->torque[n][1] %e atom->torque[n][2] %e\n", n, childType, atom->torque[n][0], atom->torque[n][1], atom->torque[n][2]);
+     //printf("divide_sc diameter PARENT %e CHILD %e \n", atom->radius[i] * 2, childRadius * 2);
 
 	 modify->create_attribute(n);
 

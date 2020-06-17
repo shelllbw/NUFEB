@@ -277,7 +277,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
       if (species[t] == 2) {
 		double R5_1 = mu[t] * nus[il17][grid];
 		double R5_2 = mu[t] * nus[tnfa][grid];
-		double R6 = decay[t];
+		double R6 = pow(decay[t], 2);
 		double R7 = abase;
 		double R8_1 = ta2d * nus[il17][grid];
 		double R8_2 = ta2d * nus[tnfa][grid];
@@ -292,7 +292,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 		//printf("growrate_ta AFTER: il17 conc : %e tnfa conc :  %e   \n", nus[il17][grid], nus[tnfa][grid]);
 
         growrate_ta = R5_1 + R5_2 - R6 - R7;
-        growrate_d = R8_1 + R8_2;
+        growrate_d = R8_1 + R8_2 - R6 - R7;
 
         if (!gflag || !external_gflag){
         	continue;

@@ -267,17 +267,17 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
 	  //different heights for diff cells
-	  double sbheight = (zhi-1.6e-5) * 0.4;
-	  double ssheight = (zhi-1.6e-5) * 0.6;
-	  double sgheight = (zhi-1.6e-5) * 0.84;
-	  double sc1height = (zhi-1.6e-5) * 0.948;
-	  double sc2height = (zhi-1.6e-5) * 1;
+	  double sbheight = zhi * 0.4;
+	  double ssheight = zhi * 0.6;
+	  double sgheight = zhi * 0.84;
+	  double sc1height = zhi * 0.948;
+	  double sc2height = zhi * 1;
 
 	  //printf("heights sb %e    ss %e    sg %e    sc1 %e     sc2 %e\n", sbheight, ssheight, sgheight, sc1height, sc2height);
 
       // diff cell model
       if (species[t] == 3) {
-		double R10 = decay[t];
+		double R10 = pow(decay[t], 2);
 		double R11 = abase;
 		double R12 = ddesq; //desquamation should occur when diff cells reach zhi
 
@@ -285,36 +285,16 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
         	continue;
         }
 
-        //if diff cell is below the ss layer
-//        if (atom->x[i][2] < ssheight){
-//        	growrate_d = R10 - R11;
-//        	//rmass[i] = rmass[i] + growrate_d * rmass[i] * dt;
-//        	rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
-//        } else if (atom->x[i][2] > sgheight) { //if diff cell is at the sg layer
-//			growrate_d = R10 - R11;
-//			//rmass[i] = rmass[i] + growrate_d * rmass[i] * dt;
-//			rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
-//		} else if (atom->x[i][2] > sc1height) { //if diff cell is at the sc layer before shedding
-//			growrate_d = R10 - R11 - R12;
-//			//rmass[i] = rmass[i] - growrate_d * rmass[i] * dt;
-//			rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
-//		} else if (atom->x[i][2] > sc2height) { //if diff cell is at the layer for shedding
-//			growrate_d = R10 - R11 - R12;
-//			//rmass[i] = rmass[i] - growrate_d * rmass[i] * dt;
-//			rmass[i] = rmass[i] + rmass[i] * (1 + growrate_d * dt);
-//		} else {
-//			  rmass[i] = rmass[i];
-//		}
-
+//        printf("rmass before %e\n", rmass[i]);
 
         if (atom->x[i][2] < sc1height) {
-        	growrate_d = R10 - R11;
-        	rmass[i] = rmass[i] + rmass[i] *  growrate_d * dt;
-        	//printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
+        	growrate_d = R10 + R11;
+        	rmass[i] = rmass[i] + rmass[i] *  -growrate_d * dt;
+//        	printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else if (atom->x[i][2] > sc1height) {
-        	growrate_d = R10 - R11 - R12;
-        	rmass[i] = rmass[i] + rmass[i] * growrate_d * dt;
-        	//printf("growrate_d 2 is %e rmass is %e \n", growrate_d, rmass[i]);
+        	growrate_d = R10 + R11 + R12;
+        	rmass[i] = rmass[i] + rmass[i] * -growrate_d * dt;
+//        	printf("growrate_d 2 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else {
         	rmass[i] = rmass[i];
         }

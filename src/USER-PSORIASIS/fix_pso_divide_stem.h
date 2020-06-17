@@ -61,12 +61,14 @@ class FixPDivideStem : public Fix {
   int parentMask, childMask;
   double asym, cell_dens, stem_percent;
   int max_cap;
-  int ca;
   int nx, ny, nz;
   double stepx, stepy, stepz;       // grids size
   int snxx, snyy, snzz;                   // # of local grids in x, y and z
   double vol;                       // grid volume and gas volume
   double caThreshold;
+  int asymcounter;
+  int symcounter;
+  int selfcounter;
 
   class RanPark *random;
   class AtomVecBio *avec;

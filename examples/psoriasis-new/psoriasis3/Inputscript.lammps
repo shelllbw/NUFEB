@@ -126,13 +126,9 @@ variable layer equal -1
 variable tol equal 1e-5
 
 #common variables used in growth
-#variable abase equal 4.16666667e-8
-variable abase equal 0
+variable abase equal 4.16666667e-8
 variable il172 equal 0.00000578703
-variable il1720 equal 0.0004224537
 variable tnfa2 equal 0.00000578703
-variable tnfa20 equal 0.0004224537
-variable ca2 equal 0.0004224537
 
 #variables used in growth/sc
 variable STEMdens equal 30
@@ -154,18 +150,17 @@ variable TCELLdens equal 30
 variable dcvm equal 0
 variable dckp equal 0
 variable il232 equal 0.00001157407
-variable il2320 equal 0.0001
 
 ##############Define IBm Commands##############
 
 fix k1 all kinetics 1 20 4 20 v_diffT v_layer demflag 0 niter 5000
-fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il232 v_il2320 v_il172 v_il1720 v_tnfa2 v_tnfa20
+fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il172 v_tnfa2
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
-fix kgsc STEM psoriasis/growth/sc v_STEMdens v_sc2ta v_sc2gf v_abase v_ca2
-fix d1 STEM psoriasis/divide_stem 100 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
-fix kgta TA psoriasis/growth/ta v_TAdens v_ta2d v_ta2gf v_abase v_sc2ta v_ca2
-fix d2 TA psoriasis/divide_ta 100 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
-#fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ta2d v_ddesq v_il172 v_il1720 v_tnfa2 v_tnfa20
+fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abase v_sc2ta v_sc2gf
+fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
+fix kgta TA psoriasis/growth/ta v_TAdens v_abase v_ta2d v_ta2gf
+fix d2 TA psoriasis/divide_ta 1 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
+#fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ddesq
 
 ##############Define IBm Computes##############
 
@@ -183,9 +178,13 @@ thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 50 pre no post no every 1 &
+run 20 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
+"fix_modify d1 demflag 1" &
+"fix_modify d2 demflag 1" &
 "timestep 1e-3" &
 "run 1000 pre no post no" &
 "timestep 3600"  &
-"fix_modify k1 demflag 0"
+"fix_modify k1 demflag 0" &
+"fix_modify d1 demflag 0" &
+"fix_modify d2 demflag 0"

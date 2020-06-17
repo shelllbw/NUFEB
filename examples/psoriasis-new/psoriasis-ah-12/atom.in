@@ -6,7 +6,7 @@
 
    0.000000e-04   0.5e-04  xlo xhi
    0.000000e-04   0.2e-04  ylo yhi
-   0.000000e-04   0.6e-04  zlo zhi
+   0.000000e-04   0.5e-04  zlo zhi
 
  Atoms
 
@@ -51,7 +51,7 @@
     ta 2.03263889e-8
     diff 0
     tcell 0.00063657407
-    dc 0
+    dc 0.0694
     apop 0
     bm 0
 

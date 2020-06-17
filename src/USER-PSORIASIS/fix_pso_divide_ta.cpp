@@ -254,8 +254,8 @@ void FixPDivideTa::post_integrate() {
       double rand = distribution(gen);
 
       int grid = kinetics->position(i); //find grid that atom is in
-      double ssheight = (zhi-1.6e-5) * 0.6;
-      double sbheight = (zhi-1.6e-5) * 0.4;
+      double ssheight = zhi * 0.6;
+      double sbheight = zhi * 0.4;
 
       //printf("  	sheight is %e 	atom->x[i][2] is %e \n",  ssheight, atom->x[i][2]);
 

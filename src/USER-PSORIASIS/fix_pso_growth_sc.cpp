@@ -265,6 +265,8 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 //  for(int i=0; i<atom->nlocal; i++)
 //      if (atom->type[i] == 1)  printf("i=%i type=%i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
 
+  //printf("enters sc growth \n");
+
   for (int i = 0; i < nlocal; i++) {
 	if (mask[i] & groupbit) {
 	  int t = type[i];
@@ -276,7 +278,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
       if (species[t] == 1) {
 		double R1_1 = mu[t] * nus[il17][grid];
 		double R1_2 = mu[t] * nus[tnfa][grid];
-		double R2 = decay[t];
+		double R2 = pow(decay[t], 2);
 		double R3 = abase;
 		double R4_1 = sc2ta * nus[il17][grid];
 		double R4_2 = sc2ta * nus[tnfa][grid];
@@ -293,7 +295,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//printf("growrate_sc AFTER: il17 conc : %e tnfa conc :  %e \n", nus[il17][grid], nus[tnfa][grid]);
 
         growrate_sc = R1_1 + R1_2 - R2 - R3;
-        growrate_ta = R4_1 + R4_2; //sc can divide to a TA cell
+        growrate_ta = R4_1 + R4_2 - R2 - R3; //sc can divide to a TA cell
 
         if (!gflag || !external_gflag){
         	continue;
