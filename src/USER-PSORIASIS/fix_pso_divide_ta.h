@@ -46,14 +46,13 @@ class FixPDivideTa : public Fix {
   tagint maxtag_all;
   double xlo,xhi,ylo,yhi,zlo,zhi;
   double div_dia;
-  int diff_mask;
-
   /*
    * Dinika's edits
    *
    * cell type name and id
    * boolean to check if the cell can divide
    * */
+  int diff_mask;
   int type_id, max_division_counter;
   char* type_name;
   int parentType, childType;
@@ -63,6 +62,7 @@ class FixPDivideTa : public Fix {
   double stepx, stepy, stepz;       // grids size
   int snxx, snyy, snzz;                   // # of local grids in x, y and z
   double vol;                       // grid volume and gas volume
+  int asymcounter, symcounter, selfcounter;
 
   class RanPark *random;
   class AtomVecBio *avec;

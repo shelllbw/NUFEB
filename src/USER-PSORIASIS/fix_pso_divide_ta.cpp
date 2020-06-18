@@ -220,14 +220,7 @@ void FixPDivideTa::post_integrate() {
     return;
 
   int nlocal = atom->nlocal;
-  int nta = 0;
-
-  //get the total number of stem cells in the system
-  for (int i = 0; i < nlocal; i++) {
-	if (atom->mask[i] & groupbit) {
-		nta++;
-	}
-  }
+  int cself;
 
   for (int i = 0; i < nlocal; i++) {
     //this groupbit will allow the input script to set each cell type to divide
@@ -253,11 +246,8 @@ void FixPDivideTa::post_integrate() {
       std::uniform_real_distribution<double>  distribution(0.0, 1.0);
       double rand = distribution(gen);
 
-      int grid = kinetics->position(i); //find grid that atom is in
-      double ssheight = zhi * 0.6;
-      double sbheight = zhi * 0.4;
-
-      //printf("  	sheight is %e 	atom->x[i][2] is %e \n",  ssheight, atom->x[i][2]);
+      double ssheight = zhi * 0.715;
+      double sbheight = zhi * 0.67;
 
       if (atom->radius[i] * 2 >= div_dia){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
@@ -265,23 +255,31 @@ void FixPDivideTa::post_integrate() {
     		  childType = ta_id;
     		  parentMask = diff_mask;
     		  childMask = atom->mask[i];
+    		  asymcounter++;
     	  } else if (atom->x[i][2] > ssheight){
     		  parentType = diff_id;
 			  childType = diff_id;
 			  parentMask = diff_mask;
 			  childMask = diff_mask;
-      	  }	else if (parentDivisionCount < max_division_counter && rand < asym && atom->x[i][2] > sbheight){
-			//asymmetric division
-			parentType = type_id;
-			childType = diff_id;
-			parentMask = atom->mask[i];
-			childMask = diff_mask;
-		  } else { //self proliferate
-			parentType = type_id;
-			childType = type_id;
-			parentMask = atom->mask[i];
-			childMask = atom->mask[i];
+			  symcounter++;
+      	 // }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2) {
+    	  }	else if (parentDivisionCount < max_division_counter && rand < 1-asym || atom->x[i][2] < sbheight) {
+      		  parentType = type_id;
+      		  childType = type_id;
+      		  parentMask = atom->mask[i];
+      		  childMask = atom->mask[i];
+      		  selfcounter++;
+      		  cself++;
+		  } else {
+			  parentType = type_id;
+			  childType = diff_id;
+			  parentMask = atom->mask[i];
+			  childMask = diff_mask;
+			  asymcounter++;
     	  }
+
+ 		 printf("symcounter %i , asymcounter %i, selfcounter %i cself %i,  TOTAL divisions_ta %i \n", symcounter, asymcounter, selfcounter, cself, symcounter + asymcounter + cself);
+
 
 		parentDivisionCount = avec->d_counter[i] + 1;
 		childDivisionCount = 0;
@@ -343,7 +341,6 @@ void FixPDivideTa::post_integrate() {
           printf("enters here 5 parent type %i \n", parentType);
         } else if (newZ + avec->outer_radius[i] > zhi) {
           newZ = zhi - avec->outer_radius[i];
-          printf("enters here 6 parent type %i \n", parentType);
         }
         atom->x[i][0] = newX;
         atom->x[i][1] = newY;
@@ -384,7 +381,6 @@ void FixPDivideTa::post_integrate() {
           printf("enters here 7 type: %i \n", childType);
         } else if (newZ + childOuterRadius > zhi) {
           newZ = zhi - childOuterRadius;
-          printf("enters here 8 type: %i \n", childType);
         }
         //coordinates should be the same as parent
         coord[0] = newX;

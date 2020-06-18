@@ -251,8 +251,7 @@ void FixPDivideStem::init() {
     	  max_cap = round(nlocal * 0.5);
       }
 
-      //double sbheight = (zhi-1.6e-5) * 0.4; // stratum basale height
-      double sbheight = zhi * 0.4;
+      double sbheight = zhi * 0.67;
 
    if (atom->radius[i] * 2 >= div_dia){
 	  if (rand < (1 - asym)/2 && atom->x[i][2] < sbheight){
@@ -282,7 +281,7 @@ void FixPDivideStem::init() {
 		   asymcounter++;
 	   }
 
-		 printf("symcounter %i , selfcounter %i asymcounter %i TOTAL divisions_sc %i \n", symcounter, selfcounter, asymcounter, symcounter + selfcounter + asymcounter);
+	//	 printf("symcounter %i , selfcounter %i asymcounter %i TOTAL divisions_sc %i \n", symcounter, selfcounter, asymcounter, symcounter + selfcounter + asymcounter);
 
      double splitF = 0.4 + (random->uniform() *0.2);
 	 double parentMass = atom->rmass[i] * splitF;
@@ -340,7 +339,6 @@ void FixPDivideStem::init() {
 		 printf("enters here 1 parent type %i \n", parentType);
 	 } else if (newZ + avec->outer_radius[i] > zhi) {
 		 newZ = zhi - avec->outer_radius[i];
-		 printf("enters here 2 parent type %i \n", parentType);
 	 }
 	 atom->x[i][0] = newX;
 	 atom->x[i][1] = newY;
@@ -378,7 +376,6 @@ void FixPDivideStem::init() {
 		 printf("enters here 3 type: %i \n", childType);
 	 } else if (newZ + childOuterRadius > zhi) {
 		 newZ = zhi - childOuterRadius;
-		 printf("enters here 4 type: %i \n", childType);
 	 }
 	 //coordinates should be the same as parent
 	 coord[0] = newX;

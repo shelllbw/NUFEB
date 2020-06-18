@@ -267,8 +267,6 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
 	  //different heights for diff cells
-	  double sbheight = zhi * 0.4;
-	  double ssheight = zhi * 0.6;
 	  double sgheight = zhi * 0.84;
 	  double sc1height = zhi * 0.948;
 	  double sc2height = zhi * 1;
