@@ -121,7 +121,7 @@ fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-16 0 1.6e-16 1.6e-13
 
 
 #variables used in fix division
-variable divDia equal 1.2e-6
+variable divDia equal 1.36e-6
 variable divisionCounter equal 4
 variable asym equal 0.8
 variable maxDivCount equal 4
@@ -133,7 +133,8 @@ variable layer equal -1
 variable tol equal 1e-5
 
 #common variables used in growth
-variable abase equal 4.16666667e-8
+#variable abase equal 4.16666667e-8
+variable abase equal 4.16666667e-30
 
 #variables used in growth/sc
 variable STEMdens equal 30

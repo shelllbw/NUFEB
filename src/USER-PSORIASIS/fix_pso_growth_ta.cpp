@@ -186,6 +186,7 @@ void FixPGrowthTA::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthTA::init_param() {
+	ks = bio->ks;
 	il17, gf, tnfa = 0;
 
   // initialize nutrient
@@ -292,7 +293,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 		//printf("growrate_ta AFTER: il17 conc : %e tnfa conc :  %e   \n", nus[il17][grid], nus[tnfa][grid]);
 
         growrate_ta = R5_1 + R5_2 - R6 - R7;
-        growrate_d = R8_1 + R8_2 - R6 - R7;
+        growrate_d = R8_1 + R8_2;
 
         if (!gflag || !external_gflag){
         	continue;
@@ -304,7 +305,6 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / ta_dens), third);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
 		//printf("properties of new ta %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-		//printf("diameter is %e\n", radius[i] * 2);
       }
     }
   }

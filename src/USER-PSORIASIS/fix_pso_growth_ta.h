@@ -40,6 +40,7 @@ class FixPGrowthTA : public Fix {
  private:
   char **var;
   int *ivar;
+  double **ks;
 
   int varg;
   char *itype;
