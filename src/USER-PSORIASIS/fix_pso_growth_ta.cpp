@@ -294,6 +294,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 
         growrate_ta = R5_1 + R5_2 - R6 - R7;
         growrate_d = R8_1 + R8_2;
+        //printf("growrate ta %e 		growrate_d %e \n", growrate_ta, growrate_d);
 
         if (!gflag || !external_gflag){
         	continue;

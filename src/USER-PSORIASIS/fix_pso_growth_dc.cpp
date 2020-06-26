@@ -278,14 +278,8 @@ void FixPGrowthDC::growth(double dt, int gflag) {
     	double R14 = decay[t];
     	double R15 = abase;
 
-    	//printf("growrate_tcell  BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
-
     	nur[gf][grid] -= R13 * nus[gf][grid];
     	nur[il23][grid] += (il232 * (rmass[i]/ grid_vol));
-
-    	//printf("growrate_tcell  AFTER: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
-
-    	//printf("growrate_tcell equation is R11 %e - R12 %e - R13 %e = %e\n", R11, R12, R13, R11 - R12 - R13);
 
         growrate_dc = R13 - R14 - R15;
 
@@ -293,7 +287,6 @@ void FixPGrowthDC::growth(double dt, int gflag) {
         	continue;
         }
 
-        //todo potential issues with updating cell rmass, radius
         //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
 		rmass[i] = rmass[i] + rmass[i] * (1 + growrate_dc * dt);
 		outer_mass[i] = rmass[i];

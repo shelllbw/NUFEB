@@ -279,6 +279,8 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 		double R11 = abase;
 		double R12 = ddesq; //desquamation should occur when diff cells reach zhi
 
+		//cytokines at sg layer gets released back into the system?
+
         if (!gflag || !external_gflag){
         	continue;
         }
@@ -286,12 +288,12 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 //        printf("rmass before %e\n", rmass[i]);
 
         if (atom->x[i][2] < sc1height) {
-        	growrate_d = R10 + R11;
-        	rmass[i] = rmass[i] + rmass[i] *  -growrate_d * dt;
+        	growrate_d = - (R10 + R11);
+        	rmass[i] = rmass[i] + rmass[i] * growrate_d * dt;
 //        	printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else if (atom->x[i][2] > sc1height) {
-        	growrate_d = R10 + R11 + R12;
-        	rmass[i] = rmass[i] + rmass[i] * -growrate_d * dt;
+        	growrate_d = - (R10 + R11 + R12);
+        	rmass[i] = rmass[i] + rmass[i] * growrate_d * dt;
 //        	printf("growrate_d 2 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else {
         	rmass[i] = rmass[i];

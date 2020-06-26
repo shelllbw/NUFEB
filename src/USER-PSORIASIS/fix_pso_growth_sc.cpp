@@ -288,6 +288,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		double R4_1 = sc2ta * nus[il17][grid];
 		double R4_2 = sc2ta * nus[tnfa][grid];
 
+		//printf("growth_sc before nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
 		//nutrient uptake for sc is affected by gf
 		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol);
 		nur[il17][grid] -=  (R1_1 + R4_1) * (rmass[i]/ grid_vol);
@@ -299,7 +300,9 @@ void FixPGrowthSC::growth(double dt, int gflag) {
         growrate_sc = R1_1 + R1_2 - R2 - R3;
         growrate_ta = R4_1 + R4_2; //sc can divide to a TA cell
 
+		//printf("growth_sc after nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
         //printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
+
         if (!gflag || !external_gflag){
         	continue;
         }

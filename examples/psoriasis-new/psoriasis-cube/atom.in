@@ -5,7 +5,7 @@
        4 nutrients
 
    0.000000e-04   0.5e-04  xlo xhi
-   0.000000e-04   0.2e-04  ylo yhi
+   0.000000e-04   0.5e-04  ylo yhi
    0.000000e-04   0.3e-04  zlo zhi
 
  Atoms
@@ -67,9 +67,9 @@
 
  Decay
 
-    stem 2.1105324e-20
-    ta 4.3195602e-21
-    diff 5.8449074e-22
+    stem 2.1105324e-10
+    ta 4.3195602e-11
+    diff 5.8449074e-12
     tcell 0.00001747685
     dc 0.00001747685
     apop 0
