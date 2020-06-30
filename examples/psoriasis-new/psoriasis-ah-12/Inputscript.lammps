@@ -37,7 +37,7 @@ set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
-create_atoms 4 random 50 64564 reg2
+create_atoms 4 random 200 64564 reg2
 
 group TA type 2
 group DIFF type 3

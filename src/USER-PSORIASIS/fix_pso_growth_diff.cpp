@@ -249,6 +249,7 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
   double *mu = bio->mu;
   double *decay = bio->decay;
+  double *diff_coeff = bio->diff_coeff;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
@@ -289,11 +290,11 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
         if (atom->x[i][2] < sc1height) {
         	growrate_d = - (R10 + R11);
-        	rmass[i] = rmass[i] + rmass[i] * growrate_d * dt;
+        	rmass[i] = rmass[i] * (1 + growrate_d * dt);
 //        	printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else if (atom->x[i][2] > sc1height) {
         	growrate_d = - (R10 + R11 + R12);
-        	rmass[i] = rmass[i] + rmass[i] * growrate_d * dt;
+        	rmass[i] = rmass[i] * (1 + growrate_d * dt);
 //        	printf("growrate_d 2 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else {
         	rmass[i] = rmass[i];

@@ -250,6 +250,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
   double *mu = bio->mu;
   double *decay = bio->decay;
+  double *diff_coeff = bio->diff_coeff;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
@@ -266,8 +267,6 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 //  for(int i=0; i<atom->nlocal; i++)
 //      if (atom->type[i] == 1)  printf("i=%i type=%i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
 
-  //printf("enters sc growth \n");
-
   for (int i = 0; i < nlocal; i++) {
 	if (mask[i] & groupbit) {
 	  int t = type[i];
@@ -281,7 +280,8 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 //		double R1_2 = mu[t] * (nus[tnfa][grid]/ (ks[t][tnfa] + nus[tnfa][grid]));
 		double R1_1 = mu[t] * nus[il17][grid];
 		double R1_2 = mu[t] * nus[tnfa][grid];
-		double R2 = pow(decay[t], 2);
+		double R2 =  pow(decay[t], 2);
+//		double R2 = pow(decay[t], 2);
 		double R3 = abase;
 //		double R4_1 = sc2ta * (nus[il17][grid]/ (ks[t][il17] + nus[il17][grid]));
 //		double R4_2 = sc2ta * (nus[tnfa][grid]/ (ks[t][tnfa] + nus[tnfa][grid]));
@@ -289,12 +289,12 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		double R4_2 = sc2ta * nus[tnfa][grid];
 
 		//printf("growth_sc before nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
+
 		//nutrient uptake for sc is affected by gf
-		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol);
+		nur[gf][grid] += diff_coeff[t] * sc2gf * (rmass[i]/grid_vol);
 		nur[il17][grid] -=  (R1_1 + R4_1) * (rmass[i]/ grid_vol);
 		nur[tnfa][grid] -=  (R1_2 + R4_2) * (rmass[i]/ grid_vol);
 
-		//printf("BEFORE R1_1 is %e R1_2 %e , R4_1 is %e R4_2 %e \n", R1_1, R1_2, R4_1, R4_2);
 		//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1_1 + R1_2, R2, R3, (R1_1 + R1_2) - R2 - R3);
 
         growrate_sc = R1_1 + R1_2 - R2 - R3;
@@ -312,7 +312,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
          * */
         //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
         rmass[i] = rmass[i] + rmass[i] * (1 + growrate_sc * dt);
-        //rmass[i] = rmass[i] * (1 + growrate_sc * dt);
+        rmass[i] = rmass[i] * (1 + growrate_sc * dt);
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);

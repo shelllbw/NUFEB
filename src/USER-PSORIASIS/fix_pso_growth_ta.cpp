@@ -256,6 +256,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 
   double *mu = bio->mu;
   double *decay = bio->decay;
+  double *diff_coeff = bio->diff_coeff;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
@@ -285,7 +286,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 
 		//printf("growrate_ta BEFORE: il17 conc : %e tnfa conc :  %e \n", nus[il17][grid], nus[tnfa][grid]);
 
-		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol);
+		nur[gf][grid] += diff_coeff[t] * ta2gf * (rmass[i]/grid_vol);
 		nur[il17][grid] -=  (R5_1 + R8_1) * (rmass[i]/ grid_vol);
 		nur[tnfa][grid] -=  (R5_2 + R8_2) * (rmass[i]/ grid_vol);
 
