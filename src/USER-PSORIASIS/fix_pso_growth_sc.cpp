@@ -276,22 +276,17 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
       // Stem cell model
       if (species[t] == 1) {
-//		double R1_1 = mu[t] * (nus[il17][grid] / (ks[t][il17] + nus[il17][grid]));
-//		double R1_2 = mu[t] * (nus[tnfa][grid]/ (ks[t][tnfa] + nus[tnfa][grid]));
 		double R1_1 = mu[t] * nus[il17][grid];
 		double R1_2 = mu[t] * nus[tnfa][grid];
 		double R2 =  pow(decay[t], 2);
-//		double R2 = pow(decay[t], 2);
 		double R3 = abase;
-//		double R4_1 = sc2ta * (nus[il17][grid]/ (ks[t][il17] + nus[il17][grid]));
-//		double R4_2 = sc2ta * (nus[tnfa][grid]/ (ks[t][tnfa] + nus[tnfa][grid]));
 		double R4_1 = sc2ta * nus[il17][grid];
 		double R4_2 = sc2ta * nus[tnfa][grid];
 
 		//printf("growth_sc before nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
 
 		//nutrient uptake for sc is affected by gf
-		nur[gf][grid] += diff_coeff[t] * sc2gf * (rmass[i]/grid_vol);
+		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) + diff_coeff[t];
 		nur[il17][grid] -=  (R1_1 + R4_1) * (rmass[i]/ grid_vol);
 		nur[tnfa][grid] -=  (R1_2 + R4_2) * (rmass[i]/ grid_vol);
 
@@ -312,7 +307,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
          * */
         //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
         rmass[i] = rmass[i] + rmass[i] * (1 + growrate_sc * dt);
-        rmass[i] = rmass[i] * (1 + growrate_sc * dt);
+        //rmass[i] = rmass[i] * (1 + growrate_sc * dt);
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);

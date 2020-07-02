@@ -37,7 +37,8 @@ set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
-create_atoms 4 random 200 64564 reg2
+create_atoms 5 random 100 64565 reg2
+create_atoms 4 random 100 64564 reg2
 
 group TA type 2
 group DIFF type 3
@@ -46,8 +47,7 @@ group DC type 5
 group APOP type 6
 group BM type 7
 
-group BASE union BM TCELL
-#group OTHERS union STEM TA DIFF
+group BASE union BM TCELL DC
 group PROLIF union STEM TA
 
 fix fz1 BASE freeze
@@ -133,8 +133,8 @@ variable layer equal -1
 variable tol equal 1e-5
 
 #common variables used in growth
-#variable abase equal 4.16666667e-8
-variable abase equal 4.16666667e-30
+variable abase equal 4.16666667e-8
+#variable abase equal 4.16666667e-30
 
 #variables used in growth/sc
 variable STEMdens equal 30
@@ -158,13 +158,14 @@ variable tnfa2 equal 0.00000578703
 
 #variables used in growth/dc
 variable DCdens equal 30
-variable dckp equal 0
-variable dcact equal 0
+variable dckp equal 3.472e7
+variable dcact equal 0.02083333333
 variable il232 equal 0.00001157407
 
 ##############Define IBm Commands##############
 
 fix k1 all kinetics 1 10 4 6 v_diffT v_layer demflag 0 niter 5000
+fix kgdc DC psoriasis/growth/dc v_DCdens v_abase v_dckp v_dcact v_il232
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il172 v_tnfa2
 fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abase v_sc2ta v_sc2gf
@@ -172,8 +173,6 @@ fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 645
 fix kgta TA psoriasis/growth/ta v_TAdens v_abase v_ta2d v_ta2gf
 fix d2 TA psoriasis/divide_ta 1 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
 fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase v_ddesq
-#fix kgdc DC psoriasis/growth/dc v_DCdens v_abase v_dckp v_dcact v_il232
-#fix p1 HET kinetics/pressure 4 INE NULL 25
 
 ##############Define IBm Computes##############
 
@@ -184,7 +183,7 @@ compute myMass all biomass
 
 # Use atom_# instead of atom%_#
 dump		du1 all custom/vtk 500 atom_*.vtu id type diameter x y z
-dump		du2 all grid 500 grid_%_*.vti con 
+#dump		du2 all grid 500 grid_%_*.vti con
 thermo_style    custom step cpu atoms c_myNtypes[*]
 thermo		1001
 thermo_modify	lost ignore

@@ -1,0 +1,165 @@
+LAMMPS (5 Nov 2016)
+# NUFEB simulation
+
+atom_style	bio
+atom_modify	map array sort 100 5.0e-7
+boundary	pp pp ff
+newton		off
+processors  * * 1
+
+units si
+
+comm_modify	vel yes
+read_data_bio atom.in
+  orthogonal box = (0 0 0) to (5e-05 5e-05 3e-05)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  0 atoms
+  4 nutrients
+
+variable x equal 50
+variable y equal 50
+variable z equal 20
+
+lattice sc 1e-6 origin 0.5 0.5 0.5
+Lattice spacing in x,y,z = 1e-06 1e-06 1e-06
+
+region reg block 0 $x 0 $y 0 $z
+region reg block 0 50 0 $y 0 $z
+region reg block 0 50 0 50 0 $z
+region reg block 0 50 0 50 0 20
+region reg2 block 0 $x 0 $y 0 1
+region reg2 block 0 50 0 $y 0 1
+region reg2 block 0 50 0 50 0 1
+
+variable  xx internal 0.0
+variable  yy internal 0.0
+variable  zz internal 0.0
+variable  v equal "(0.12*v_z*zlat * cos(v_xx/xlat * 2.0*PI*PI/v_x) * cos(v_yy/ylat * 1.8 *PI*PI/v_y) + 0.9*v_z*zlat - v_zz  ) > 0.0"
+
+group STEM type 1
+0 atoms in group STEM
+
+create_atoms 7 region reg var v set x xx set y yy set z zz
+Created 44990 atoms
+set type 7 density 150
+  44990 settings made for density
+set type 7 diameter 1.0e-6
+  44990 settings made for diameter
+set type 7 mass 7.853981e-17
+  44990 settings made for mass
+
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 600 64564
+Created 600 atoms
+set type 1 density 150
+  600 settings made for density
+set type 1 diameter 1.0e-6
+  600 settings made for diameter
+set type 1 mass 7.853981e-17
+  600 settings made for mass
+
+create_atoms 4 random 50 64564 reg2
+Created 50 atoms
+
+group TA type 2
+0 atoms in group TA
+group DIFF type 3
+0 atoms in group DIFF
+group TCELL type 4
+50 atoms in group TCELL
+group DC type 5
+0 atoms in group DC
+group APOP type 6
+0 atoms in group APOP
+group BM type 7
+44990 atoms in group BM
+
+group BASE union BM TCELL
+45040 atoms in group BASE
+#group OTHERS union STEM TA DIFF
+group PROLIF union STEM TA
+600 atoms in group PROLIF
+
+fix fz1 BASE freeze
+fix nomove BASE move linear 0.0 0.0 0.0 units box
+
+neighbor	5e-7 bin
+neigh_modify delay 0 exclude group BASE BASE
+
+set type 2 density 150
+  0 settings made for density
+set type 2 diameter 1.0e-6
+  0 settings made for diameter
+set type 2 mass 7.853981e-17
+  0 settings made for mass
+
+set type 3 density 150
+  0 settings made for density
+set type 3 diameter 1.0e-6
+  0 settings made for diameter
+set type 3 mass 7.853981e-17
+  0 settings made for mass
+
+set type 4 density 150
+  50 settings made for density
+set type 4 diameter 1.0e-6
+  50 settings made for diameter
+set type 4 mass 7.853981e-17
+  50 settings made for mass
+
+set type 5 density 150
+  0 settings made for density
+set type 5 diameter 1.0e-6
+  0 settings made for diameter
+set type 5 mass 7.853981e-17
+  0 settings made for mass
+
+set type 6 density 150
+  0 settings made for density
+set type 6 diameter 1.0e-6
+  0 settings made for diameter
+set type 6 mass 7.853981e-17
+  0 settings made for mass
+
+##############Define DEM Variables&Commands##############
+
+
+pair_style  gran/hooke/history 2500 NULL 2500 NULL 0.0 1
+pair_coeff  * *
+
+pair_style  gran/hooke/history 2000 NULL 2250 NULL 0.0 1
+pair_coeff 1 7
+
+pair_style  gran/hooke/history 2300 NULL 2250 NULL 0.0 1
+pair_coeff 2 7
+
+pair_style  gran/hooke/history 2750 NULL 2750 NULL 0.0 1
+pair_coeff  3 7
+
+#pair_style  gran/hooke/history 1750 NULL 1750 NULL 0.0 1
+#pair_coeff 1 1
+
+#pair_style  gran/hooke/history 1500 NULL 1500 NULL 0.0 1
+#pair_coeff 1 2
+
+#pair_style  gran/hooke/history 2500 NULL 2500 NULL 0.0 1
+#pair_coeff 1 3
+
+timestep 1e-3
+
+velocity BASE set 0.0 0.0 0.0 units box
+
+fix 1 all nve/limit 1e-8
+fix fv1 all viscous 1e-5
+
+#fix zw all wall/gran hooke/history 2500 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
+fix zwb STEM wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  1.6e-5  0.6e-4
+fix zwt TA wall/gran hooke/history 2300 NULL 500.0 NULL 1.5. 0 zplane 1.6e-5 0.6e-4
+#fix zwd DIFF wall/gran hooke/history 2500 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
+
+variable kanc equal 50
+
+# a1 = bm-sc  a2 = bm-ta a3 = sc-ta  a4 =sc-diff  a5 = ta-diff a6 = same cell type
+fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-16 0 1.6e-16 1.6e-13
+
+##############Define IBm Variables

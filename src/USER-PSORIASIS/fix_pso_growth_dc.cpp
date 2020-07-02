@@ -258,6 +258,7 @@ void FixPGrowthDC::growth(double dt, int gflag) {
 
   double *mu = bio->mu;
   double *decay = bio->decay;
+  double *diff_coeff = bio->diff_coeff;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
@@ -271,24 +272,26 @@ void FixPGrowthDC::growth(double dt, int gflag) {
 
 	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-	  //printf("species is %i \n", species[t]);
       // dc cell model
       if (species[t] == 5) {
-    	double R13 = (mu[t] * nus[gf][grid] / (dckp + nus[gf][grid])) + dcact;
+    	double R13 = (mu[t] * pow(nus[gf][grid], 4) / (dckp + pow(nus[gf][grid], 4))) + dcact;
     	double R14 = decay[t];
     	double R15 = abase;
 
-    	nur[gf][grid] -= R13 * nus[gf][grid];
-    	nur[il23][grid] += (il232 * (rmass[i]/ grid_vol));
+    	nur[gf][grid] -= R13 * (rmass[i]/ grid_vol);
+    	nur[il23][grid] += il232 * (rmass[i]/ grid_vol) + diff_coeff[t];
+
+    	printf("nur[gf][grid] %e   nur[il23][grid] %e ", nur[gf][grid], nur[il23][grid]);
 
         growrate_dc = R13 - R14 - R15;
+    	printf("growth dc R13 = %e growrate = %e \n", R13, growrate_dc);
 
         if (!gflag || !external_gflag){
         	continue;
         }
 
         //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-		rmass[i] = rmass[i] + rmass[i] * (1 + growrate_dc * dt);
+		rmass[i] = rmass[i] * (1 + growrate_dc * dt);
 		outer_mass[i] = rmass[i];
 		outer_radius[i] = radius[i];
 		radius[i] = radius[i];

@@ -316,8 +316,8 @@ void FixKineticsMonod::growth(double dt, int gflag) {
         growrate[i][0][grid] = R1 + R4 + R5 - R6 - R13 - R14;
         growrate[i][1][grid] = (yield_eps / yield[i]) * (R1 + R4 + R5);
 
-        printf("growrate[i][0][grid] %e\n", growrate[i][0][grid]);
-        printf("growrate[i][1][grid] %e\n", growrate[i][1][grid]);
+//        printf("growrate[i][0][grid] %e\n", growrate[i][0][grid]);
+//        printf("growrate[i][1][grid] %e\n", growrate[i][1][grid]);
       } else if (spec == 2) {
         // AOB monod model
         double R2 = mu[i] * (nus[inh4][grid] / (ks[i][inh4] + nus[inh4][grid])) * (nus[io2][grid] / (ks[i][io2] + nus[io2][grid]));
