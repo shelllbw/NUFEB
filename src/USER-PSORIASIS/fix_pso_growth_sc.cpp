@@ -187,7 +187,7 @@ void FixPGrowthSC::init() {
 
 void FixPGrowthSC::init_param() {
 	ks = bio->ks;
-	il17, gf, tnfa = 0;
+	il17, tnfa = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
@@ -195,16 +195,12 @@ void FixPGrowthSC::init_param() {
 	  il17 = nu;
 	if (strcmp(bio->nuname[nu], "tnfa") == 0)
 		  tnfa = nu;
-	if (strcmp(bio->nuname[nu], "gf") == 0)
-		  gf = nu;
   }
 
   if (il17 == 0)
 	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il17");
   if (tnfa == 0)
   	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
-  if (gf == 0)
-  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient gf");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
