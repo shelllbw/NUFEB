@@ -32,12 +32,12 @@ set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 600 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 300 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
-create_atoms 5 random 100 64565 reg2
+#create_atoms 5 random 100 64565 reg2
 create_atoms 4 random 100 64564 reg2
 
 group TA type 2
@@ -183,7 +183,7 @@ compute myMass all biomass
 
 # Use atom_# instead of atom%_#
 dump		du1 all custom/vtk 500 atom_*.vtu id type diameter x y z
-#dump		du2 all grid 500 grid_%_*.vti con
+dump		du2 all grid 500 grid_%_*.vti con
 thermo_style    custom step cpu atoms c_myNtypes[*]
 thermo		1001
 thermo_modify	lost ignore

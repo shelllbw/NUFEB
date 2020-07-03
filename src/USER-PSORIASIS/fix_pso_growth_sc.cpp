@@ -286,7 +286,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//printf("growth_sc before nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
 
 		//nutrient uptake for sc is affected by gf
-		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) + diff_coeff[t];
+		//nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) + diff_coeff[t];
 		nur[il17][grid] -=  (R1_1 + R4_1) * (rmass[i]/ grid_vol);
 		nur[tnfa][grid] -=  (R1_2 + R4_2) * (rmass[i]/ grid_vol);
 
