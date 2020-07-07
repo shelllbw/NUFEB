@@ -40,7 +40,7 @@
 #include "fix_pso_growth_ta.h"
 #include "fix_pso_growth_diff.h"
 #include "comm.h"
-#include "fix_bio_fluid.h"
+#include "fix_bio_sedifoam.h"
 #include "compute.h"
 #include "compute_bio_height.h"
 #include "compute_bio_rough.h"
@@ -59,8 +59,6 @@ using namespace FixConst;
 
 using namespace std;
 
-#define BUFMIN 1000
-
 /* ---------------------------------------------------------------------- */
 
 FixKinetics::FixKinetics(LAMMPS *lmp, int narg, char **arg) :
@@ -77,6 +75,18 @@ FixKinetics::FixKinetics(LAMMPS *lmp, int narg, char **arg) :
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix kinetics command: calling steps should be positive integer");
+
+  nuconv = NULL;
+  nus = NULL;
+  nur = NULL;
+  nubs = NULL;
+  grid_yield = NULL;
+  activity = NULL;
+  gibbs_cata = NULL;
+  gibbs_anab = NULL;
+  sh = NULL;
+  fv = NULL;
+  xdensity = NULL;
 
   nx = force->inumeric(FLERR, arg[4]);
   ny = force->inumeric(FLERR, arg[5]);
@@ -147,6 +157,11 @@ FixKinetics::FixKinetics(LAMMPS *lmp, int narg, char **arg) :
   stepx = (xhi - xlo) / nx;
   stepy = (yhi - ylo) / ny;
   stepz = (zhi - zlo) / nz;
+
+  if (!is_equal(stepx, stepy, stepz))
+    error->all(FLERR, "Non-cubic Cartesian grid: NUFEB requires cubic Cartesian coordinate system. "
+	"Set nx ny nz parameters in fix kinetics to make sure the equal length of grid edges.\n"
+	"fix id group-id kinetics Nevery nx ny nz v_diffT v_layer");
 
   grid = Grid<double, 3>(Box<double, 3>(domain->boxlo, domain->boxhi), { nx, ny, nz });
   double tmpsublo[3], tmpsubhi[3];
@@ -222,13 +237,14 @@ void FixKinetics::init() {
   ph = NULL;
   thermo = NULL;
   monod = NULL;
-  nufebfoam = NULL;
+  sedifoam = NULL;
 
   //DINIKA MOD - register fix growth with this class
   psosc = NULL;
   psotcell = NULL;
   psota = NULL;
   psodiff = NULL;
+
 
   int nfix = modify->nfix;
   for (int j = 0; j < nfix; j++) {
@@ -242,9 +258,9 @@ void FixKinetics::init() {
       thermo = static_cast<FixKineticsThermo *>(lmp->modify->fix[j]);
     } else if (strcmp(modify->fix[j]->style, "kinetics/growth/monod") == 0) {
       monod = static_cast<FixKineticsMonod *>(lmp->modify->fix[j]);
-    } else if (strcmp(modify->fix[j]->style, "nufebFoam") == 0) {
-      nufebfoam = static_cast<FixFluid *>(lmp->modify->fix[j]);
-    } else if (strcmp(modify->fix[j]->style, "psoriasis/growth/sc") == 0) { // DINIKA MOD
+    } else if (strcmp(modify->fix[j]->style, "sedifoam") == 0) {
+      sedifoam = static_cast<FixSedifoam *>(lmp->modify->fix[j]);
+   } else if (strcmp(modify->fix[j]->style, "psoriasis/growth/sc") == 0) { // DINIKA MOD
         psosc = static_cast<FixPGrowthSC *>(lmp->modify->fix[j]);
     } else if (strcmp(modify->fix[j]->style, "psoriasis/growth/tcell") == 0){
     	psotcell = static_cast<FixPGrowthTCELL *>(lmp->modify->fix[j]);
@@ -275,17 +291,21 @@ void FixKinetics::init() {
   int ntypes = atom->ntypes;
   int nnus = bio->nnu;
 
-  nuconv = new int[nnus + 1]();
-  nus = memory->create(nus, nnus + 1, ngrids, "kinetics:nus");
-  nur = memory->create(nur, nnus + 1, ngrids, "kinetics:nur");
-  nubs = memory->create(nubs, nnus + 1, "kinetics:nubs");
-  grid_yield = memory->create(grid_yield, ntypes + 1, ngrids, "kinetic:grid_yield");
-  activity = memory->create(activity, nnus + 1, 5, ngrids, "kinetics:activity");
-  gibbs_cata = memory->create(gibbs_cata, ntypes + 1, ngrids, "kinetics:gibbs_cata");
-  gibbs_anab = memory->create(gibbs_anab, ntypes + 1, ngrids, "kinetics:gibbs_anab");
-  sh = memory->create(sh, ngrids, "kinetics:sh");
-  fv = memory->create(fv, 3, ngrids, "kinetcis:fv");
-  xdensity = memory->create(xdensity, ntypes + 1, ngrids, "kinetics:xdensity");
+  if (nuconv == NULL) {
+    nuconv = new int[nnus + 1]();
+    nus = memory->create(nus, nnus + 1, ngrids, "kinetics:nus");
+    nur = memory->create(nur, nnus + 1, ngrids, "kinetics:nur");
+    nubs = memory->create(nubs, nnus + 1, "kinetics:nubs");
+    grid_yield = memory->create(grid_yield, ntypes + 1, ngrids, "kinetic:grid_yield");
+    activity = memory->create(activity, nnus + 1, 5, ngrids, "kinetics:activity");
+    gibbs_cata = memory->create(gibbs_cata, ntypes + 1, ngrids, "kinetics:gibbs_cata");
+    gibbs_anab = memory->create(gibbs_anab, ntypes + 1, ngrids, "kinetics:gibbs_anab");
+    sh = memory->create(sh, ngrids, "kinetics:sh");
+    fv = memory->create(fv, 3, ngrids, "kinetcis:fv");
+    xdensity = memory->create(xdensity, ntypes + 1, ngrids, "kinetics:xdensity");
+
+    init_param();
+  }
 
   // Fitting initial domain decomposition to the grid 
   for (int i = 0; i < comm->procgrid[0]; i++) {
@@ -302,8 +322,8 @@ void FixKinetics::init() {
   }
   domain->set_local_box();
 
-  init_param();
   update_bgrids();
+
   if (diffusion != NULL) reset_isconv();
 }
 
@@ -325,7 +345,7 @@ void FixKinetics::init_param() {
     for (int i = 0; i <= bio->nnu; i++) {
       if (bio->ini_nus != NULL) nus[i][j] = bio->ini_nus[i][0];
       nur[i][j] = 0;
-
+      nuconv[i] = 0;
       activity[i][0][j] = 0;
       activity[i][1][j] = 0;
       activity[i][2][j] = 0;
@@ -344,7 +364,7 @@ void FixKinetics::pre_force(int vflag) {
     flag = false;
   if (update->ntimestep % nevery)
     flag = false;
-  if (nufebfoam != NULL && nufebfoam->demflag)
+  if (sedifoam != NULL && sedifoam->demflag)
     flag = false;
   if (demflag)
     flag = false;
@@ -357,7 +377,7 @@ void FixKinetics::pre_force(int vflag) {
  integration loop
  ------------------------------------------------------------------------- */
 void FixKinetics::integration() {
-  int iteration = 0;
+  int iter = 0;
   bool converge = false;
   int nnus = bio->nnu;
 
@@ -368,52 +388,55 @@ void FixKinetics::integration() {
   // update grid biomass to calculate diffusion coeff
   if (diffusion != NULL) {
     if (diffusion->dcflag) diffusion->update_diff_coeff();
-
     while (!converge) {
       converge = true;
 
-      // solve for reaction term, no growth happens here
-      if (iteration % devery == 0) {
-        reset_nur();
-        if (energy != NULL) {
-          ph->solve_ph();
-          thermo->thermo(diff_dt * devery);
-          energy->growth(diff_dt * devery, grow_flag);
-        } else if (monod != NULL) {
-          monod->growth(diff_dt * devery, grow_flag);
-        } else if (psosc != NULL) {				//DINIKA MOD
-            psosc->growth(diff_dt * devery, grow_flag);
-        } else if (psotcell != NULL) {
-        	psotcell->growth(diff_dt * devery, grow_flag);
-        } else if (psota != NULL){
-        	psota->growth(diff_dt * devery, grow_flag);
-        } else if (psodiff != NULL){
-        	psodiff->growth(diff_dt * devery, grow_flag);
-        }
-      }
+      // solve for reaction term, no growth happens here unless external growth flag is on
+      if (iter % devery == 0) {
+	reset_nur();
+	if (energy != NULL) {
+	  ph->solve_ph();
+	  thermo->thermo(diff_dt * devery);
+	  energy->growth(diff_dt * devery, grow_flag);
+	} else if (monod != NULL) {
+	  monod->growth(diff_dt * devery, grow_flag);
+	} else if (psosc != NULL) {				//DINIKA MOD
+        psosc->growth(diff_dt * devery, grow_flag);
+    } else if (psotcell != NULL) {
+    	psotcell->growth(diff_dt * devery, grow_flag);
+    } else if (psota != NULL){
+    	psota->growth(diff_dt * devery, grow_flag);
+    } else if (psodiff != NULL){
+    	psodiff->growth(diff_dt * devery, grow_flag);
+    	}
+     }
 
-      iteration++;
+      iter++;
 
       // solve for diffusion and advection
-      nuconv = diffusion->diffusion(nuconv, iteration, diff_dt);
+      if (diffusion->closed_flag) {
+	diffusion->closed_diff(update->dt * nevery);
+      } else {
+	nuconv = diffusion->diffusion(nuconv, iter, diff_dt);
+      }
 
       // check for convergence
       for (int i = 1; i <= nnus; i++) {
-        if (!nuconv[i]) {
-          converge = false;
-          reset_isconv();
-          break;
-        }
+	if (!nuconv[i]) {
+	  converge = false;
+	  reset_isconv();
+	  break;
+	}
       }
 
-      if (niter > 0 && iteration >= niter)
-        converge = true;
+      if (niter > 0 && iter >= niter || diffusion->closed_flag)
+	converge = true;
     }
 
     if (comm->me == 0 && logfile)
-      fprintf(logfile, "number of iterations: %i \n", iteration);
+      fprintf(logfile, "number of iterations: %i \n", iter);
     if (comm->me == 0 && screen)
-      fprintf(screen, "number of iterations: %i \n", iteration);
+      fprintf(screen, "number of iterations: %i \n", iter);
 
     reset_isconv();
   } else {
@@ -442,11 +465,7 @@ void FixKinetics::integration() {
     ph->buffer_ph();
 
   if (diffusion != NULL) {
-    // manually update reaction if none of the surface is using dirichlet BC
-    diffusion->update_nus();
-    // update concentration in bulk liquid
     diffusion->compute_bulk();
-    // update grids
     diffusion->update_grids();
   }
 
@@ -543,7 +562,7 @@ int FixKinetics::position(int i) {
   int pos = xpos + ypos * subn[0] + zpos * subn[0] * subn[1];
 
   if (pos >= bgrids) {
-    printf("Too big! pos=%d   size = %i\n", pos, bgrids);
+    printf("Cannot find grid index for atom[%i]: position=%i bgrids=%i \n", i,  pos, bgrids);
   }
 
   return pos;
@@ -591,6 +610,18 @@ int FixKinetics::modify_param(int narg, char **arg) {
   return 0;
 }
 
+
+/* ----------------------------------------------------------------------
+ Compare double values for equality
+ ------------------------------------------------------------------------- */
+bool FixKinetics::is_equal(double a, double b, double c) {
+  double epsilon = 1e-10;
+  if ((fabs(a - b) > epsilon) || (fabs(a - c) > epsilon) || (fabs(b - c) > epsilon))
+    return false;
+
+  return true;
+}
+
 /* ---------------------------------------------------------------------- */
 
 int FixKinetics::get_elem_per_cell() const {
@@ -599,7 +630,7 @@ int FixKinetics::get_elem_per_cell() const {
     result += 5 * bio->nnu; // qGas + activity
     result += 3 * atom->ntypes; // gYield + DRGCat + DRGAn 
   }
-  if (nufebfoam) {
+  if (sedifoam) {
     result += 3; // fV
   }
   return result;
@@ -638,7 +669,7 @@ void FixKinetics::resize(const Subgrid<double, 3> &subgrid) {
     gibbs_anab = memory->grow(gibbs_anab, ntypes + 1, ngrids, "kinetics:gibbs_anab");
     sh = memory->grow(sh, ngrids, "kinetics:sh");
   }
-  if (nufebfoam) {
+  if (sedifoam) {
     fv = memory->grow(fv, 3, ngrids, "kinetcis:fV");
   }
   if (monod != NULL)

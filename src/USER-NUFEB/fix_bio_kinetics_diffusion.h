@@ -22,6 +22,9 @@ FixStyle(kinetics/diffusion,FixKineticsDiffusion)
 #include "fix.h"
 #include "decomp_grid.h"
 
+const int M2L = 1000;
+const double MIN_NUS = 1e-20;
+
 namespace LAMMPS_NS {
 class AtomVecBio;
 class BIO;
@@ -42,13 +45,14 @@ public:
   int *mask;
   int *type;
 
-  double stepx, stepy, stepz;             // grid size
+  double stepx, stepy, stepz;             // grid size in x, y, z axis
 
-  int xbcflag, ybcflag, zbcflag;          // boundary condition flag, 0=PERIODIC-PERIODIC, 1=DIRiCH-DIRICH, 2=NEU-DIRICH, 3=NEU-NEU, 4=DIRICH-NEU
+  int xbcflag, ybcflag, zbcflag;          // boundary condition flag, 0=PERIODIC-PERIODIC, 1=DIRICH-DIRICH, 2=NEU-DIRICH, 3=NEU-NEU, 4=DIRICH-NEU
   int bulkflag;                           // 1=solve mass balance for bulk liquid
   int shearflag, dragflag, dcflag;        // flags for shear, drag(nufebfoam), and diffusion coefficent
+  double dcratio;                         // ratio of diffusion coefficent in biomass region
 
-  int *ghost;                             // ghost grid flag [gird] 1=ghost gird, 0=non-ghost grid
+  int *grid_type;                         // ghost grid flag [gird] 1=ghost gird, 0=non-ghost grid
 
   double srate;                           // shear rate
   double tol;                             // tolerance for convergence criteria
@@ -62,13 +66,14 @@ public:
   double q, rvol, af;                     // parameters used for dynamic bulk
   int unit;                               // concentration unit 0=mol/l; 1=kg/m3
 
-  int nx, ny, nz;                         // # of non-ghost grids in x, y and z
+  int nx, ny, nz;                         // # of non-ghost grids in x, y and z axis
   int snxyz;                              // total # of local non-ghost grid
-  int snxx, snyy, snzz;                   // # of local grids in x, y and z
-  int snxx_yy;                            // # of local grids in x and y
-  int snxx_yy_zz;                         // total # of local grids
+  int snxx, snyy, snzz;                   // # of local + ghost grids in x, y and z
+  int snxx_yy;                            // # of local + ghost grids in xy
+  int snxx_yy_zz;                         // total # of local + ghost grids
 
   double diff_dt;
+  int closed_flag;                        // flag for close system 1 = gradient is negligible (no diffusion)
 
   double xlo, xhi, ylo, yhi, zlo, zhi, bzhi;
   double xbcm, xbcp, ybcm, ybcp, zbcm, zbcp; // inlet BC concentrations for each surface
@@ -83,6 +88,7 @@ public:
   
   int setmask();
   void init();
+  void closed_diff(double);
   int *diffusion(int*, int, double);
   void update_nus();
   void update_grids();
@@ -93,7 +99,6 @@ public:
   void compute_blayer();
   void compute_flux(double, double &, double *, double, int, int);
 
-  bool is_equal(double, double, double);
   int get_index(int);
   void migrate(const Grid<double, 3> &, const Box<int, 3> &, const Box<int, 3> &);
 

@@ -38,7 +38,7 @@ set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
 #create_atoms 5 random 100 64565 reg2
-create_atoms 4 random 100 64564 reg2
+create_atoms 4 random 150 64564 reg2
 
 group TA type 2
 group DIFF type 3
@@ -133,8 +133,8 @@ variable layer equal -1
 variable tol equal 1e-5
 
 #common variables used in growth
+#variable abase equal 1.38888889e-8
 variable abase equal 4.16666667e-8
-#variable abase equal 4.16666667e-30
 
 #variables used in growth/sc
 variable STEMdens equal 30

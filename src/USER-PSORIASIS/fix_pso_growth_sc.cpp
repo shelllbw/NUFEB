@@ -251,7 +251,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
-  //double **xdensity = kinetics->xdensity;
+  double **xdensity = kinetics->xdensity;
 
   const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
@@ -283,9 +283,10 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 		//nutrient uptake for sc is affected by gf
 		//nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) + diff_coeff[t];
-		nur[il17][grid] -=  (R1_1 + R4_1) * (rmass[i]/ grid_vol);
-		nur[tnfa][grid] -=  (R1_2 + R4_2) * (rmass[i]/ grid_vol);
+		nur[il17][grid] -=  (R1_1 + R4_1) * xdensity[t][grid];
+		nur[tnfa][grid] -=  (R1_2 + R4_2) * xdensity[t][grid];
 
+		//printf("R1_1 %e 	R1_2 %e 	R4_1 %e 	R4_2 %e \n", R1_1, R1_2, R4_1, R4_2);
 		//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1_1 + R1_2, R2, R3, (R1_1 + R1_2) - R2 - R3);
 
         growrate_sc = R1_1 + R1_2 - R2 - R3;

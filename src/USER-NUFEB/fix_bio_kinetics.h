@@ -52,8 +52,8 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
   int *ivar;
 
   int nx, ny, nz, bnz;             // number of grids in x y z axis
-  int bgrids;                      // # of non-boundary grids
-  int ngrids;                      // # of grids
+  int bgrids;                      // # of local grids below boundary layer
+  int ngrids;                      // # of local grids
 
   double **nus;                    // nutrient concentration [nutrient][grid]
   double **nur;                    // nutrient consumption [nutrient][grid]
@@ -92,7 +92,7 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
   class FixKineticsMonod *monod;
   class FixKineticsPH *ph;
   class FixKineticsThermo *thermo;
-  class FixFluid *nufebfoam;
+  class FixSedifoam *sedifoam;
 
   //DINIKA - add for each fix kinetics
 
@@ -111,6 +111,7 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
   int position(int);
   void reset_nur();
   void reset_isconv();
+  bool is_equal(double, double, double);
 
   Subgrid<double, 3> get_subgrid() const { return subgrid; }
   int get_elem_per_cell() const;
@@ -133,10 +134,10 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
 	  *result++ = gibbs_anab[i][*it];
 	}
       }
-      if (nufebfoam) {
-	for (int i = 0; i < 3; i++) {
-	  *result++ = fv[i][*it];
-	}
+    if (sedifoam) {
+		for (int i = 0; i < 3; i++) {
+		  *result++ = fv[i][*it];
+		}
       }
     }
     return result;
@@ -160,7 +161,7 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
 	  gibbs_anab[i][*it] = *input++;
 	}
       }
-      if (nufebfoam) {
+      if (sedifoam) {
 	for (int i = 0; i < 3; i++) {
 	  fv[i][*it] = *input++;
 	}

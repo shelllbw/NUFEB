@@ -257,7 +257,7 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
-  //double **xdensity = kinetics->xdensity;
+  double **xdensity = kinetics->xdensity;
 
   double growrate_tcell = 0;
 
@@ -276,10 +276,11 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
     	double R18 = abase;
 
     	//printf("growrate_tcell  BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
+		//printf("rmass is %e grid_vol is %e rmass/grid_vol is %e \n", rmass[i], grid_vol, rmass[i]/grid_vol);
 
-    	nur[il23][grid] -= R16 * (rmass[i]/ grid_vol);
-    	nur[il17][grid] += il172 * (rmass[i]/ grid_vol) + diff_coeff[t];
-    	nur[tnfa][grid] += tnfa2 * (rmass[i]/ grid_vol) + diff_coeff[t];
+    	nur[il23][grid] -= R16 * xdensity[t][grid];
+    	nur[il17][grid] += il172 * xdensity[t][grid] + diff_coeff[t];
+    	nur[tnfa][grid] += tnfa2 * xdensity[t][grid] + diff_coeff[t];
 
     	//printf("growrate_tcell  AFTER: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 
