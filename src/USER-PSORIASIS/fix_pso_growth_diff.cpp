@@ -276,11 +276,11 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
       // diff cell model
       if (species[t] == 3) {
-		double R10 = pow(decay[t], 2);
-		double R11 = -R10 * abase;
-		double R12 = ddesq; //desquamation should occur when diff cells reach zhi
+		double R9 = pow(decay[t], 3);
+		double R10 = R9 * abase;
+		double R11 = ddesq; //desquamation should occur when diff cells reach zhi
 
-		//printf("growrate_diff equation is R10 %e - R11 %e - R12 %e = %e\n", R10, R11, R12, R10 - R11 - R12);
+		printf("growrate_diff equation is R9 %e - R10 %e - R11 %e = %e\n", R9, R10, R11, R9 - R10 - R11);
 
         if (!gflag || !external_gflag){
         	continue;
@@ -289,11 +289,11 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 //        printf("rmass before %e\n", rmass[i]);
 
         if (atom->x[i][2] < sc1height) {
-        	growrate_d = - (R10 + R11);
+        	growrate_d = - (R9 + R10);
         	rmass[i] = rmass[i] * (1 + growrate_d * dt);
 //        	printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else if (atom->x[i][2] > sc1height) {
-        	growrate_d = - (R10 + R11 + R12);
+        	growrate_d = - (R9 + R10 + R11);
         	rmass[i] = rmass[i] * (1 + growrate_d * dt);
 //        	printf("growrate_d 2 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else {

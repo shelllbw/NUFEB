@@ -133,7 +133,7 @@ variable layer equal -1
 variable tol equal 1e-5
 
 #common variables used in growth
-variable abase equal 0.12
+variable abase equal 0.0012
 #variable abase equal 4.16666667e-8
 
 #variables used in growth/sc
