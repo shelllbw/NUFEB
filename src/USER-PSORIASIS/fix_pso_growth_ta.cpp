@@ -254,6 +254,8 @@ void FixPGrowthTA::growth(double dt, int gflag) {
   double *decay = bio->decay;
   double *diff_coeff = bio->diff_coeff;
 
+  double **xdensity = kinetics->xdensity;
+
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
@@ -275,18 +277,18 @@ void FixPGrowthTA::growth(double dt, int gflag) {
       if (species[t] == 2) {
 		double R5_1 = mu[t] * nus[il17][grid];
 		double R5_2 = mu[t] * nus[tnfa][grid];
-		double R6 = pow(decay[t], 2);
-		double R7 = abase;
+		double R6 = pow(decay[t], 3);
+		double R7 = (R5_1 + R5_2 - R6) * abase;
 		double R8_1 = ta2d * nus[il17][grid];
 		double R8_2 = ta2d * nus[tnfa][grid];
 
 		//printf("growrate_ta BEFORE: il17 conc : %e tnfa conc :  %e \n", nus[il17][grid], nus[tnfa][grid]);
 
 		//nur[gf][grid] += ta2gf * (rmass[i]/grid_vol) + diff_coeff[t];
-		nur[il17][grid] -=  (R5_1 + R8_1) * (rmass[i]/ grid_vol);
-		nur[tnfa][grid] -=  (R5_2 + R8_2) * (rmass[i]/ grid_vol);
+		nur[il17][grid] -=  (R5_1 + R8_1) * xdensity[t][grid];
+		nur[tnfa][grid] -=  (R5_2 + R8_2) * xdensity[t][grid];
 
-		//printf("growrate_sc equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2, R6, R7, (R5_1 + R5_2) - R6 - R7);
+		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2, R6, R7, (R5_1 + R5_2) - R6 - R7);
 		//printf("growrate_ta AFTER: il17 conc : %e tnfa conc :  %e   \n", nus[il17][grid], nus[tnfa][grid]);
 
         growrate_ta = R5_1 + R5_2 - R6 - R7;

@@ -133,8 +133,8 @@ variable layer equal -1
 variable tol equal 1e-5
 
 #common variables used in growth
-#variable abase equal 1.38888889e-8
-variable abase equal 4.16666667e-8
+variable abase equal 0.12
+#variable abase equal 4.16666667e-8
 
 #variables used in growth/sc
 variable STEMdens equal 30
@@ -167,7 +167,8 @@ variable il232 equal 0.00001157407
 fix k1 all kinetics 1 10 4 6 v_diffT v_layer demflag 0 niter 5000
 #fix kgdc DC psoriasis/growth/dc v_DCdens v_abase v_dckp v_dcact v_il232
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abase v_il172 v_tnfa2
-fix g1 all kinetics/diffusion v_tol pp pp nd kg dcflag 2
+fix g1 all kinetics/diffusion v_tol pp pp nd dcflag 2
+#fix g1 all kinetics/diffusion v_tol pp pp nd closedflag 1
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abase v_sc2ta v_sc2gf
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
 fix kgta TA psoriasis/growth/ta v_TAdens v_abase v_ta2d v_ta2gf
@@ -182,8 +183,8 @@ compute myMass all biomass
 ##############Simulation Output##############
 
 # Use atom_# instead of atom%_#
-dump		du1 all custom/vtk 500 atom_*.vtu id type diameter x y z
-dump		du2 all grid 500 grid_%_*.vti con
+dump		du1 all custom/vtk 1000 atom_*.vtu id type diameter x y z
+dump		du2 all grid 1000 grid_%_*.vti con
 thermo_style    custom step cpu atoms c_myNtypes[*]
 thermo		1001
 thermo_modify	lost ignore

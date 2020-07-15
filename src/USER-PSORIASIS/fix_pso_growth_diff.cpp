@@ -277,10 +277,10 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
       // diff cell model
       if (species[t] == 3) {
 		double R10 = pow(decay[t], 2);
-		double R11 = abase;
+		double R11 = -R10 * abase;
 		double R12 = ddesq; //desquamation should occur when diff cells reach zhi
 
-		//cytokines at sg layer gets released back into the system?
+		//printf("growrate_diff equation is R10 %e - R11 %e - R12 %e = %e\n", R10, R11, R12, R10 - R11 - R12);
 
         if (!gflag || !external_gflag){
         	continue;

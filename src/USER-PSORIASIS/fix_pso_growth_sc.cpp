@@ -274,8 +274,8 @@ void FixPGrowthSC::growth(double dt, int gflag) {
       if (species[t] == 1) {
 		double R1_1 = mu[t] * nus[il17][grid];
 		double R1_2 = mu[t] * nus[tnfa][grid];
-		double R2 =  pow(decay[t], 2);
-		double R3 = abase;
+		double R2 =  pow(decay[t], 3);
+		double R3 = (R1_1 + R1_2 - R2) * abase;
 		double R4_1 = sc2ta * nus[il17][grid];
 		double R4_2 = sc2ta * nus[tnfa][grid];
 

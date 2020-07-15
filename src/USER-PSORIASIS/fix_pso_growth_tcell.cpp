@@ -273,7 +273,7 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
       if (species[t] == 4) {
     	double R16 = mu[t] * nus[il23][grid];
     	double R17 = pow(decay[t],2);
-    	double R18 = abase;
+    	double R18 = (R16 - R17) * abase;
 
     	//printf("growrate_tcell  BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 		//printf("rmass is %e grid_vol is %e rmass/grid_vol is %e \n", rmass[i], grid_vol, rmass[i]/grid_vol);
