@@ -56,7 +56,7 @@ variable layer equal -1
 
 fix k1 all kinetics 400 30 12 30 v_diffT v_layer niter 10000
 fix kgm all kinetics/growth/monod v_EPSdens v_etaHET
-fix g1 all kinetics/diffusion v_tol pp pp nd kg
+fix g1 all kinetics/diffusion v_tol pp pp nd 
 fix d1 all divide 400 v_EPSdens v_divDia 31231
 
 ##############Define IBm Computes##############

@@ -274,10 +274,10 @@ void FixPGrowthSC::growth(double dt, int gflag) {
       if (species[t] == 1) {
 		double R1_1 = mu[t] * nus[il17][grid];
 		double R1_2 = mu[t] * nus[tnfa][grid];
-		double R2 =  pow(decay[t], 3);
+		double R2 =  pow(decay[t], 2) * xdensity[t][grid];
 		double R3 = (R1_1 + R1_2 - R2) * abase;
-		double R4_1 = sc2ta * nus[il17][grid];
-		double R4_2 = sc2ta * nus[tnfa][grid];
+		double R4_1 = sc2ta * nus[il17][grid] * abase;
+		double R4_2 = sc2ta * nus[tnfa][grid] * abase;
 
 		//printf("growth_sc before nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
 
@@ -287,13 +287,13 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		nur[tnfa][grid] -=  (R1_2 + R4_2) * xdensity[t][grid];
 
 		//printf("R1_1 %e 	R1_2 %e 	R4_1 %e 	R4_2 %e \n", R1_1, R1_2, R4_1, R4_2);
-		//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1_1 + R1_2, R2, R3, (R1_1 + R1_2) - R2 - R3);
+		printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1_1 + R1_2, R2, R3, (R1_1 + R1_2) - R2 - R3);
 
         growrate_sc = R1_1 + R1_2 - R2 - R3;
         growrate_ta = R4_1 + R4_2; //sc can divide to a TA cell
 
 		//printf("growth_sc after nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
-        //printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
+        printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
 
         if (!gflag || !external_gflag){
         	continue;

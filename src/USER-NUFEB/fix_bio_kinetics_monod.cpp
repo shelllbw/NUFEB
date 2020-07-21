@@ -296,7 +296,7 @@ void FixKineticsMonod::growth(double dt, int gflag) {
         double R13 = (1 / 2.86) * maintain[i] * eta_het * (nus[ino3][grid] / (ks[i][ino3] + nus[ino3][grid])) * (ks[i][io2] / (ks[i][io2] + nus[io2][grid]));
         double R14 = (1 / 1.17) * maintain[i] * eta_het * (nus[ino2][grid] / (ks[i][ino2] + nus[ino2][grid])) * (ks[i][io2] / (ks[i][io2] + nus[io2][grid]));
 
-       // printf("r1 %e, r4 %e, r5 %e R6 %e R10 %e R13 %e R14 %e \n", R1, R4, R5, R6, R10, R13, R14);
+        //printf("r1 %e, r4 %e, r5 %e R6 %e R10 %e R13 %e R14 %e \n", R1, R4, R5, R6, R13, R14);
         //printf("R1 %e\n", R1);
 
         nur[isub][grid] += ((-1 / yield[i]) * ((R1 + R4 + R5) * xdensity[i][grid]));

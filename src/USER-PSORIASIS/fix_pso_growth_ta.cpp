@@ -277,7 +277,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
       if (species[t] == 2) {
 		double R5_1 = mu[t] * nus[il17][grid];
 		double R5_2 = mu[t] * nus[tnfa][grid];
-		double R6 = pow(decay[t], 3);
+		double R6 = pow(decay[t], 4) * xdensity[t][grid];
 		double R7 = (R5_1 + R5_2 - R6) * abase;
 		double R8_1 = ta2d * nus[il17][grid];
 		double R8_2 = ta2d * nus[tnfa][grid];

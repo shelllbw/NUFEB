@@ -2,7 +2,7 @@ Granular Flow Simulation
 
      0 atoms
      7 atom types
-     3 nutrients
+     4 nutrients
 
  0.000000e-04   0.5e-04  xlo xhi
  0.000000e-04   0.2e-04  ylo yhi
@@ -16,6 +16,7 @@ Nutrients
    1 il17 l 0 0 0 0 0 0 0
    2 tnfa l 0 0 0 0 0 0 0
    3 il23 l 0.015 0.015 0.015 0.015 0.015 0.015 0
+   4 gf l 0 0 0 0 0 0 0
 
 Type Name
 
@@ -32,6 +33,7 @@ Diffusion Coeffs
    il17 1.6e-10
    tnfa 1.6e-10
    il23 1.6e-10
+   gf 1.6e-10
 
 Division Counter
 
@@ -45,7 +47,7 @@ Division Counter
 
 Growth Rate
 
-  stem 2.04108796e-8
+  stem 2.04-8
   ta 2.03e-8
   diff 0
   tcell 6.37e-4

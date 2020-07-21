@@ -250,7 +250,7 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
   double *mu = bio->mu;
   double *decay = bio->decay;
   double *diff_coeff = bio->diff_coeff;
-
+  double **xdensity = kinetics->xdensity;
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
@@ -276,26 +276,28 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
       // diff cell model
       if (species[t] == 3) {
-		double R9 = pow(decay[t], 3);
+		double R9 = pow(decay[t], 4) * xdensity[t][grid];
 		double R10 = R9 * abase;
 		double R11 = ddesq; //desquamation should occur when diff cells reach zhi
 
-		printf("growrate_diff equation is R9 %e - R10 %e - R11 %e = %e\n", R9, R10, R11, R9 - R10 - R11);
+		//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
+//		printf("growrate d 1 R9 %e - R10 %e = %e\n", R9, R10, -(R9+R10));
+//		printf("growrate d 2 R9 %e - R10 %e - R11 %e= %e\n", R9, R10, R11, -(R9+R10+R11));
 
         if (!gflag || !external_gflag){
         	continue;
         }
 
-//        printf("rmass before %e\n", rmass[i]);
+        //printf("rmass before %e\n", rmass[i]);
 
         if (atom->x[i][2] < sc1height) {
         	growrate_d = - (R9 + R10);
         	rmass[i] = rmass[i] * (1 + growrate_d * dt);
-//        	printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
+        	//printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else if (atom->x[i][2] > sc1height) {
         	growrate_d = - (R9 + R10 + R11);
         	rmass[i] = rmass[i] * (1 + growrate_d * dt);
-//        	printf("growrate_d 2 is %e rmass is %e \n", growrate_d, rmass[i]);
+        	//printf("growrate_d 2 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else {
         	rmass[i] = rmass[i];
         }
