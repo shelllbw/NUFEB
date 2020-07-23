@@ -277,20 +277,21 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
     	double R17 = pow(decay[t],2);
     	double R18 = (R16 - R17) * abase;
 
-    	//printf("growrate_tcell  BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
+    	printf("growrate_tcell  BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 		//printf("rmass is %e grid_vol is %e rmass/grid_vol is %e \n", rmass[i], grid_vol, rmass[i]/grid_vol);
 
-    	nur[il23][grid] -= R16 * xdensity[t][grid];
+    	nur[il23][grid] -= (R16 * xdensity[t][grid]);
 //    	nur[il17][grid] += il172 * xdensity[t][grid] + diff_coeff[t];
 //    	nur[tnfa][grid] += tnfa2 * xdensity[t][grid] + diff_coeff[t];
-    	nur[il17][grid] += il172 * xdensity[t][grid] - il1720 * nus[il17][grid];
-    	nur[tnfa][grid] += tnfa2 * xdensity[t][grid] - tnfa20 * nus[tnfa][grid];
+    	nur[il17][grid] += (il172 * xdensity[t][grid]);
+    	nur[tnfa][grid] += (tnfa2 * xdensity[t][grid]);
+    	printf("XDENSITY %e \n", xdensity[t][grid]);
 
     	//printf("il172 * xdensity[t][grid] %e - il1720 * nus[il17][grid] %e = %e \n", il172 * xdensity[t][grid], il1720 * nus[il17][grid], nur[il17][grid]);
 
-    	//printf("growrate_tcell  AFTER: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
+    	printf("growrate_tcell  AFTER: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 
-    	//printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", R16, R17, R18, R16 - R17 - R18);
+    	printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", R16, R17, R18, R16 - R17 - R18);
 
         growrate_tcell = R16 - R17 - R18;
 

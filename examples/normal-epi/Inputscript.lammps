@@ -38,7 +38,7 @@ set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
 #create_atoms 5 random 100 64565 reg2
-create_atoms 4 random 50 64564 reg2
+create_atoms 4 random 100 64564 reg2
 
 group TA type 2
 group DIFF type 3
@@ -139,25 +139,25 @@ variable abase1 equal 0.0012
 
 #variables used in growth/sc
 variable STEMdens equal 30
-variable sc2ta equal 1.78414352e-8
-variable sc2gf equal 0.00001157407
+variable sc2ta equal 4.28e-07
+variable sc2gf equal 0.00027777777
 variable gf20 equal 0.0004224537
 
 #variables used in growth/ta
 variable TAdens equal 30
-variable ta2d equal 2.090625e-8
-variable ta2gf equal 0.00001157407
+variable ta2d equal 5.02e-07
+variable ta2gf equal 0.00027777777
 
 #variable used in growth/diff
 variable DIFFdens equal 30
-variable ddesq equal 5.50104167e-8
+variable ddesq equal 0.00000132025
 
 #variables used in growth/tcell
 variable TCELLdens equal 30
-variable il172 equal 5.78703e-6
-variable tnfa2 equal 5.78703e-6
-variable il1720 equal 4.225e-5
-variable tnfa20 equal 4.225e-5
+variable il172 equal 0.015
+variable tnfa2 equal 5.78703e-3
+variable il1720 equal 4.225e-7
+variable tnfa20 equal 4.225e-7
 
 #variables used in growth/dc
 variable DCdens equal 30
@@ -174,9 +174,9 @@ fix g1 all kinetics/diffusion v_tol pp pp nd dcflag 2
 #fix g1 all kinetics/diffusion v_tol pp pp nd closedflag 1
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abase1 v_sc2ta v_sc2gf
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
-#fix kgta TA psoriasis/growth/ta v_TAdens v_abase1 v_ta2d v_ta2gf
-#fix d2 TA psoriasis/divide_ta 1 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
-#fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase1 v_ddesq
+fix kgta TA psoriasis/growth/ta v_TAdens v_abase1 v_ta2d v_ta2gf
+fix d2 TA psoriasis/divide_ta 1 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
+fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abase1 v_ddesq
 
 ##############Define IBm Computes##############
 
@@ -194,11 +194,13 @@ thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 50 pre no post no every 1 &
+run 200 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
 "fix_modify d1 demflag 1" &
+"fix_modify d2 demflag 1" &
 "timestep 1e-3" &
 "run 1000 pre no post no" &
 "timestep 3600"  &
 "fix_modify k1 demflag 0" &
-"fix_modify d1 demflag 0"
+"fix_modify d1 demflag 0" &
+"fix_modify d2 demflag 0"

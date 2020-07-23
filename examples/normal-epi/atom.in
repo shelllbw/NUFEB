@@ -30,10 +30,10 @@ Type Name
 
 Diffusion Coeffs
 
-   il17 1.6e-10
-   tnfa 1.6e-10
-   il23 1.6e-10
-   gf 1.6e-10
+   il17 1e-10
+   tnfa 1e-10
+   il23 1.6e-9
+   gf 1.6e-9
 
 Division Counter
 
@@ -47,20 +47,20 @@ Division Counter
 
 Growth Rate
 
-  stem 2.04-8
-  ta 2.03e-8
+  stem 4.90e-07
+  ta 4.88e-07
   diff 0
-  tcell 6.37e-4
+  tcell 0.01527777777
   dc 6.94e-2
   apop 0
   bm 0
 
 Decay
 
-  stem 2.11e-10
-  ta 4.32e-11
-  diff 5.84e-12
-  tcell 1.75e-5
-  dc 1.75e-5
+  stem 5.04e-19
+  ta 1.04e-19
+  diff 1.40e-20
+  tcell 0.00041944444
+  dc 0.00041944444
   apop 0
   bm 0

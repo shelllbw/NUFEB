@@ -272,28 +272,38 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
       // Stem cell model
       if (species[t] == 1) {
-		double R1_1 = mu[t] * nus[il17][grid];
-		double R1_2 = mu[t] * nus[tnfa][grid];
-		double R2 =  pow(decay[t], 2) * xdensity[t][grid];
-		double R3 = (R1_1 + R1_2 - R2) * abase;
-		double R4_1 = sc2ta * nus[il17][grid] * abase;
-		double R4_2 = sc2ta * nus[tnfa][grid] * abase;
-
-		//printf("growth_sc before nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
+//    	  printf("growth_sc before nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
+//		double R1_1 = mu[t] * nus[il17][grid];
+//		double R1_2 = mu[t] * nus[tnfa][grid];
+//		double R2 =  pow(decay[t], 2);
+//		double R3 = (R1_1 + R1_2 - R2) * abase;
+//		double R4_1 = sc2ta * nus[il17][grid];
+//		double R4_2 = sc2ta * nus[tnfa][grid];
+		double R1 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]);
+		double R2 =  pow(decay[t], 2);
+		double R3 = (R1 - R2) * abase;
+		double R4 = sc2ta * (nus[il17][grid] + nus[tnfa][grid]);
 
 		//nutrient uptake for sc is affected by gf
 		//nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) + diff_coeff[t];
-		nur[il17][grid] -=  (R1_1 + R4_1) * xdensity[t][grid];
-		nur[tnfa][grid] -=  (R1_2 + R4_2) * xdensity[t][grid];
+//		nur[il17][grid] -=  (R1_1 + R4_1) * xdensity[t][grid];
+//		nur[tnfa][grid] -=  (R1_2 + R4_2) * xdensity[t][grid];
+		nur[il17][grid] -=  ((R1 + R4) * xdensity[t][grid]);
+		nur[tnfa][grid] -=  ((R1 + R4) * xdensity[t][grid]);
 
-		//printf("R1_1 %e 	R1_2 %e 	R4_1 %e 	R4_2 %e \n", R1_1, R1_2, R4_1, R4_2);
-		printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1_1 + R1_2, R2, R3, (R1_1 + R1_2) - R2 - R3);
+//		printf("R1_1 %e 	R1_2 %e 	R4_1 %e 	R4_2 %e R4 total = %e \n", R1_1, R1_2, R4_1, R4_2, R4_1 + R4_2);
+//		printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1_1 + R1_2, R2, R3, (R1_1 + R1_2) - R2 - R3);
+//		printf("R1 %e 	R4 %e \n", R1, R4);
+//		printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1, R2, R3, R1 - R2 - R3);
+//		printf("XDENSITY %e \n", xdensity[t][grid]);
 
-        growrate_sc = R1_1 + R1_2 - R2 - R3;
-        growrate_ta = R4_1 + R4_2; //sc can divide to a TA cell
+//        growrate_sc = R1_1 + R1_2 - R2 - R3;
+//        growrate_ta = R4_1 + R4_2; //sc can divide to a TA cell
+		growrate_sc = R1 - R2 - R3;
+		growrate_ta = R4; //sc can divide to a TA cell
 
-		//printf("growth_sc after nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
-        printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
+//		printf("growth_sc after nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
+//        printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
 
         if (!gflag || !external_gflag){
         	continue;
@@ -302,9 +312,10 @@ void FixPGrowthSC::growth(double dt, int gflag) {
         /*
          * Update biomass
          * */
-        //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-        rmass[i] = rmass[i] + rmass[i] * (1 + growrate_sc * dt);
-        //rmass[i] = rmass[i] * (1 + growrate_sc * dt);
+       // printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+        //printf("rmass is %e , growrate_sc is %e  , 1 + growrate_sc %e  dt %e , 1 + growrate_sc * dt %e \n", rmass[i], growrate_sc, 1 + growrate_sc, dt, 1 + growrate_sc * dt);
+        //rmass[i] = rmass[i] + rmass[i] * (1 + growrate_sc * dt);
+        rmass[i] = rmass[i] * (1 + growrate_sc * dt);
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
