@@ -13,9 +13,9 @@ Atoms
 
 Nutrients
 
-   1 il17 l 0 0 0 0 0 0 0
+   1 il17 l 1e-4 1e-4 1e-4 1e-4 1e-4 1e-4 0
    2 tnfa l 0 0 0 0 0 0 0
-   3 il23 l 0.015 0.015 0.015 0.015 0.015 0.015 0
+   3 il23 l 1e-4 1e-4 1e-4 1e-4 1e-4 1e-4 0
    4 gf l 0 0 0 0 0 0 0
 
 Type Name
@@ -45,22 +45,32 @@ Division Counter
    apop 0
    bm 0
 
-Growth Rate
+ Growth Rate
 
-  stem 4.90e-07
-  ta 4.88e-07
-  diff 0
-  tcell 0.01527777777
-  dc 6.94e-2
+    stem 2.04108796e-8
+    ta 2.03263889e-8
+    diff 0
+    tcell 0.00063657407
+    dc 0.0694
+    apop 0
+    bm 0
+
+Maintenance
+
+  stem 0.1
+  ta 0.1
+  diff 0.1
+  tcell 0.1
+  dc 0.001
   apop 0
   bm 0
 
-Decay
+  Decay
 
-  stem 5.04e-19
-  ta 1.04e-19
-  diff 1.40e-20
-  tcell 0.00041944444
-  dc 0.00041944444
-  apop 0
-  bm 0
+   stem 2.1105324e-20
+   ta 4.3195602e-21
+   diff 5.8449074e-22
+   tcell 0.00001747685
+   dc 0.00001747685
+   apop 0
+   bm 0

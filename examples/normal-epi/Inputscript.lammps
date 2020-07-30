@@ -139,23 +139,23 @@ variable abase1 equal 0.0012
 
 #variables used in growth/sc
 variable STEMdens equal 30
-variable sc2ta equal 4.28e-07
-variable sc2gf equal 0.00027777777
+variable sc2ta equal 1.78414352e-8
+variable sc2gf equal 0.00001157407
 variable gf20 equal 0.0004224537
 
 #variables used in growth/ta
 variable TAdens equal 30
-variable ta2d equal 5.02e-07
-variable ta2gf equal 0.00027777777
+variable ta2d equal 2.090625e-8
+variable ta2gf equal 0.00001157407
 
 #variable used in growth/diff
 variable DIFFdens equal 30
-variable ddesq equal 0.00000132025
+variable ddesq equal 5.50104167e-8
 
 #variables used in growth/tcell
 variable TCELLdens equal 30
-variable il172 equal 0.015
-variable tnfa2 equal 5.78703e-3
+variable il172 equal 0.00000578703
+variable tnfa2 equal 0.00000578703
 variable il1720 equal 4.225e-7
 variable tnfa20 equal 4.225e-7
 
@@ -186,15 +186,15 @@ compute myMass all biomass
 ##############Simulation Output##############
 
 # Use atom_# instead of atom%_#
-dump		du1 all custom/vtk 3601 atom_*.vtu id type diameter x y z
-dump		du2 all grid 3601 grid_%_*.vti con
+dump		du1 all custom/vtk 500 atom_*.vtu id type diameter x y z
+dump		du2 all grid 500 grid_%_*.vti con
 thermo_style    custom step cpu atoms c_myNtypes[*]
 thermo		1001
 thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 200 pre no post no every 1 &
+run 100 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
 "fix_modify d1 demflag 1" &
 "fix_modify d2 demflag 1" &

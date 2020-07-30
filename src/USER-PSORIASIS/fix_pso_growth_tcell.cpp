@@ -254,6 +254,7 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 
   double *mu = bio->mu;
   double *decay = bio->decay;
+  double *maintain = bio->maintain;
   double *diff_coeff = bio->diff_coeff;
 
   double **nus = kinetics->nus;
@@ -273,27 +274,24 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 	  //printf("species is %i \n", species[t]);
       // t cell model
       if (species[t] == 4) {
+    	//  printf("------- start of growth/tcell  -------- \n");
     	double R16 = mu[t] * nus[il23][grid];
-    	double R17 = pow(decay[t],2);
+    	double R17 = pow(decay[t],4);
     	double R18 = (R16 - R17) * abase;
+    	double R19 = maintain[t] * (R16 + R17 + R18);
 
-    	printf("growrate_tcell  BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
+    	//printf("growrate_tcell BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 		//printf("rmass is %e grid_vol is %e rmass/grid_vol is %e \n", rmass[i], grid_vol, rmass[i]/grid_vol);
 
-    	nur[il23][grid] -= (R16 * xdensity[t][grid]);
-//    	nur[il17][grid] += il172 * xdensity[t][grid] + diff_coeff[t];
-//    	nur[tnfa][grid] += tnfa2 * xdensity[t][grid] + diff_coeff[t];
-    	nur[il17][grid] += (il172 * xdensity[t][grid]);
-    	nur[tnfa][grid] += (tnfa2 * xdensity[t][grid]);
-    	printf("XDENSITY %e \n", xdensity[t][grid]);
+    	nur[il23][grid] -= ((R16 + R19) * (rmass[i]/grid_vol));
+    	nur[il17][grid] += (il172 * R16 * (rmass[i]/grid_vol));
+    	nur[tnfa][grid] += (tnfa2 * R16 * (rmass[i]/grid_vol));
 
-    	//printf("il172 * xdensity[t][grid] %e - il1720 * nus[il17][grid] %e = %e \n", il172 * xdensity[t][grid], il1720 * nus[il17][grid], nur[il17][grid]);
+    	//printf("growrate_tcell equation is R16 %e + R19 %e - R17 %e - R18 %e = %e\n", R16, R19, R17, R18, R16 + R19 - R17 - R18);
 
-    	printf("growrate_tcell  AFTER: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
+        growrate_tcell = R16 + R19 - R17 - R18;
+       // printf("rmass is %e , growrate_tcell is %e  , 1 + growrate_tcell %e  dt %e , 1 + growrate_tcell * dt %e \n", rmass[i], growrate_tcell, 1 + growrate_tcell, dt, 1 + growrate_tcell * dt);
 
-    	printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", R16, R17, R18, R16 - R17 - R18);
-
-        growrate_tcell = R16 - R17 - R18;
 
         if (!gflag || !external_gflag){
         	continue;

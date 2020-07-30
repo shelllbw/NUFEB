@@ -276,7 +276,8 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
       // diff cell model
       if (species[t] == 3) {
-		double R9 = pow(decay[t], 4) * xdensity[t][grid];
+    	  //printf("------- start of growth/diff  -------- \n");
+		double R9 = pow(decay[t], 4) * rmass[i]/grid_vol;
 		double R10 = R9 * abase;
 		double R11 = ddesq; //desquamation should occur when diff cells reach zhi
 
