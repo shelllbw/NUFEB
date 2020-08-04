@@ -296,7 +296,7 @@ void FixKineticsMonod::growth(double dt, int gflag) {
         double R13 = (1 / 2.86) * maintain[i] * eta_het * (nus[ino3][grid] / (ks[i][ino3] + nus[ino3][grid])) * (ks[i][io2] / (ks[i][io2] + nus[io2][grid]));
         double R14 = (1 / 1.17) * maintain[i] * eta_het * (nus[ino2][grid] / (ks[i][ino2] + nus[ino2][grid])) * (ks[i][io2] / (ks[i][io2] + nus[io2][grid]));
 
-        printf("r1 %e, r4 %e, r5 %e R6 %e R10 %e R13 %e R14 %e \n", R1, R4, R5, R6, R13, R14);
+        //printf("r1 %e, r4 %e, r5 %e R6 %e R10 %e R13 %e R14 %e \n", R1, R4, R5, R6, R13, R14);
         //printf("R1 %e\n", R1);
 
         nur[isub][grid] += ((-1 / yield[i]) * ((R1 + R4 + R5) * xdensity[i][grid]));
@@ -385,10 +385,11 @@ void FixKineticsMonod::update_biomass(double ***growrate, double dt) {
       int pos = kinetics->position(i);
 
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
-      //printf("before TYPE %i	rmass is %e  growrate[t][0][pos] %e dt %e \n", t, rmass[i], growrate[t][0][pos], dt);
-      //printf("1 + growrate[t][0][pos] * dt %e \n", 1 + growrate[t][0][pos] * dt);
+      printf("before TYPE %i	rmass is %e  growrate[t][0][pos] %e dt %e \n", t, rmass[i], growrate[t][0][pos], dt);
+      printf("growrate * dt = %e\n", growrate[t][0][pos] * dt);
+      printf("1 + growrate[t][0][pos] * dt %e \n", 1 + growrate[t][0][pos] * dt);
       rmass[i] = rmass[i] * (1 + growrate[t][0][pos] * dt);
-      //printf("after 	rmass is %e  growrate[t][0][pos] %e dt %e \n", rmass[i], growrate[t][0][pos], dt);
+      printf("after 	rmass is %e  growrate[t][0][pos] %e dt %e \n", rmass[i], growrate[t][0][pos], dt);
 
       if (species[t] == 1) {
         outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * eps_dens + growrate[t][1][pos] * rmass[i] * dt;

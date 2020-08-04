@@ -130,7 +130,7 @@ variable stemPercent equal 0.05
 #variables used in fix kinetics
 variable diffT equal 1e-4
 variable layer equal -1
-variable tol equal 1e-5
+variable tol equal 1e-6
 
 #common variables used in growth
 variable abase1 equal 0.0012
@@ -186,8 +186,8 @@ compute myMass all biomass
 ##############Simulation Output##############
 
 # Use atom_# instead of atom%_#
-dump		du1 all custom/vtk 500 atom_*.vtu id type diameter x y z
-dump		du2 all grid 500 grid_%_*.vti con
+dump		du1 all custom/vtk 3601 atom_*.vtu id type diameter x y z
+dump		du2 all grid 3601 grid_%_*.vti con
 thermo_style    custom step cpu atoms c_myNtypes[*]
 thermo		1001
 thermo_modify	lost ignore

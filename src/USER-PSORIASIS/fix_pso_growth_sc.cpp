@@ -277,9 +277,9 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
       // Stem cell model
       if (species[t] == 1) {
-    	  printf("------- start of growth/sc  -------- \n");
-    	  printf("growth_sc nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
-    	  printf("mu is %e , decay is %e , sc2ta is %e \n", mu[t], decay[t], sc2ta);
+    	  //printf("------- start of growth/sc  -------- \n");
+    	  //printf("growth_sc nus il17 %e tnfa %e\n", nus[il17][grid], nus[tnfa][grid]);
+    	  //printf("mu is %e , decay is %e , sc2ta is %e \n", mu[t], decay[t], sc2ta);
 		double R1 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]);
 		double R2 =  pow(decay[t], 2);
 		double R3 = (R1 - R2) * abase;
@@ -297,13 +297,13 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		growrate_ta = R1 + R4; //sc can divide to a TA cell
 
         //printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
-        printf("rmass is %e , diameter is %e , growrate_sc is %e  , 1 + growrate_sc %e  dt %e , 1 + growrate_sc * dt %e \n", rmass[i], radius[i]*2, growrate_sc, 1 + growrate_sc, dt, 1 + growrate_sc * dt);
-        printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", rmass[i] * (1 + growrate_sc * dt));
+
 
         if (!gflag || !external_gflag){
         	continue;
         }
-
+        printf("rmass is %e , diameter is %e , growrate_sc is %e  , dt = %e , growrate_sc * dt %e, 1 + growrate_sc * dt %e \n", rmass[i], radius[i]*2, growrate_sc, dt, growrate_sc * dt, 1 + growrate_sc * dt);
+        printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", rmass[i] * (1 + growrate_sc * dt));
         /*
          * Update biomass
          * */
