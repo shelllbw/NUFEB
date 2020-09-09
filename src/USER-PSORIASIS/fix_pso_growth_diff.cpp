@@ -148,6 +148,8 @@ void FixPGrowthDIFF::init() {
 	error->all(FLERR, "fix_psoriasis/growth/diff requires Decay input");
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/diff requires Growth Rate input");
+  else if (bio->ks == NULL)
+        error->all(FLERR, "fix_psoriasis/growth/sc requires Ks input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -185,6 +187,7 @@ void FixPGrowthDIFF::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthDIFF::init_param() {
+	ks = bio->ks;
 	il17, tnfa = 0;
 
   // initialize nutrient
