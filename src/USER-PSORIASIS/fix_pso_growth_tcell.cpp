@@ -151,8 +151,6 @@ void FixPGrowthTCELL::init() {
 	error->all(FLERR, "fix_psoriasis/growth/tcell requires Decay input");
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/tcell requires Growth Rate input");
-  else if (bio->ks == NULL)
-        error->all(FLERR, "fix_psoriasis/growth/sc requires Ks input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -190,7 +188,6 @@ void FixPGrowthTCELL::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthTCELL::init_param() {
-	ks = bio->ks;
 	il23, il17, tnfa = 0;
 
   // initialize nutrient
@@ -283,27 +280,15 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 	  //printf("species is %i \n", species[t]);
       // t cell model
       if (species[t] == 4) {
-<<<<<<< HEAD
     	 // printf("------- start of growth/tcell  -------- \n");
     	  //printf("grid is %e\n", grid);
     	double R16 = mu[t] * nus[il23][grid];
     	double R17 = decay[t] * (rmass[i]/grid_vol);
     	double R18 = abase * (rmass[i]/grid_vol);
-=======
-    	  //printf("------- start of growth/tcell  -------- \n");
-    	double R16 = mu[t] * nus[il23][grid];
-    	  //double R16 = (mu[t] * nus[il23][grid]) / (ks[t][il23] + nus[il23][grid]);
-    	double R17 = pow(decay[t],4);
-    	//  double R17 = decay[t];
-    	double R18 = (R16 - R17) * abase;
-    	//  double R18 = abase;
-    	//double R19 = maintain[t] * (R16 + R17 + R18);
->>>>>>> e196c656b79d155c2ce79ef011bec4132e5546bc
 
     	printf("growrate_tcell BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 		//printf("rmass is %e grid_vol is %e rmass/grid_vol is %e \n", rmass[i], grid_vol, rmass[i]/grid_vol);
 
-<<<<<<< HEAD
     	nur[il23][grid] -= (R16 * (rmass[i]/grid_vol));
     	nur[il17][grid] += (R16 * (rmass[i]/grid_vol));
     	nur[tnfa][grid] += (R16 * (rmass[i]/grid_vol));
@@ -315,20 +300,6 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
     	nus[tnfa][grid] += nur[tnfa][grid]/ntc;
     	nus[il23][grid] += nur[il23][grid]/ntc;
 
-=======
-    	//nur[il23][grid] -= ((R16 + R19) * (rmass[i]/grid_vol));
-    	  nur[il23][grid] -= (R16 * (rmass[i]/grid_vol));
-    	nur[il17][grid] += (il172 * R16 * (rmass[i]/grid_vol));
-    	nur[tnfa][grid] += (tnfa2 * R16 * (rmass[i]/grid_vol));
-
-		//manually updating nus - disabled kinetics/diffusion
-//    	nus[il23][grid] += nur[il23][grid];
-//    	nus[il17][grid] += nur[il17][grid];
-//    	nus[tnfa][grid] += nur[tnfa][grid];
-
-    	//printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", R16, R17, R18, R16 - R17 - R18);
-
->>>>>>> e196c656b79d155c2ce79ef011bec4132e5546bc
         growrate_tcell = R16 - R17 - R18;
         //printf("rmass is %e , growrate_tcell is %e  , 1 + growrate_tcell %e  dt %e , 1 + growrate_tcell * dt %e \n", rmass[i], growrate_tcell, 1 + growrate_tcell, dt, 1 + growrate_tcell * dt);
 

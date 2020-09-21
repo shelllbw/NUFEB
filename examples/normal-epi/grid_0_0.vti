@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<VTKFile type="ImageData" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <ImageData WholeExtent="0 1 0 1 0 6" Origin="0 0 0" Spacing="5e-05 2e-05 5e-06">
+    <Piece Extent="0 1 0 1 0 6"                                                       >
+      <PointData>
+      </PointData>
+      <CellData>
+        <DataArray type="Float64" Name="il17 concentration" format="appended" RangeMin="0"                    RangeMax="0"                    offset="0"                   />
+        <DataArray type="Float64" Name="tnfa concentration" format="appended" RangeMin="0"                    RangeMax="0"                    offset="40"                  />
+        <DataArray type="Float64" Name="il23 concentration" format="appended" RangeMin="0.001"                RangeMax="0.001"                offset="80"                  />
+        <DataArray type="Float64" Name="gf concentration" format="appended" RangeMin="0"                    RangeMax="0"                    offset="132"                 />
+      </CellData>
+    </Piece>
+  </ImageData>
+  <AppendedData encoding="base64">
+   _AQAAAACAAAAwAAAADAAAAA==eJxjYCANAAAAMAABAQAAAACAAAAwAAAADAAAAA==eJxjYCANAAAAMAABAQAAAACAAAAwAAAAEwAAAA==eJz7s/LjJd+kAPs/RNIAxu4b5Q==AQAAAACAAAAwAAAADAAAAA==eJxjYCANAAAAMAAB
+  </AppendedData>
+</VTKFile>
