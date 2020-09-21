@@ -149,6 +149,8 @@ void FixPGrowthSC::init() {
 	error->all(FLERR, "fix_psoriasis/growth/sc requires Decay input");
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/sc requires Growth Rate input");
+  else if (bio->ks == NULL)
+      error->all(FLERR, "fix_psoriasis/growth/sc requires Ks input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -279,6 +281,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
       // Stem cell model
       if (species[t] == 1) {
+<<<<<<< HEAD
     	  //printf("------- start of growth/sc  -------- \n");
     	  //printf("grid is %f\n", grid);
 
@@ -287,6 +290,20 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		double R2 =  decay[t] * pow((rmass[i]/grid_vol), 2);
 		double R3 =  abase * (rmass[i]/grid_vol);
 		double R4 = sc2ta * (nus[il17][grid] + nus[tnfa][grid]) * (rmass[i]/grid_vol);
+=======
+    	  printf("------- start of growth/sc  -------- \n");
+
+    	  //printf("mu is %e , decay is %e , sc2ta is %e \n", mu[t], decay[t], sc2ta);
+		double R1 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]);
+    	//  double R1 = (mu[t] * (nus[il17][grid] + nus[tnfa][grid])) / (ks[t][il17] + nus[il17][grid]) + (ks[t][tnfa] + nus[tnfa][grid]);
+		double R2 =  pow(decay[t], 4);
+    	//  double R2 = decay[i];
+		double R3 = (R1 - R2) * abase;
+		//double R3 = abase;
+		//double R4 = (sc2ta * (nus[il17][grid] + nus[tnfa][grid])) / (ks[t][il17] + nus[il17][grid]) + (ks[t][tnfa] + nus[tnfa][grid]);
+		double R4 = sc2ta * (nus[il17][grid] + nus[tnfa][grid]);
+		//double R5 = maintain[t] * (R1 + R2 + R3);
+>>>>>>> e196c656b79d155c2ce79ef011bec4132e5546bc
 
 		printf("growth_sc nus il17 %e tnfa %e gf %e\n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid]);
 
@@ -298,23 +315,39 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1, R2, R3, R1 - R2 - R3);
 
 		//manually updating nus - disabled kinetics/diffusion
+<<<<<<< HEAD
 		nus[il17][grid] += nur[il17][grid]/nstem;
 		nus[tnfa][grid] += nur[tnfa][grid]/nstem;
 		nus[gf][grid] += nur[gf][grid]/nstem;
 
 		growrate_sc = R1 - R2 - R3;
 		growrate_ta = R4; //sc can divide to a TA cell
+=======
+//    	nus[il17][grid] += nur[il17][grid];
+//    	nus[tnfa][grid] += nur[tnfa][grid];
+//    	nus[gf][grid] += nur[gf][grid];
 
-        //printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
+		printf("growrate_sc equation is R1 %e + R4 %e - R2 %e - R3 %e = %e\n", R1, R4, R2, R3, R1 + R4 - R2 - R3);
+
+		growrate_sc = R1 + R4 - R2 - R3;
+		growrate_ta = R1 + R4; //sc can divide to a TA cell
+>>>>>>> e196c656b79d155c2ce79ef011bec4132e5546bc
+
+        printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
 
 
         if (!gflag || !external_gflag){
         	continue;
         }
+<<<<<<< HEAD
 //        printf("------- start of growth/sc  -------- \n");
 //        printf("rmass is %e , diameter is %e , growrate_sc is %e  , dt = %e , growrate_sc * dt %e, 1 + growrate_sc * dt %e \n", rmass[i], radius[i]*2, growrate_sc, dt, growrate_sc * dt, 1 + growrate_sc * dt);
 //        printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", rmass[i] * (1 + growrate_sc * dt));
 //        printf("new rmass will be if rmass[i] + rmass[i] * (1 + growrate_sc * dt) %e\n ", rmass[i] + rmass[i] * (1 + growrate_sc * dt));
+=======
+        //printf("rmass is %e , diameter is %e , growrate_sc is %e  , dt = %e , growrate_sc * dt %e, 1 + growrate_sc * dt %e \n", rmass[i], radius[i]*2, growrate_sc, dt, growrate_sc * dt, 1 + growrate_sc * dt);
+        //printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", rmass[i] * (1 + growrate_sc * dt));
+>>>>>>> e196c656b79d155c2ce79ef011bec4132e5546bc
         /*
          * Update biomass
          * */
