@@ -149,8 +149,6 @@ void FixPGrowthSC::init() {
 	error->all(FLERR, "fix_psoriasis/growth/sc requires Decay input");
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/sc requires Growth Rate input");
-  else if (bio->ks == NULL)
-      error->all(FLERR, "fix_psoriasis/growth/sc requires Ks input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -188,7 +186,6 @@ void FixPGrowthSC::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthSC::init_param() {
-	ks = bio->ks;
 	il17, tnfa, gf = 0;
 
   // initialize nutrient
@@ -252,7 +249,6 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
   double *mu = bio->mu;
   double *decay = bio->decay;
-  double *maintain = bio->maintain;
   double *diff_coeff = bio->diff_coeff;
 
   double **nus = kinetics->nus;
@@ -266,9 +262,13 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
   double growrate_sc = 0;
   double growrate_ta = 0; //sc can divide to a TA cell
+  int nstem = 0;
 
-//  for(int i=0; i<atom->nlocal; i++)
-//      if (atom->type[i] == 1)  printf("i=%i type=%i x=%e y=%e z=%e \n", i,atom->type[i], atom->x[i][0],atom->x[i][1],atom->x[i][2]);
+  for (int i = 0; i < nlocal; i++) {
+	if (atom->mask[i] & groupbit) {
+		nstem++;
+	}
+  }
 
   for (int i = 0; i < nlocal; i++) {
 	if (mask[i] & groupbit) {
@@ -279,44 +279,42 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
       // Stem cell model
       if (species[t] == 1) {
-    	  printf("------- start of growth/sc  -------- \n");
+    	  //printf("------- start of growth/sc  -------- \n");
+    	  //printf("grid is %f\n", grid);
 
     	  //printf("mu is %e , decay is %e , sc2ta is %e \n", mu[t], decay[t], sc2ta);
-		double R1 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]);
-    	//  double R1 = (mu[t] * (nus[il17][grid] + nus[tnfa][grid])) / (ks[t][il17] + nus[il17][grid]) + (ks[t][tnfa] + nus[tnfa][grid]);
-		double R2 =  pow(decay[t], 4);
-    	//  double R2 = decay[i];
-		double R3 = (R1 - R2) * abase;
-		//double R3 = abase;
-		//double R4 = (sc2ta * (nus[il17][grid] + nus[tnfa][grid])) / (ks[t][il17] + nus[il17][grid]) + (ks[t][tnfa] + nus[tnfa][grid]);
-		double R4 = sc2ta * (nus[il17][grid] + nus[tnfa][grid]);
-		//double R5 = maintain[t] * (R1 + R2 + R3);
+		double R1 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]) * (rmass[i]/grid_vol);
+		double R2 =  decay[t] * pow((rmass[i]/grid_vol), 2);
+		double R3 =  abase * (rmass[i]/grid_vol);
+		double R4 = sc2ta * (nus[il17][grid] + nus[tnfa][grid]) * (rmass[i]/grid_vol);
 
 		printf("growth_sc nus il17 %e tnfa %e gf %e\n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid]);
 
 		//nutrient uptake for sc is affected by gf
-		nur[gf][grid] += sc2gf * (R1 + R4) * (rmass[i]/grid_vol);
-		nur[il17][grid] -=  ((R1 + R4) * rmass[i]/grid_vol);
-		nur[tnfa][grid] -=  ((R1 + R4) * rmass[i]/grid_vol);
+		nur[gf][grid] += (R1 + R4) * (rmass[i]/grid_vol);
+		nur[il17][grid] -= ((R1 + R4) * (rmass[i]/grid_vol));
+		nur[tnfa][grid] -= ((R1 + R4) * (rmass[i]/grid_vol));
+
+		//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1, R2, R3, R1 - R2 - R3);
 
 		//manually updating nus - disabled kinetics/diffusion
-//    	nus[il17][grid] += nur[il17][grid];
-//    	nus[tnfa][grid] += nur[tnfa][grid];
-//    	nus[gf][grid] += nur[gf][grid];
+		nus[il17][grid] += nur[il17][grid]/nstem;
+		nus[tnfa][grid] += nur[tnfa][grid]/nstem;
+		nus[gf][grid] += nur[gf][grid]/nstem;
 
-		printf("growrate_sc equation is R1 %e + R4 %e - R2 %e - R3 %e = %e\n", R1, R4, R2, R3, R1 + R4 - R2 - R3);
+		growrate_sc = R1 - R2 - R3;
+		growrate_ta = R4; //sc can divide to a TA cell
 
-		growrate_sc = R1 + R4 - R2 - R3;
-		growrate_ta = R1 + R4; //sc can divide to a TA cell
-
-        printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
+        //printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
 
 
         if (!gflag || !external_gflag){
         	continue;
         }
-        //printf("rmass is %e , diameter is %e , growrate_sc is %e  , dt = %e , growrate_sc * dt %e, 1 + growrate_sc * dt %e \n", rmass[i], radius[i]*2, growrate_sc, dt, growrate_sc * dt, 1 + growrate_sc * dt);
-        //printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", rmass[i] * (1 + growrate_sc * dt));
+//        printf("------- start of growth/sc  -------- \n");
+//        printf("rmass is %e , diameter is %e , growrate_sc is %e  , dt = %e , growrate_sc * dt %e, 1 + growrate_sc * dt %e \n", rmass[i], radius[i]*2, growrate_sc, dt, growrate_sc * dt, 1 + growrate_sc * dt);
+//        printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", rmass[i] * (1 + growrate_sc * dt));
+//        printf("new rmass will be if rmass[i] + rmass[i] * (1 + growrate_sc * dt) %e\n ", rmass[i] + rmass[i] * (1 + growrate_sc * dt));
         /*
          * Update biomass
          * */

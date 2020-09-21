@@ -149,8 +149,6 @@ void FixPGrowthTA::init() {
 	error->all(FLERR, "fix_psoriasis/growth/ta requires Decay input");
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/ta requires Growth Rate input");
-  else if (bio->ks == NULL)
-        error->all(FLERR, "fix_psoriasis/growth/sc requires Ks input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -188,7 +186,6 @@ void FixPGrowthTA::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthTA::init_param() {
-	ks = bio->ks;
 	il17, tnfa, gf = 0;
 
   // initialize nutrient
@@ -270,6 +267,13 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 
   double growrate_d = 0;
   double growrate_ta = 0;
+  int nta = 0;
+
+  for (int i = 0; i < nlocal; i++) {
+	if (atom->mask[i] & groupbit) {
+		nta++;
+	}
+  }
 
   for (int i = 0; i < nlocal; i++) {
 	if (mask[i] & groupbit) {
@@ -281,23 +285,23 @@ void FixPGrowthTA::growth(double dt, int gflag) {
       // ta cell model
       if (species[t] == 2) {
     	  //printf("------- start of growth/ta  -------- \n");
-		double R5 = mu[t] * nus[il17][grid] * nus[tnfa][grid];
-		double R6 = pow(decay[t], 4);
-		double R7 = (R5 - R6) * abase;
-		double R8 = ta2d * nus[il17][grid] * nus[tnfa][grid];
+		double R5 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]) * (rmass[i]/grid_vol);
+		double R6 = decay[t] * pow((rmass[i]/grid_vol), 2);
+		double R7 = abase * (rmass[i]/grid_vol);
+		double R8 = ta2d * (nus[il17][grid] + nus[tnfa][grid]) * (rmass[i]/grid_vol);
 
 		//printf("growrate_ta BEFORE: il17 conc : %e tnfa conc :  %e \n", nus[il17][grid], nus[tnfa][grid]);
 
-		nur[gf][grid] += ta2gf * (R5 + R8) * (rmass[i]/grid_vol);
-		nur[il17][grid] -=  (R5 + R8) * rmass[i]/grid_vol;
-		nur[tnfa][grid] -=  (R5 + R8) * rmass[i]/grid_vol;
-
-		//manually updating nus - disabled kinetics/diffusion
-//    	nus[il17][grid] += nur[il17][grid];
-//    	nus[tnfa][grid] += nur[tnfa][grid];
-//    	nus[gf][grid] += nur[gf][grid];
+		nur[gf][grid] += (R5 + R8) * (rmass[i]/grid_vol);
+		nur[il17][grid] -= ((R5 + R8) * (rmass[i]/grid_vol));
+		nur[tnfa][grid] -= ((R5 + R8) * (rmass[i]/grid_vol));
 
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5, R6, R7, R5 - R6 - R7);
+
+		//manually updating nus - disabled kinetics/diffusion
+		nus[il17][grid] += nur[il17][grid]/nta;
+		nus[tnfa][grid] += nur[tnfa][grid]/nta;
+		nus[gf][grid] += nur[gf][grid]/nta;
 
         growrate_ta = R5 - R6 - R7;
         growrate_d = R8;
@@ -308,6 +312,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
         }
 
         //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+        //rmass[i] = rmass[i] +  rmass[i] * (1 + growrate_ta * dt);
         rmass[i] = rmass[i] * (1 + growrate_ta * dt);
 		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * ta_dens + growrate_d * rmass[i] * dt;
 		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / ta_dens), third);

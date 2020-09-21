@@ -15,7 +15,7 @@ Nutrients
 
    1 il17 l 0 0 0 0 0 0 0
    2 tnfa l 0 0 0 0 0 0 0
-   3 il23 l 1e-4 1e-4 1e-4 1e-4 1e-4 1e-4 0
+   3 il23 l 1e-3 1e-3 1e-3 1e-3 1e-3 1e-3 0
    4 gf l 0 0 0 0 0 0 0
 
 Type Name
@@ -30,20 +30,10 @@ Type Name
 
 Diffusion Coeffs
 
-   il17 1e-10
-   tnfa 1e-10
+   il17 1.6e-9
+   tnfa 1.6e-9
    il23 1.6e-9
    gf 1.6e-9
-
- Ks
-
-    stem 1e-20 1e-20 0 0
-    ta 1e-20 1e-20 0 0
-    diff 1e-20 1e-20 0 0
-    tcell 0 0 3.5e-10 0
-    dc 0 0 0 0
-    apop 0 0 0 0
-    bm 0 0 0 0
 
 Division Counter
 
@@ -64,16 +54,6 @@ Division Counter
     dc 0.0694
     apop 0
     bm 0
-
-Maintenance
-
-  stem 0.1
-  ta 0.1
-  diff 0.1
-  tcell 0.1
-  dc 0.001
-  apop 0
-  bm 0
 
   Decay
 
