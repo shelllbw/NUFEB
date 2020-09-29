@@ -280,13 +280,12 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 	  //printf("species is %i \n", species[t]);
       // t cell model
       if (species[t] == 4) {
-    	 // printf("------- start of growth/tcell  -------- \n");
-    	  //printf("grid is %e\n", grid);
-    	double R16 = mu[t] * nus[il23][grid];
+    	  //printf("------- start of growth/tcell  -------- \n");
+    	double R16 = mu[t] * nus[il23][grid] * (rmass[i]/grid_vol);
     	double R17 = decay[t] * (rmass[i]/grid_vol);
     	double R18 = abase * (rmass[i]/grid_vol);
 
-    	printf("growrate_tcell BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
+    	//printf("growrate_tcell BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 		//printf("rmass is %e grid_vol is %e rmass/grid_vol is %e \n", rmass[i], grid_vol, rmass[i]/grid_vol);
 
     	nur[il23][grid] -= (R16 * (rmass[i]/grid_vol));
@@ -301,8 +300,8 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
     	nus[il23][grid] += nur[il23][grid]/ntc;
 
         growrate_tcell = R16 - R17 - R18;
-        //printf("rmass is %e , growrate_tcell is %e  , 1 + growrate_tcell %e  dt %e , 1 + growrate_tcell * dt %e \n", rmass[i], growrate_tcell, 1 + growrate_tcell, dt, 1 + growrate_tcell * dt);
-
+        //printf("rmass is %e , growrate_tcell is %e  , dt %e , 1 + growrate_tcell * dt %e \n", rmass[i], growrate_tcell, dt, 1 + growrate_tcell * dt);
+        //printf("new rmass will be %e \n", rmass[i] * (1 + growrate_tcell * dt));
 
         if (!gflag || !external_gflag){
         	continue;

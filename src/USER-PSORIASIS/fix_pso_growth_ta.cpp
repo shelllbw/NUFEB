@@ -285,27 +285,32 @@ void FixPGrowthTA::growth(double dt, int gflag) {
       // ta cell model
       if (species[t] == 2) {
     	  //printf("------- start of growth/ta  -------- \n");
-		double R5 = mu[t] * (nus[il17][grid] + nus[tnfa][grid]) * (rmass[i]/grid_vol);
-		double R6 = decay[t] * pow((rmass[i]/grid_vol), 2);
+		double R5_1 = mu[t] * nus[il17][grid] * (rmass[i]/grid_vol);
+		double R5_2 = mu[t] * nus[tnfa][grid] * (rmass[i]/grid_vol);
+		double R6 = decay[t] * pow(rmass[i]/grid_vol, 2);
 		double R7 = abase * (rmass[i]/grid_vol);
-		double R8 = ta2d * (nus[il17][grid] + nus[tnfa][grid]) * (rmass[i]/grid_vol);
+		double R8_1 = ta2d * nus[il17][grid] * (rmass[i]/grid_vol);
+		double R8_2 = ta2d * nus[tnfa][grid] * (rmass[i]/grid_vol);
 
 		//printf("growrate_ta BEFORE: il17 conc : %e tnfa conc :  %e \n", nus[il17][grid], nus[tnfa][grid]);
 
-		nur[gf][grid] += (R5 + R8) * (rmass[i]/grid_vol);
-		nur[il17][grid] -= ((R5 + R8) * (rmass[i]/grid_vol));
-		nur[tnfa][grid] -= ((R5 + R8) * (rmass[i]/grid_vol));
+		nur[gf][grid] += (R5_1 + R5_2 + R8_1 + R8_2) * (rmass[i]/grid_vol);
+		nur[il17][grid] -= ((R5_1 + R8_1) * (rmass[i]/grid_vol));
+		nur[tnfa][grid] -= ((R5_2 + R8_2) * (rmass[i]/grid_vol));
 
-		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5, R6, R7, R5 - R6 - R7);
+		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2, R6, R7, R5_1 + R5_2 - R6 - R7);
 
 		//manually updating nus - disabled kinetics/diffusion
 		nus[il17][grid] += nur[il17][grid]/nta;
 		nus[tnfa][grid] += nur[tnfa][grid]/nta;
 		nus[gf][grid] += nur[gf][grid]/nta;
 
-        growrate_ta = R5 - R6 - R7;
-        growrate_d = R8;
-        //printf("growrate ta %e 		growrate_d %e \n", growrate_ta, growrate_d);
+        growrate_ta = R5_1 + R5_2 - R6 - R7;
+        growrate_d = R8_1 + R8_2;
+//        printf("growrate ta %e 		growrate_d %e \n", growrate_ta, growrate_d);
+//        printf("current rmass is %e \n", rmass[i]);
+//        printf("new rmass will be rmass[i] * (1 + growrate_ta * dt) = %e \n", rmass[i] * (1 + growrate_ta * dt));
+//        printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (rmass[i] / density), third));
 
         if (!gflag || !external_gflag){
         	continue;

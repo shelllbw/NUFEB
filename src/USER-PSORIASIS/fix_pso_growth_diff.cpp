@@ -148,8 +148,6 @@ void FixPGrowthDIFF::init() {
 	error->all(FLERR, "fix_psoriasis/growth/diff requires Decay input");
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/diff requires Growth Rate input");
-  else if (bio->ks == NULL)
-        error->all(FLERR, "fix_psoriasis/growth/sc requires Ks input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -187,7 +185,6 @@ void FixPGrowthDIFF::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthDIFF::init_param() {
-	ks = bio->ks;
 	il17, tnfa = 0;
 
   // initialize nutrient
@@ -280,13 +277,15 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
       // diff cell model
       if (species[t] == 3) {
     	  //printf("------- start of growth/diff  -------- \n");
-		double R9 = decay[t] * pow(rmass[i], 2);
-		double R10 = abase * rmass[i];
-		double R11 = ddesq * rmass[i]; //desquamation should occur when diff cells reach zhi
+		double R9 = decay[t] * pow(rmass[i]/grid_vol, 2);
+		double R10 = abase * (rmass[i]/grid_vol);
+		double R11 = ddesq * (rmass[i]/grid_vol); //desquamation should occur when diff cells reach zhi
 
 		//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
 //		printf("growrate d 1 R9 %e - R10 %e = %e\n", R9, R10, -(R9+R10));
 //		printf("growrate d 2 R9 %e - R10 %e - R11 %e= %e\n", R9, R10, R11, -(R9+R10+R11));
+
+		//todo after the model is more or less ready - update cytokine concentration levels
 
         if (!gflag || !external_gflag){
         	continue;
