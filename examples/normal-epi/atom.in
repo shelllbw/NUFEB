@@ -15,7 +15,7 @@ Nutrients
 
    1 il17 l 0 0 0 0 0 0 0
    2 tnfa l 0 0 0 0 0 0 0
-   3 il23 l 1e-3 1e-3 1e-3 1e-3 1e-3 1e-3 0
+   3 il23 l 1.5e-3 1.5e-3 1.5e-3 1.5e-3 1.5e-3 1.5e-3 0
    4 gf l 0 0 0 0 0 0 0
 
 Type Name
@@ -57,10 +57,10 @@ Division Counter
 
   Decay
 
-   stem 2.111e-10
-   ta 4.320e-11
-   diff 5.845e-12
-   tcell 1.748e-5
+   stem 2.111e-6
+   ta 4.320e-5
+   diff 5.845e-7
+   tcell 5.748e-5
    dc 1.747685e-5
    apop 0
    bm 0

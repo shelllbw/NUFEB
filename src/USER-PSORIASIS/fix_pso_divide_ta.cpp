@@ -247,7 +247,7 @@ void FixPDivideTa::post_integrate() {
       double rand = distribution(gen);
 
       double ssheight = zhi * 0.7;
-      double sbheight = zhi * 0.66;
+      double sbheight = zhi * 0.68;
 
       if (atom->radius[i] * 2 >= div_dia){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells

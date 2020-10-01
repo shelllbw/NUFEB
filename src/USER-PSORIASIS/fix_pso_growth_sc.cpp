@@ -305,11 +305,19 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 		growrate_sc = R1_1 + R1_2 - R2 - R3;
 		growrate_ta = R4_1 + R4_2; //sc can divide to a TA cell
+		double total_r = R1_1 + R1_2 + R4_1 + R4_2 - R2 - R3 ;
+		double g_perc = ((R1_1 + R1_2 + R4_1 + R4_2)/ total_r) * 100;
+		double d_perc = (R2/ total_r) * 100;
+		double a_perc = (R3/ total_r) * 100;
+		double new_rmass = rmass[i] * (1 + growrate_sc * dt);
 
        printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
        printf("current rmass is %e \n", rmass[i]);
-       printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", rmass[i] * (1 + growrate_sc * dt));
-       printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (rmass[i] / density), third));
+       printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", new_rmass);
+       printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (new_rmass / density), third));
+       printf("----- calculations ---- \n");
+       printf("Growth is %.4f    decay is %.4f    apoptosis is %.4f \n", g_perc, d_perc, a_perc);
+       printf("------ end ---------- \n");
 
 
 
