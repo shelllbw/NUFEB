@@ -136,13 +136,13 @@ variable tol equal 1e-6
 #variable abase1 equal 0.0012
 #variable abase2 equal 0.1
 variable abaseT equal 7.384e-8
-variable abaseSC equal 4.000e-11
-variable abaseTA equal 4.167e-13
+variable abaseSC equal 4.000e-10
+variable abaseTA equal 4.000e-8
 variable abaseD equal 4.167e-13
 
 #variables used in growth/sc
 variable STEMdens equal 30
-variable sc2ta equal 8.784e-2
+variable sc2ta equal 8.784e-3
 variable sc2gf equal 0.00001157407
 variable gf20 equal 0.0004224537
 

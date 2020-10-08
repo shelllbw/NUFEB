@@ -226,9 +226,9 @@ void FixPGrowthTA::init_param() {
 	  else
 		error->all(FLERR, "unknown species in fix_psoriasis/growth/ta");
 
-	  if (species[i] == 2){
-		  printf("cell type %i detected \n", species[i]);
-	  }
+//	  if (species[i] == 2){
+//		  printf("cell type %i detected \n", species[i]);
+//	  }
   }
 }
 
@@ -307,10 +307,19 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 
         growrate_ta = R5_1 + R5_2 - R6 - R7;
         growrate_d = R8_1 + R8_2;
+		double total_r = R5_1 + R5_2 + R8_1 + R8_2 - R6 - R7 ;
+		double g_perc = ((R5_1 + R5_2 + R8_1 + R8_2)/ total_r) * 100;
+		double d_perc = (R6/ total_r) * 100;
+		double a_perc = (R7/ total_r) * 100;
+		double new_rmass = rmass[i] * (1 + growrate_ta * dt);
+
 //        printf("growrate ta %e 		growrate_d %e \n", growrate_ta, growrate_d);
 //        printf("current rmass is %e \n", rmass[i]);
-//        printf("new rmass will be rmass[i] * (1 + growrate_ta * dt) = %e \n", rmass[i] * (1 + growrate_ta * dt));
-//        printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (rmass[i] / density), third));
+//        printf("new rmass will be rmass[i] * (1 + growrate_ta * dt) = %e \n", new_rmass);
+//        printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (new_rmass / density), third));
+//        printf("----- calculations ---- \n");
+//        printf("Growth is %.4f    decay is %.4f    apoptosis is %.4f \n", g_perc, d_perc, a_perc);
+//        printf("------ end ---------- \n");
 
         if (!gflag || !external_gflag){
         	continue;

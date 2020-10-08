@@ -288,8 +288,10 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
     	//printf("growrate_tcell BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 
     	nur[il23][grid] -= (R16 * (rmass[i]/grid_vol));
-    	nur[il17][grid] += (R16 * (rmass[i]/grid_vol));
-    	nur[tnfa][grid] += (R16 * (rmass[i]/grid_vol));
+//    	nur[il17][grid] += (R16 * (rmass[i]/grid_vol));
+//    	nur[tnfa][grid] += (R16 * (rmass[i]/grid_vol));
+    	nur[il17][grid] += (il172 * (rmass[i]/grid_vol) - il1720 * nus[il17][grid]);
+    	nur[tnfa][grid] += (tnfa2 * (rmass[i]/grid_vol) - tnfa20 * nus[tnfa][grid]);
 
     	//printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", R16, R17, R18, R16 - R17 - R18);
 

@@ -221,9 +221,9 @@ void FixPGrowthDIFF::init_param() {
 	  else
 		error->all(FLERR, "unknown species in fix_psoriasis/growth/diff");
 
-	  if (species[i] == 3){
-		  printf("cell type %i detected \n", species[i]);
-	  }
+//	  if (species[i] == 3){
+//		  printf("cell type %i detected \n", species[i]);
+//	  }
   }
 }
 
