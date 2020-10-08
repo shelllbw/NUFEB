@@ -197,12 +197,12 @@ thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 1000 pre no post no every 1 &
+run 2000 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
 "fix_modify d1 demflag 1" &
 "fix_modify d2 demflag 1" &
 "timestep 1e-3" &
-"run 1000 pre no post no" &
+"run 2000 pre no post no" &
 "timestep 3600"  &
 "fix_modify k1 demflag 0" &
 "fix_modify d1 demflag 0" &
