@@ -56,7 +56,7 @@ FixPGrowthTA::FixPGrowthTA(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/ta requires atom style bio");
 
-  if (narg < 7)
+  if (narg < 9)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/ta command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthTA::FixPGrowthTA(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 7;
+  int iarg = 9;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -140,6 +140,8 @@ void FixPGrowthTA::init() {
   abase = input->variable->compute_equal(ivar[1]);
   ta2d = input->variable->compute_equal(ivar[2]);
   ta2gf = input->variable->compute_equal(ivar[3]);
+  gf20 = input->variable->compute_equal(ivar[4]);
+  ca2 = input->variable->compute_equal(ivar[5]);
 
   bio = kinetics->bio;
 
@@ -186,16 +188,18 @@ void FixPGrowthTA::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthTA::init_param() {
-	il17, tnfa, gf = 0;
+	il17, tnfa, gf, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
 	if (strcmp(bio->nuname[nu], "il17") == 0)
 	  il17 = nu;
 	if (strcmp(bio->nuname[nu], "tnfa") == 0)
-			  tnfa = nu;
+		tnfa = nu;
 	if (strcmp(bio->nuname[nu], "gf") == 0)
-				  gf = nu;
+		gf = nu;
+	if (strcmp(bio->nuname[nu], "ca") == 0)
+		ca = nu;
   }
 
   if (il17 == 0)
@@ -204,6 +208,8 @@ void FixPGrowthTA::init_param() {
     	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
   if (gf == 0)
       	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient gf");
+  if (ca == 0)
+       	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -287,8 +293,10 @@ void FixPGrowthTA::growth(double dt, int gflag) {
     	  //printf("------- start of growth/ta  -------- \n");
 		double R5_1 = mu[t] * nus[il17][grid] * (rmass[i]/grid_vol);
 		double R5_2 = mu[t] * nus[tnfa][grid] * (rmass[i]/grid_vol);
+  //  	  double R5 = mu[t] * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/ grid_vol);
 		double R6 = decay[t] * pow(rmass[i]/grid_vol, 2);
 		double R7 = abase * (rmass[i]/grid_vol);
+//		double R8 = ta2d * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
 		double R8_1 = ta2d * nus[il17][grid] * (rmass[i]/grid_vol);
 		double R8_2 = ta2d * nus[tnfa][grid] * (rmass[i]/grid_vol);
 
@@ -297,6 +305,8 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 		nur[gf][grid] += (R5_1 + R5_2 + R8_1 + R8_2) * (rmass[i]/grid_vol);
 		nur[il17][grid] -= ((R5_1 + R8_1) * (rmass[i]/grid_vol));
 		nur[tnfa][grid] -= ((R5_2 + R8_2) * (rmass[i]/grid_vol));
+//		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
+//		nur[ca][grid] += ca2 * nus[ca][grid] -(R5 + R8) * (rmass[i]/grid_vol);
 
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2, R6, R7, R5_1 + R5_2 - R6 - R7);
 
@@ -304,13 +314,16 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 		nus[il17][grid] += nur[il17][grid]/nta;
 		nus[tnfa][grid] += nur[tnfa][grid]/nta;
 		nus[gf][grid] += nur[gf][grid]/nta;
+//		nus[ca][grid] += nur[ca][grid]/nta;
 
         growrate_ta = R5_1 + R5_2 - R6 - R7;
         growrate_d = R8_1 + R8_2;
-		double total_r = R5_1 + R5_2 + R8_1 + R8_2 - R6 - R7 ;
-		double g_perc = ((R5_1 + R5_2 + R8_1 + R8_2)/ total_r) * 100;
-		double d_perc = (R6/ total_r) * 100;
-		double a_perc = (R7/ total_r) * 100;
+//		growrate_ta = R5 - R6 - R7;
+//		growrate_d = R8;
+//		double total_r = R5_1 + R5_2 + R8_1 + R8_2 - R6 - R7 ;
+//		double g_perc = ((R5_1 + R5_2 + R8_1 + R8_2)/ total_r) * 100;
+//		double d_perc = (R6/ total_r) * 100;
+//		double a_perc = (R7/ total_r) * 100;
 		double new_rmass = rmass[i] * (1 + growrate_ta * dt);
 
 //        printf("growrate ta %e 		growrate_d %e \n", growrate_ta, growrate_d);

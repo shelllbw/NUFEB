@@ -54,7 +54,7 @@ class FixPGrowthSC : public Fix {
   double vol;                       // grid volume and gas volume
   double sc_dens; //cell density
   double il172, il1720, tnfa2,tnfa20;
-  double abase, sc2ta, sc2gf, gf20, ca2;
+  double abase, sc2ta, sc2gf, gf20, ca2, ca20;
 
   class AtomVecBio *avec;
   class FixKinetics *kinetics;

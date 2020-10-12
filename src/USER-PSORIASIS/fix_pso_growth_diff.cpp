@@ -56,7 +56,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/diff requires atom style bio");
 
-  if (narg < 6)
+  if (narg < 8)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/diff command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 6;
+  int iarg = 8;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -139,6 +139,8 @@ void FixPGrowthDIFF::init() {
   diff_dens = input->variable->compute_equal(ivar[0]);
   abase = input->variable->compute_equal(ivar[1]);
   ddesq = input->variable->compute_equal(ivar[2]);
+  diff2ca1 = input->variable->compute_equal(ivar[3]);
+  diff2ca2 = input->variable->compute_equal(ivar[4]);
 
   bio = kinetics->bio;
 
@@ -185,7 +187,7 @@ void FixPGrowthDIFF::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthDIFF::init_param() {
-	il17, tnfa = 0;
+	il17, tnfa, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
@@ -193,12 +195,16 @@ void FixPGrowthDIFF::init_param() {
 	  il17 = nu;
 	if (strcmp(bio->nuname[nu], "tnfa") == 0)
 			  tnfa = nu;
+	if (strcmp(bio->nuname[nu], "ca") == 0)
+			ca = nu;
   }
 
   if (il17 == 0)
 	error->all(FLERR, "fix_psoriasis/growth/diff requires nutrient il17");
   if (tnfa == 0)
     	error->all(FLERR, "fix_psoriasis/growth/diff requires nutrient tnfa");
+  if (ca == 0)
+         	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -268,8 +274,8 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
 	  //different heights for diff cells
-	  double sgheight = zhi * 0.83;
-	  double sc1height = zhi * 0.9;
+	  double sgheight = zhi * 0.85;
+	  double sc1height = zhi * 0.92;
 	  double sc2height = zhi * 1;
 
 	  //printf("heights sb %e    ss %e    sg %e    sc1 %e     sc2 %e\n", sbheight, ssheight, sgheight, sc1height, sc2height);
@@ -285,6 +291,7 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 //		printf("growrate d 1 R9 %e - R10 %e = %e\n", R9, R10, -(R9+R10));
 //		printf("growrate d 2 R9 %e - R10 %e - R11 %e= %e\n", R9, R10, R11, -(R9+R10+R11));
 
+
 		//todo after the model is more or less ready - update cytokine concentration levels
 
         if (!gflag || !external_gflag){
@@ -293,9 +300,15 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
         //printf("rmass before %e\n", rmass[i]);
 
+//        if (atom->x[i][2] < sgheight) {
+//        	growrate_d = - (R9 + R10);
+//        	rmass[i] = rmass[i] * (1 + growrate_d * dt);
+//        	nur[ca][grid] += diff2ca1 * (rmass[i]/grid_vol);
+//        } else
         if (atom->x[i][2] < sc1height) {
         	growrate_d = - (R9 + R10);
         	rmass[i] = rmass[i] * (1 + growrate_d * dt);
+        	nur[ca][grid] += diff2ca2 * (rmass[i]/grid_vol);
         	//printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else if (atom->x[i][2] > sc1height) {
         	growrate_d = - (R9 + R10 + R11);

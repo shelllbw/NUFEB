@@ -56,7 +56,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/tcell requires atom style bio");
 
-  if (narg < 9)
+  if (narg < 10)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/tcell command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 9;
+  int iarg = 10;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -142,6 +142,7 @@ void FixPGrowthTCELL::init() {
   tnfa2 = input->variable->compute_equal(ivar[3]);
   il1720 = input->variable->compute_equal(ivar[4]);
   tnfa20 = input->variable->compute_equal(ivar[5]);
+  il232 = input->variable->compute_equal(ivar[6]);
 
   bio = kinetics->bio;
 
@@ -290,6 +291,7 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
     	nur[il23][grid] -= (R16 * (rmass[i]/grid_vol));
 //    	nur[il17][grid] += (R16 * (rmass[i]/grid_vol));
 //    	nur[tnfa][grid] += (R16 * (rmass[i]/grid_vol));
+    	//nur[il23][grid] += il232 * (rmass[i]/grid_vol) - il1720 * nus[il23][grid];
     	nur[il17][grid] += (il172 * (rmass[i]/grid_vol) - il1720 * nus[il17][grid]);
     	nur[tnfa][grid] += (tnfa2 * (rmass[i]/grid_vol) - tnfa20 * nus[tnfa][grid]);
 
