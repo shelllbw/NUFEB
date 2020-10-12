@@ -291,35 +291,35 @@ void FixPGrowthTA::growth(double dt, int gflag) {
       // ta cell model
       if (species[t] == 2) {
     	  //printf("------- start of growth/ta  -------- \n");
-		double R5_1 = mu[t] * nus[il17][grid] * (rmass[i]/grid_vol);
-		double R5_2 = mu[t] * nus[tnfa][grid] * (rmass[i]/grid_vol);
-  //  	  double R5 = mu[t] * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/ grid_vol);
+//		double R5_1 = mu[t] * nus[il17][grid] * (rmass[i]/grid_vol);
+//		double R5_2 = mu[t] * nus[tnfa][grid] * (rmass[i]/grid_vol);
+    	  double R5 = mu[t] * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/ grid_vol);
 		double R6 = decay[t] * pow(rmass[i]/grid_vol, 2);
 		double R7 = abase * (rmass[i]/grid_vol);
-//		double R8 = ta2d * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
-		double R8_1 = ta2d * nus[il17][grid] * (rmass[i]/grid_vol);
-		double R8_2 = ta2d * nus[tnfa][grid] * (rmass[i]/grid_vol);
+		double R8 = ta2d * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
+//		double R8_1 = ta2d * nus[il17][grid] * (rmass[i]/grid_vol);
+//		double R8_2 = ta2d * nus[tnfa][grid] * (rmass[i]/grid_vol);
 
 		//printf("growrate_ta BEFORE: il17 conc : %e tnfa conc :  %e \n", nus[il17][grid], nus[tnfa][grid]);
 
-		nur[gf][grid] += (R5_1 + R5_2 + R8_1 + R8_2) * (rmass[i]/grid_vol);
-		nur[il17][grid] -= ((R5_1 + R8_1) * (rmass[i]/grid_vol));
-		nur[tnfa][grid] -= ((R5_2 + R8_2) * (rmass[i]/grid_vol));
-//		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
-//		nur[ca][grid] += ca2 * nus[ca][grid] -(R5 + R8) * (rmass[i]/grid_vol);
+//		nur[gf][grid] += (R5_1 + R5_2 + R8_1 + R8_2) * (rmass[i]/grid_vol);
+//		nur[il17][grid] -= ((R5_1 + R8_1) * (rmass[i]/grid_vol));
+//		nur[tnfa][grid] -= ((R5_2 + R8_2) * (rmass[i]/grid_vol));
+		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
+		//nur[ca][grid] += ca2 * nus[ca][grid] -(R5 + R8) * (rmass[i]/grid_vol);
 
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2, R6, R7, R5_1 + R5_2 - R6 - R7);
 
 		//manually updating nus - disabled kinetics/diffusion
-		nus[il17][grid] += nur[il17][grid]/nta;
-		nus[tnfa][grid] += nur[tnfa][grid]/nta;
+//		nus[il17][grid] += nur[il17][grid]/nta;
+//		nus[tnfa][grid] += nur[tnfa][grid]/nta;
 		nus[gf][grid] += nur[gf][grid]/nta;
-//		nus[ca][grid] += nur[ca][grid]/nta;
+		nus[ca][grid] += nur[ca][grid]/nta;
 
-        growrate_ta = R5_1 + R5_2 - R6 - R7;
-        growrate_d = R8_1 + R8_2;
-//		growrate_ta = R5 - R6 - R7;
-//		growrate_d = R8;
+//        growrate_ta = R5_1 + R5_2 - R6 - R7;
+//        growrate_d = R8_1 + R8_2;
+		growrate_ta = R5 - R6 - R7;
+		growrate_d = R8;
 //		double total_r = R5_1 + R5_2 + R8_1 + R8_2 - R6 - R7 ;
 //		double g_perc = ((R5_1 + R5_2 + R8_1 + R8_2)/ total_r) * 100;
 //		double d_perc = (R6/ total_r) * 100;
