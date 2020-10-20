@@ -290,11 +290,11 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//double R1_1 = mu[t] * nus[il17][grid] * (rmass[i]/grid_vol);
 		//double R1_2 = mu[t] * nus[tnfa][grid] * (rmass[i]/grid_vol);
 //    	double R1 = mu[t] * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
-    	double R1 = mu[t] * nus[gf][grid] * (rmass[i]/grid_vol);
+    	double R1 = mu[t] * nus[ca][grid] * (rmass[i]/grid_vol);
 		double R2 =  decay[t] * pow((rmass[i]/grid_vol), 2);
 		double R3 =  abase * (rmass[i]/grid_vol);
 //		double R4 = sc2ta *(nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
-		double R4 = sc2ta * nus[gf][grid] * (rmass[i]/grid_vol);
+		double R4 = sc2ta * nus[ca][grid] * (rmass[i]/grid_vol);
 		//double R4_1 = sc2ta * nus[il17][grid] * (rmass[i]/grid_vol);
 		//double R4_2 = sc2ta * nus[tnfa][grid] * (rmass[i]/grid_vol);
 
@@ -305,7 +305,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 		//todo - modify gf to be used by sc and ta in normal epi dev
 		//nur[gf][grid] += (R1_1 + R1_2 + R4_1 + R4_2) * (rmass[i]/grid_vol);
-		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
+		//nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
 		//nur[ca][grid] += ca2 * nus[ca][grid] - (R1 + R4) * (rmass[i]/grid_vol);
 		//nur[il17][grid] -= ((R1_1 + R4_1) * (rmass[i]/grid_vol));
 		//nur[tnfa][grid] -= ((R1_2 + R4_2) * (rmass[i]/grid_vol));
@@ -316,7 +316,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//manually updating nus - disabled kinetics/diffusion
 		//nus[il17][grid] += nur[il17][grid]/nstem;
 		//nus[tnfa][grid] += nur[tnfa][grid]/nstem;
-		nus[gf][grid] += nur[gf][grid]/nstem;
+//		nus[gf][grid] += nur[gf][grid]/nstem;
 //		nus[ca][grid] += nur[ca][grid]/nstem;
 
 		//growrate_sc = R1_1 + R1_2 - R2 - R3;
@@ -332,7 +332,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 //       printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
 //       printf("current rmass is %e \n", rmass[i]);
 //       printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", new_rmass);
-//       printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (new_rmass / density), third));
+       printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (new_rmass / density), third));
 //       printf("----- calculations ---- \n");
 //       printf("Growth is %.4f    decay is %.4f    apoptosis is %.4f \n", g_perc, d_perc, a_perc);
 //       printf("------ end ---------- \n");
