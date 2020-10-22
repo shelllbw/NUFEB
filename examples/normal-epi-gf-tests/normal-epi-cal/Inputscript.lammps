@@ -188,12 +188,14 @@ fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abaseD v_ddesq v_diff2ca1 v_diff
 
 compute myNtypes all ntypes
 compute myMass all biomass
+compute myNur all avg_con
 
 ##############Simulation Output##############
 
 # Use atom_# instead of atom%_#
 dump		du1 all custom/vtk 3601 atom_*.vtu id type diameter x y z
 dump		du2 all grid 3601 grid_%_*.vti con
+dump d0 all bio 1000 ntypes avg_con
 thermo_style    custom step cpu atoms c_myNtypes[*]
 thermo		1001
 thermo_modify	lost ignore

@@ -173,10 +173,10 @@ variable il232 equal 0.00001157407
 
 ##############Define IBm Commands##############
 
-fix k1 all kinetics 1 1 1 1 v_diffT v_layer demflag 0 niter 5000
+fix k1 all kinetics 1 10 10 10 v_diffT v_layer demflag 0 niter 5000
 #fix kgdc DC psoriasis/growth/dc v_DCdens v_abase1 v_dckp v_dcact v_il232
 fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abaseT v_il172 v_tnfa2 v_il1720 v_tnfa20 v_il232
-#fix g1 all kinetics/diffusion v_tol pp pp nd dcflag 2
+fix g1 all kinetics/diffusion v_tol pp pp nd dcflag 2
 #fix g1 all kinetics/diffusion v_tol pp pp nd closedflag 1
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abaseSC v_sc2ta v_sc2gf v_gf20 v_ca2
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0

@@ -304,9 +304,8 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//nutrient uptake for sc is affected by gf
 
 		//todo - modify gf to be used by sc and ta in normal epi dev
-		//nur[gf][grid] += (R1_1 + R1_2 + R4_1 + R4_2) * (rmass[i]/grid_vol);
 		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
-		//nur[ca][grid] += ca2 * nus[ca][grid] - (R1 + R4) * (rmass[i]/grid_vol);
+		nur[ca][grid] += ca2 * (rmass[i]/grid_vol)  - (R1 + R4) * nus[ca][grid];
 		//nur[il17][grid] -= ((R1_1 + R4_1) * (rmass[i]/grid_vol));
 		//nur[tnfa][grid] -= ((R1_2 + R4_2) * (rmass[i]/grid_vol));
 
@@ -316,7 +315,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//manually updating nus - disabled kinetics/diffusion
 		//nus[il17][grid] += nur[il17][grid]/nstem;
 		//nus[tnfa][grid] += nur[tnfa][grid]/nstem;
-		nus[gf][grid] += nur[gf][grid]/nstem;
+//		nus[gf][grid] += nur[gf][grid]/nstem;
 //		nus[ca][grid] += nur[ca][grid]/nstem;
 
 		//growrate_sc = R1_1 + R1_2 - R2 - R3;

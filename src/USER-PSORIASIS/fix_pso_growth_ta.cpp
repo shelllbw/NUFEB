@@ -307,7 +307,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 //		nur[il17][grid] -= ((R5_1 + R8_1) * (rmass[i]/grid_vol));
 //		nur[tnfa][grid] -= ((R5_2 + R8_2) * (rmass[i]/grid_vol));
 		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
-//		nur[ca][grid] += ca2 * nus[ca][grid] -(R5 + R8) * (rmass[i]/grid_vol);
+		nur[ca][grid] += ca2 * (rmass[i]/grid_vol) -(R5 + R8) * nus[ca][grid];
 
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2, R6, R7, R5_1 + R5_2 - R6 - R7);
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5, R6, R7, R5 - R6 - R7);
@@ -315,7 +315,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 		//manually updating nus - disabled kinetics/diffusion
 //		nus[il17][grid] += nur[il17][grid]/nta;
 //		nus[tnfa][grid] += nur[tnfa][grid]/nta;
-		nus[gf][grid] += nur[gf][grid]/nta;
+//		nus[gf][grid] += nur[gf][grid]/nta;
 //		nus[ca][grid] += nur[ca][grid]/nta;
 
 //        growrate_ta = R5_1 + R5_2 - R6 - R7;
