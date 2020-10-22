@@ -265,6 +265,13 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
   const double third = 1.0 / 3.0;
 
   double growrate_d = 0;
+  int ndiff = 0;
+
+  for (int i = 0; i < nlocal; i++) {
+	if (atom->mask[i] & groupbit) {
+		ndiff++;
+	}
+  }
 
   for (int i = 0; i < nlocal; i++) {
 	if (mask[i] & groupbit) {
@@ -300,15 +307,9 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
         //printf("rmass before %e\n", rmass[i]);
 
-//        if (atom->x[i][2] < sgheight) {
-//        	growrate_d = - (R9 + R10);
-//        	rmass[i] = rmass[i] * (1 + growrate_d * dt);
-//        	nur[ca][grid] += diff2ca1 * (rmass[i]/grid_vol);
-//        } else
         if (atom->x[i][2] < sc1height) {
         	growrate_d = - (R9 + R10);
         	rmass[i] = rmass[i] * (1 + growrate_d * dt);
-        	nur[ca][grid] += diff2ca2 * (rmass[i]/grid_vol);
         	//printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
         } else if (atom->x[i][2] > sc1height) {
         	growrate_d = - (R9 + R10 + R11);
@@ -317,6 +318,7 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
         } else {
         	rmass[i] = rmass[i];
         }
+
         radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
         outer_mass[i] = rmass[i];
         outer_radius[i] = radius[i];

@@ -289,12 +289,12 @@ void FixPGrowthSC::growth(double dt, int gflag) {
     	  //printf("mu is %e , decay is %e , sc2ta is %e \n", mu[t], decay[t], sc2ta);
 		//double R1_1 = mu[t] * nus[il17][grid] * (rmass[i]/grid_vol);
 		//double R1_2 = mu[t] * nus[tnfa][grid] * (rmass[i]/grid_vol);
-//    	double R1 = mu[t] * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
-    	double R1 = mu[t] * nus[ca][grid] * (rmass[i]/grid_vol);
+    	double R1 = mu[t] * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
+//    	double R1 = mu[t] * nus[ca][grid] * (rmass[i]/grid_vol);
 		double R2 =  decay[t] * pow((rmass[i]/grid_vol), 2);
 		double R3 =  abase * (rmass[i]/grid_vol);
-//		double R4 = sc2ta *(nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
-		double R4 = sc2ta * nus[ca][grid] * (rmass[i]/grid_vol);
+		double R4 = sc2ta *(nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
+//		double R4 = sc2ta * nus[ca][grid] * (rmass[i]/grid_vol);
 		//double R4_1 = sc2ta * nus[il17][grid] * (rmass[i]/grid_vol);
 		//double R4_2 = sc2ta * nus[tnfa][grid] * (rmass[i]/grid_vol);
 
@@ -305,7 +305,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 		//todo - modify gf to be used by sc and ta in normal epi dev
 		//nur[gf][grid] += (R1_1 + R1_2 + R4_1 + R4_2) * (rmass[i]/grid_vol);
-		//nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
+		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
 		//nur[ca][grid] += ca2 * nus[ca][grid] - (R1 + R4) * (rmass[i]/grid_vol);
 		//nur[il17][grid] -= ((R1_1 + R4_1) * (rmass[i]/grid_vol));
 		//nur[tnfa][grid] -= ((R1_2 + R4_2) * (rmass[i]/grid_vol));
@@ -316,7 +316,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//manually updating nus - disabled kinetics/diffusion
 		//nus[il17][grid] += nur[il17][grid]/nstem;
 		//nus[tnfa][grid] += nur[tnfa][grid]/nstem;
-//		nus[gf][grid] += nur[gf][grid]/nstem;
+		nus[gf][grid] += nur[gf][grid]/nstem;
 //		nus[ca][grid] += nur[ca][grid]/nstem;
 
 		//growrate_sc = R1_1 + R1_2 - R2 - R3;
@@ -342,10 +342,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
         if (!gflag || !external_gflag){
         	continue;
         }
-//        printf("------- start of growth/sc  -------- \n");
-//        printf("rmass is %e , diameter is %e , growrate_sc is %e  , dt = %e , growrate_sc * dt %e, 1 + growrate_sc * dt %e \n", rmass[i], radius[i]*2, growrate_sc, dt, growrate_sc * dt, 1 + growrate_sc * dt);
-//        printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", rmass[i] * (1 + growrate_sc * dt));
-//        printf("new rmass will be if rmass[i] + rmass[i] * (1 + growrate_sc * dt) %e\n ", rmass[i] + rmass[i] * (1 + growrate_sc * dt));
+
         /*
          * Update biomass
          * */
