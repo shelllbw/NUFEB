@@ -79,16 +79,16 @@ set type 6 mass 7.853981e-17
 ##############Define DEM Variables&Commands##############
 
 
-pair_style  gran/hooke/history 2050 NULL 2050 NULL 0.0 1
+pair_style  gran/hooke/history 2500 NULL 2500 NULL 0.0 1
 pair_coeff  * *
 
-pair_style  gran/hooke/history 2000 NULL 2000 NULL 0.0 1
+pair_style  gran/hooke/history 2000 NULL 2250 NULL 0.0 1
 pair_coeff 1 7
 
-pair_style  gran/hooke/history 2020 NULL 2020 NULL 0.0 1
+pair_style  gran/hooke/history 2300 NULL 2250 NULL 0.0 1
 pair_coeff 2 7
 
-pair_style  gran/hooke/history 2075 NULL 2075 NULL 0.0 1
+pair_style  gran/hooke/history 2750 NULL 2750 NULL 0.0 1
 pair_coeff  3 7
 
 #pair_style  gran/hooke/history 1750 NULL 1750 NULL 0.0 1
@@ -109,13 +109,13 @@ fix fv1 all viscous 1e-5
 
 #fix zw all wall/gran hooke/history 2500 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
 fix zwb STEM wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  1.6e-5  0.6e-4
-fix zwt TA wall/gran hooke/history 2020 NULL 500.0 NULL 1.5. 0 zplane 1.6e-5 0.6e-4
+fix zwt TA wall/gran hooke/history 2300 NULL 500.0 NULL 1.5. 0 zplane 1.6e-5 0.6e-4
 #fix zwd DIFF wall/gran hooke/history 2500 NULL 500.0 NULL 1.5 0 zplane  0.0  0.6e-4
 
 variable kanc equal 50
 
 # a1 = bm-sc  a2 = bm-ta a3 = sc-ta  a4 =sc-diff  a5 = ta-diff a6 = same cell type
-fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-13 0 1.6e-16 1.6e-13
+fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-16 0 1.6e-16 1.6e-13
 
 ##############Define IBm Variables##############
 

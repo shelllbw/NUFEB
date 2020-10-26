@@ -17,7 +17,7 @@ Nutrients
    2 tnfa l 0 0 0 0 0 0 0
    3 il23 l 1.5e-3 1.5e-3 1.5e-3 1.5e-3 1.5e-3 1.5e-3 0
    4 gf l 0 0 0 0 0 0 0
-   5 ca l 1e-3 1e-3 1e-3 1e-3 1e-3 1e-3 0
+   5 ca l 1e-4 1e-4 1e-4 1e-4 1e-4 1e-4 0
 
 Type Name
 
@@ -49,10 +49,10 @@ Division Counter
 
  Growth Rate
 
-    stem 2.041
-    ta 2.033
+    stem 2.041e-5
+    ta 2.033e-5
     diff 0
-    tcell 6.365
+    tcell 6.365e-5
     dc 0.0694
     apop 0
     bm 0
