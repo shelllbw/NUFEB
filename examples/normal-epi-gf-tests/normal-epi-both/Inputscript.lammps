@@ -32,7 +32,7 @@ set type 7 density 150
 set type 7 diameter 1.0e-6
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 350 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-6 150 64564
 set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
@@ -133,8 +133,6 @@ variable layer equal -1
 variable tol equal 1e-6
 
 #common variables used in growth
-#variable abase1 equal 0.0012
-#variable abase2 equal 0.1
 variable abaseT equal 7.384e-8
 variable abaseSC equal 4.000e-10
 variable abaseTA equal 4.000e-8

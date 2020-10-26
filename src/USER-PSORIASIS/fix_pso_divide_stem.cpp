@@ -251,7 +251,8 @@ void FixPDivideStem::init() {
     	  max_cap = round(nlocal * 0.5);
       }
 
-      double sbheight = zhi * 0.7;
+      //double sbheight = zhi * 0.7; //cubic domain
+      double sbheight = zhi * 0.66; //smaller domain
 
    if (atom->radius[i] * 2 >= div_dia){
 	  if (rand < (1 - asym)/2 && atom->x[i][2] < sbheight){

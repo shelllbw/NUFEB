@@ -246,8 +246,10 @@ void FixPDivideTa::post_integrate() {
       std::uniform_real_distribution<double>  distribution(0.0, 1.0);
       double rand = distribution(gen);
 
-      double ssheight = zhi * 0.7;
-      double sbheight = zhi * 0.8;
+//      double ssheight = zhi * 0.7; //cubic domain
+//      double sbheight = zhi * 0.8;
+      double ssheight = zhi * 0.66; //smaller domain
+      double sbheight = zhi * 0.7;
 
       if (atom->radius[i] * 2 >= div_dia){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
