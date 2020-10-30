@@ -286,12 +286,12 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
     	double R17 = decay[t] * (rmass[i]/grid_vol);
     	double R18 = abase * (rmass[i]/grid_vol);
 
-    	//printf("growrate_tcell BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e \n", nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
+    	//printf("growrate_tcell grid %i BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e  \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 
     	nur[il23][grid] -= (R16 * (rmass[i]/grid_vol));
     	//nur[il23][grid] += il232 * (rmass[i]/grid_vol) - il1720 * nus[il23][grid];
-    	nur[il17][grid] += (il172 * (rmass[i]/grid_vol) - il1720 * nus[il17][grid]);
-    	nur[tnfa][grid] += (tnfa2 * (rmass[i]/grid_vol) - tnfa20 * nus[tnfa][grid]);
+    	nur[il17][grid] += il172 * (rmass[i]/grid_vol) - il1720 * nus[il17][grid];
+    	nur[tnfa][grid] += tnfa2 * (rmass[i]/grid_vol) - tnfa20 * nus[tnfa][grid];
 
     	//printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", R16, R17, R18, R16 - R17 - R18);
 
@@ -301,10 +301,10 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 //    	nus[il23][grid] += nur[il23][grid]/ntc;
 
         growrate_tcell = R16 - R17 - R18;
-        double total_r = R16 - R17 - R18;
-        double g_perc = (R16/ total_r) * 100;
-        double d_perc = (R17/ total_r) * 100;
-        double a_perc = (R18/ total_r) * 100;
+//        double total_r = R16 - R17 - R18;
+//        double g_perc = (R16/ total_r) * 100;
+//        double d_perc = (R17/ total_r) * 100;
+//        double a_perc = (R18/ total_r) * 100;
 //        printf("rmass is %e , growrate_tcell is %e  , dt %e , 1 + growrate_tcell * dt %e \n", rmass[i], growrate_tcell, dt, 1 + growrate_tcell * dt);
 //        printf("new rmass will be %e \n", rmass[i] * (1 + growrate_tcell * dt));
 //        printf("----- calculations ---- \n");
