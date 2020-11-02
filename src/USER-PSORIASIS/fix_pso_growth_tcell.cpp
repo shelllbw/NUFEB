@@ -295,16 +295,8 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 
     	//printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", R16, R17, R18, R16 - R17 - R18);
 
-    	//manually updating nus - disabled kinetics/diffusion
-//    	nus[il17][grid] += nur[il17][grid]/ntc;
-//    	nus[tnfa][grid] += nur[tnfa][grid]/ntc;
-//    	nus[il23][grid] += nur[il23][grid]/ntc;
 
         growrate_tcell = R16 - R17 - R18;
-//        double total_r = R16 - R17 - R18;
-//        double g_perc = (R16/ total_r) * 100;
-//        double d_perc = (R17/ total_r) * 100;
-//        double a_perc = (R18/ total_r) * 100;
 //        printf("rmass is %e , growrate_tcell is %e  , dt %e , 1 + growrate_tcell * dt %e \n", rmass[i], growrate_tcell, dt, 1 + growrate_tcell * dt);
 //        printf("new rmass will be %e \n", rmass[i] * (1 + growrate_tcell * dt));
 //        printf("----- calculations ---- \n");
