@@ -188,24 +188,25 @@ void FixPGrowthTA::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthTA::init_param() {
-	il17, tnfa, gf, ca = 0;
+	//il17, tnfa, gf, ca = 0;
+	gf, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
-	if (strcmp(bio->nuname[nu], "il17") == 0)
-	  il17 = nu;
-	if (strcmp(bio->nuname[nu], "tnfa") == 0)
-		tnfa = nu;
+//	if (strcmp(bio->nuname[nu], "il17") == 0)
+//	  il17 = nu;
+//	if (strcmp(bio->nuname[nu], "tnfa") == 0)
+//		tnfa = nu;
 	if (strcmp(bio->nuname[nu], "gf") == 0)
 		gf = nu;
 	if (strcmp(bio->nuname[nu], "ca") == 0)
 		ca = nu;
   }
 
-  if (il17 == 0)
-	error->all(FLERR, "fix_psoriasis/growth/ta requires nutrient il17");
-  if (tnfa == 0)
-    	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
+//  if (il17 == 0)
+//	error->all(FLERR, "fix_psoriasis/growth/ta requires nutrient il17");
+//  if (tnfa == 0)
+//    	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
   if (gf == 0)
       	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient gf");
   if (ca == 0)
@@ -308,7 +309,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 //		nur[tnfa][grid] -= ((R5_2 + R8_2) * (rmass[i]/grid_vol));
 		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
 //		nur[gf][grid] += (R5_1 + R5_2 + R8_1 + R8_2) * (rmass[i]/grid_vol);
-		nur[ca][grid] += ca2 * (rmass[i]/grid_vol) -(R5 + R8) * nus[ca][grid];
+		nur[ca][grid] += -(R5 + R8) * nus[ca][grid];
 
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2, R6, R7, R5_1 + R5_2 - R6 - R7);
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5, R6, R7, R5 - R6 - R7);

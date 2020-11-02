@@ -188,28 +188,33 @@ void FixPGrowthSC::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthSC::init_param() {
-	il17, tnfa, gf, ca = 0;
+	//il17, tnfa, gf, ca, il23 = 0;
+	gf, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
-	if (strcmp(bio->nuname[nu], "il17") == 0)
-	  il17 = nu;
-	if (strcmp(bio->nuname[nu], "tnfa") == 0)
-		  tnfa = nu;
+//	if (strcmp(bio->nuname[nu], "il17") == 0)
+//	  il17 = nu;
+//	if (strcmp(bio->nuname[nu], "tnfa") == 0)
+//		  tnfa = nu;
 	if (strcmp(bio->nuname[nu], "gf") == 0)
 		gf = nu;
 	if (strcmp(bio->nuname[nu], "ca") == 0)
 		ca = nu;
+//	if (strcmp(bio->nuname[nu], "il23") == 0)
+//		  il23 = nu;
   }
 
-  if (il17 == 0)
-	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il17");
-  if (tnfa == 0)
-  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
+//  if (il17 == 0)
+//	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il17");
+//  if (tnfa == 0)
+//  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
   if (gf == 0)
     	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient gf");
   if (ca == 0)
      	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
+//  if (il23 == 0)
+//  	error->all(FLERR, "fix_psoriasis/growth/tcell requires nutrient il23");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -299,13 +304,14 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 //		double R4_2 = sc2ta * nus[tnfa][grid] * (rmass[i]/grid_vol);
 
 		//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
+		printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
 		//nutrient uptake for sc is affected by gf
 
 		//todo - modify gf to be used by sc and ta in normal epi dev
-		//nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
-		nur[gf][grid] += (R1_1 + R1_2 + R4_1 + R4_2) * (rmass[i]/grid_vol);
-		nur[ca][grid] += ca2 * (rmass[i]/grid_vol)  - (R1 + R4) * nus[ca][grid];
+		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
+		//nur[gf][grid] += (R1_1 + R1_2 + R4_1 + R4_2) * (rmass[i]/grid_vol);
+		nur[ca][grid] += - (R1 + R4) * nus[ca][grid];
 //		nur[il17][grid] -= ((R1_1 + R4_1) * (rmass[i]/grid_vol));
 //		nur[tnfa][grid] -= ((R1_2 + R4_2) * (rmass[i]/grid_vol));
 
@@ -329,8 +335,8 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		double new_rmass = rmass[i] * (1 + growrate_sc * dt);
 
 //       printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
-       printf("current rmass is %e \n", rmass[i]);
-       printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", new_rmass);
+//       printf("current rmass is %e \n", rmass[i]);
+//       printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", new_rmass);
 //       printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (new_rmass / density), third));
 //       printf("----- calculations ---- \n");
 //       printf("Growth is %.4f    decay is %.4f    apoptosis is %.4f \n", g_perc, d_perc, a_perc);

@@ -187,22 +187,14 @@ void FixPGrowthDIFF::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthDIFF::init_param() {
-	il17, tnfa, ca = 0;
+	ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
-	if (strcmp(bio->nuname[nu], "il17") == 0)
-	  il17 = nu;
-	if (strcmp(bio->nuname[nu], "tnfa") == 0)
-			  tnfa = nu;
 	if (strcmp(bio->nuname[nu], "ca") == 0)
 			ca = nu;
   }
 
-  if (il17 == 0)
-	error->all(FLERR, "fix_psoriasis/growth/diff requires nutrient il17");
-  if (tnfa == 0)
-    	error->all(FLERR, "fix_psoriasis/growth/diff requires nutrient tnfa");
   if (ca == 0)
          	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
 
@@ -300,6 +292,12 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 		//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
 //		printf("growrate d 1 R9 %e - R10 %e = %e\n", R9, R10, -(R9+R10));
 //		printf("growrate d 2 R9 %e - R10 %e - R11 %e= %e\n", R9, R10, R11, -(R9+R10+R11));
+
+        if (atom->x[i][2] < sgheight) {
+        	nur[ca][grid] += diff2ca1 * (rmass[i]/grid_vol) - ca20 * nus[ca][grid];
+        } else {
+        	nur[ca][grid] += diff2ca2 * (rmass[i]/grid_vol) - ca20 * nus[ca][grid];
+        }
 
 
 		//todo after the model is more or less ready - update cytokine concentration levels

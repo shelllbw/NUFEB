@@ -2,7 +2,7 @@ Granular Flow Simulation
 
      0 atoms
      7 atom types
-     5 nutrients
+     2 nutrients
 
      0.000000e-04   0.5e-04  xlo xhi
      0.000000e-04   0.2e-04  ylo yhi
@@ -13,11 +13,8 @@ Atoms
 
 Nutrients
 
-   1 il17 l 0 0 0 0 0 0 0
-   2 tnfa l 0 0 0 0 0 0 0
-   3 il23 l 1.5e-3 1.5e-3 1.5e-3 1.5e-3 1.5e-3 1.5e-3 0
-   4 gf l 0 0 0 0 0 0 0
-   5 ca l 1e-3 1e-3 1e-3 1e-3 1e-3 1e-3 0
+   1 gf l 0 0 0 0 0 0 0
+   2 ca l 1e-3 1e-3 1e-3 1e-3 1e-3 1e-3 0
 
 Type Name
 
@@ -31,9 +28,6 @@ Type Name
 
 Diffusion Coeffs
 
-   il17 1.6e-9
-   tnfa 1.6e-9
-   il23 1.6e-9
    gf 1.6e-9
    ca 1.6e-9
 
