@@ -305,8 +305,9 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 
 //		nur[il17][grid] -= ((R5_1 + R8_1) * (rmass[i]/grid_vol));
 //		nur[tnfa][grid] -= ((R5_2 + R8_2) * (rmass[i]/grid_vol));
-		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
-		nur[ca][grid] += ca2 * (rmass[i]/grid_vol) - (R5 + R8) * nus[ca][grid];
+		nur[gf][grid] += - (R5 + R8) * (rmass[i]/grid_vol); //consumption by reactions
+		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid]; //production by cell
+		nur[ca][grid] += ca2 * (rmass[i]/grid_vol) - (R5 + R8) * (rmass[i]/grid_vol);
 
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2, R6, R7, R5_1 + R5_2 - R6 - R7);
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5, R6, R7, R5 - R6 - R7);

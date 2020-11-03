@@ -38,7 +38,7 @@ set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
 #create_atoms 5 random 100 64565 reg2
-create_atoms 4 random 50 64564 reg2
+#create_atoms 4 random 50 64564 reg2
 
 group TA type 2
 group DIFF type 3
@@ -137,7 +137,7 @@ variable abaseT equal 7.384e-8
 variable abaseSC equal 4.000e-10
 variable abaseTA equal 4.000e-8
 variable abaseD equal 4.167e-13
-variable ca2 equal 0.00000578703
+variable ca2 equal 0.578703
 
 #variables used in growth/sc
 variable STEMdens equal 30
@@ -208,4 +208,4 @@ run 2000 pre no post no every 1 &
 "run 1000 pre no post no" &
 "timestep 3600"  &
 "fix_modify k1 demflag 0" &
-"fix_modify d1 demflag 0" 
+"fix_modify d1 demflag 0"

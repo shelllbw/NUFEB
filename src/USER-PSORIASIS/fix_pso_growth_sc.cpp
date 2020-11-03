@@ -303,11 +303,9 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 		//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
 		printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
-		//nutrient uptake for sc is affected by gf
-
-		//todo - modify gf to be used by sc and ta in normal epi dev
-		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid];
-		nur[ca][grid] += ca2 * (rmass[i]/grid_vol)  - (R1 + R4) * nus[ca][grid];
+		nur[gf][grid] += - (R1 + R4) * (rmass[i]/grid_vol); //consumption by reactions
+		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid]; //production by cell
+		nur[ca][grid] += ca2 * (rmass[i]/grid_vol)  - (R1 + R4) * (rmass[i]/grid_vol);
 //		nur[il17][grid] -= ((R1_1 + R4_1) * (rmass[i]/grid_vol));
 //		nur[tnfa][grid] -= ((R1_2 + R4_2) * (rmass[i]/grid_vol));
 
