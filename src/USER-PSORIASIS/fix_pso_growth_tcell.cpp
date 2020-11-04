@@ -282,16 +282,15 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
       // t cell model
       if (species[t] == 4) {
     	  //printf("------- start of growth/tcell  -------- \n");
-    	double R16 = mu[t] * nus[il23][grid] * (rmass[i]/grid_vol);
-    	double R17 = decay[t] * (rmass[i]/grid_vol);
-    	double R18 = abase * (rmass[i]/grid_vol);
+    	double R16 = mu[t] * nus[il23][grid] * grid_vol;
+    	double R17 = decay[t];
+    	double R18 = abase;
 
     	//printf("growrate_tcell grid %i BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e  \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 
-    	//nur[il23][grid] -= (R16 * (rmass[i]/grid_vol));
-    	nur[il23][grid] += il232 * (rmass[i]/grid_vol) - R16 * (rmass[i]/grid_vol);
-    	nur[il17][grid] += il172 * (rmass[i]/grid_vol) - il1720 * nus[il17][grid];
-    	nur[tnfa][grid] += tnfa2 * (rmass[i]/grid_vol) - tnfa20 * nus[tnfa][grid];
+    	//nur[il23][grid] += il232 * (rmass[i]/grid_vol) - R16 * (rmass[i]/grid_vol);
+    	nur[il17][grid] += il172 * (rmass[i]/grid_vol);
+    	nur[tnfa][grid] += tnfa2 * (rmass[i]/grid_vol);
 
     	//printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", R16, R17, R18, R16 - R17 - R18);
 

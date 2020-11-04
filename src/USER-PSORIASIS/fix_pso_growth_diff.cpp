@@ -285,9 +285,9 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
       // diff cell model
       if (species[t] == 3) {
     	  //printf("------- start of growth/diff  -------- \n");
-		double R9 = decay[t] * pow(rmass[i]/grid_vol, 2);
-		double R10 = abase * (rmass[i]/grid_vol);
-		double R11 = ddesq * (rmass[i]/grid_vol); //desquamation should occur when diff cells reach zhi
+		double R9 = decay[t];
+		double R10 = abase;
+		double R11 = ddesq; //desquamation should occur when diff cells reach zhi
 
 		//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
 //		printf("growrate d 1 R9 %e - R10 %e = %e\n", R9, R10, -(R9+R10));
@@ -321,8 +321,8 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
         }
 
         radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-        outer_mass[i] = rmass[i];
-        outer_radius[i] = radius[i];
+//        outer_mass[i] = rmass[i];
+//        outer_radius[i] = radius[i];
 
       }
     }

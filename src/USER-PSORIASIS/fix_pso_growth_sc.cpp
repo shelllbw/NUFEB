@@ -293,18 +293,25 @@ void FixPGrowthSC::growth(double dt, int gflag) {
     	  //printf("------- start of growth/sc  -------- \n");
 //		double R1_1 = mu[t] * nus[il17][grid] * (rmass[i]/grid_vol);
 //		double R1_2 = mu[t] * nus[tnfa][grid] * (rmass[i]/grid_vol);
-    	double R1 = mu[t] * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
-		double R2 =  decay[t] * pow((rmass[i]/grid_vol), 2);
-		double R3 =  abase * (rmass[i]/grid_vol);
-		double R4 = sc2ta *(nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
+    	double R1 = mu[t] * (nus[gf][grid]*grid_vol + nus[ca][grid]*grid_vol);
+		double R2 =  decay[t];
+		double R3 =  abase;
+		//double R4 = sc2ta *(nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
 //		double R4_1 = sc2ta * nus[il17][grid] * (rmass[i]/grid_vol);
 //		double R4_2 = sc2ta * nus[tnfa][grid] * (rmass[i]/grid_vol);
+		// m' = rm
+		// mt+1 = mt + rm*dt = m(1+r*dt)
+
+		// sc' = sc2(ca+gf)SC - sc20*SC - abase*SC
+		// sct+1 = sct +  (sc2(ca+gf) - sc20 - abase) bio_dt * SC
+		// sct+1 = SC (1+R*dt)
 
 		//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
-		printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
+		//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
-		nur[gf][grid] += - (R1 + R4) * (rmass[i]/grid_vol); //consumption by reactions
-		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid]; //production by cell
+		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol);
+//		nur[gf][grid] += - (R1 + R4) * (rmass[i]/grid_vol); //consumption by reactions
+//		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid]; //production by cell
 		nur[ca][grid] += ca2 * (rmass[i]/grid_vol)  - (R1 + R4) * (rmass[i]/grid_vol);
 //		nur[il17][grid] -= ((R1_1 + R4_1) * (rmass[i]/grid_vol));
 //		nur[tnfa][grid] -= ((R1_2 + R4_2) * (rmass[i]/grid_vol));
@@ -316,18 +323,13 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 //		growrate_sc = R1_1 + R1_2 - R2 - R3;
 //		growrate_ta = R4_1 + R4_2; //sc can divide to a TA cell
 		growrate_sc = R1 - R2 - R3;
-		growrate_ta = R4;
+		//growrate_ta = R4;
 		double new_rmass = rmass[i] * (1 + growrate_sc * dt);
 
 //       printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
 //       printf("current rmass is %e \n", rmass[i]);
 //       printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", new_rmass);
 //       printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (new_rmass / density), third));
-//       printf("----- calculations ---- \n");
-//       printf("Growth is %.4f    decay is %.4f    apoptosis is %.4f \n", g_perc, d_perc, a_perc);
-//       printf("------ end ---------- \n");
-
-
 
         if (!gflag || !external_gflag){
         	continue;
@@ -339,8 +341,8 @@ void FixPGrowthSC::growth(double dt, int gflag) {
        // printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
         //rmass[i] = rmass[i] + rmass[i] * (1 + growrate_sc * dt);
         rmass[i] = rmass[i] * (1 + growrate_sc * dt);
-		outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
-		outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
+		//outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
+		//outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
 		//printf("properties of new sc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
       }
