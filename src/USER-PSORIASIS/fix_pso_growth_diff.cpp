@@ -290,13 +290,11 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 		double R11 = ddesq; //desquamation should occur when diff cells reach zhi
 
 		//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
-//		printf("growrate d 1 R9 %e - R10 %e = %e\n", R9, R10, -(R9+R10));
-//		printf("growrate d 2 R9 %e - R10 %e - R11 %e= %e\n", R9, R10, R11, -(R9+R10+R11));
 
         if (atom->x[i][2] < sgheight) {
-        	nur[ca][grid] += diff2ca1 * (rmass[i]/grid_vol) - ca20 * nus[ca][grid];
+        	nur[ca][grid] += diff2ca1 * (rmass[i]/grid_vol);
         } else {
-        	nur[ca][grid] += diff2ca2 * (rmass[i]/grid_vol) - ca20 * nus[ca][grid];
+        	nur[ca][grid] += diff2ca2 * (rmass[i]/grid_vol);
         }
 
 

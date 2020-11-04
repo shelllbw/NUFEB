@@ -292,32 +292,21 @@ void FixPGrowthTA::growth(double dt, int gflag) {
       // ta cell model
       if (species[t] == 2) {
     	 // printf("------- start of growth/ta  -------- \n");
-//		double R5_1 = mu[t] * nus[il17][grid] * (rmass[i]/grid_vol);
-//		double R5_2 = mu[t] * nus[tnfa][grid] * (rmass[i]/grid_vol);
     	double R5 = mu[t] * (nus[gf][grid]* grid_vol + nus[ca][grid]* grid_vol);
 		double R6 = decay[t];
 		double R7 = abase;
 //		double R8 = ta2d * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
-//		double R8_1 = ta2d * nus[il17][grid] * (rmass[i]/grid_vol);
-//		double R8_2 = ta2d * nus[tnfa][grid] * (rmass[i]/grid_vol);
 
 		//printf("growrate_ta nus il17 %e tnfa %e gf %e ca %e \n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid], nus[ca][grid]);
 
 		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol);
-		nur[ca][grid] += ca2 * (rmass[i]/grid_vol) - (R5 + R8) * (rmass[i]/grid_vol);
-//		nur[il17][grid] -= ((R5_1 + R8_1) * (rmass[i]/grid_vol));
-//		nur[tnfa][grid] -= ((R5_2 + R8_2) * (rmass[i]/grid_vol));
-//		nur[gf][grid] += - (R5 + R8) * (rmass[i]/grid_vol); //consumption by reactions
-//		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid]; //production by cell
+		//nur[ca][grid] += ca2 * (rmass[i]/grid_vol);
 
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2, R6, R7, R5_1 + R5_2 - R6 - R7);
 		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5, R6, R7, R5 - R6 - R7);
 
 		growrate_ta = R5 - R6 - R7;
-//        growrate_ta = R5_1 + R5_2 - R6 - R7;
-//        growrate_d = R8_1 + R8_2;
 
-		//growrate_d = R8;
 		double new_rmass = rmass[i] * (1 + growrate_ta * dt);
 
 //        printf("growrate ta %e 		growrate_d %e \n", growrate_ta, growrate_d);

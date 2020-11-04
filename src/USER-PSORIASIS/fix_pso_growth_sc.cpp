@@ -272,82 +272,57 @@ void FixPGrowthSC::growth(double dt, int gflag) {
   const double third = 1.0 / 3.0;
 
   double growrate_sc = 0;
-  double growrate_ta = 0; //sc can divide to a TA cell
-  int nstem = 0;
 
-  for (int i = 0; i < nlocal; i++) {
-	if (atom->mask[i] & groupbit) {
-		nstem++;
+  for (int grid = 0; grid < kinetics->bgrids; grid++) {
+	  for (int i = 0; i < nlocal; i++) {
+		if (mask[i] & groupbit) {
+		  int t = type[i];
+		  int pos = kinetics->position(i); //find grid that atom is in
+
+		  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
+
+		  // Stem cell model
+		  if (species[t] == 1) {
+			  //printf("------- start of growth/sc  -------- \n");
+			double R1 = mu[t] * (nus[gf][pos]*grid_vol + nus[ca][pos]*grid_vol);
+			double R2 =  decay[t];
+			double R3 =  abase;
+
+			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
+			printf("growth_sc grid %i gf %e ca %e \n", pos, nus[gf][pos], nus[ca][pos]);
+
+			nur[gf][pos] += sc2gf * (rmass[i]/grid_vol) - gf20 * xdensity[t][grid];
+			//nur[ca][grid] += ca2 * (rmass[i]/grid_vol);
+
+			//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1_1 + R1_2, R2, R3, R1_1 + R1_2 - R2 - R3);
+			printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1, R2, R3, R1 - R2 - R3);
+
+			growrate_sc = R1 - R2 - R3;
+			double new_rmass = rmass[i] * (1 + growrate_sc * dt);
+
+	//       printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
+	//       printf("current rmass is %e \n", rmass[i]);
+	//       printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", new_rmass);
+	//       printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (new_rmass / density), third));
+
+			if (!gflag || !external_gflag){
+				continue;
+			}
+
+			/*
+			 * Update biomass
+			 * */
+		   // printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+			//rmass[i] = rmass[i] + rmass[i] * (1 + growrate_sc * dt);
+			rmass[i] = rmass[i] * (1 + growrate_sc * dt);
+			//outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
+			//outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
+			radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+			//printf("properties of new sc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		  }
+		}
+	  }
 	}
-  }
-
-  for (int i = 0; i < nlocal; i++) {
-	if (mask[i] & groupbit) {
-	  int t = type[i];
-	  int grid = kinetics->position(i); //find grid that atom is in
-
-	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
-
-      // Stem cell model
-      if (species[t] == 1) {
-    	  //printf("------- start of growth/sc  -------- \n");
-//		double R1_1 = mu[t] * nus[il17][grid] * (rmass[i]/grid_vol);
-//		double R1_2 = mu[t] * nus[tnfa][grid] * (rmass[i]/grid_vol);
-    	double R1 = mu[t] * (nus[gf][grid]*grid_vol + nus[ca][grid]*grid_vol);
-		double R2 =  decay[t];
-		double R3 =  abase;
-		//double R4 = sc2ta *(nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
-//		double R4_1 = sc2ta * nus[il17][grid] * (rmass[i]/grid_vol);
-//		double R4_2 = sc2ta * nus[tnfa][grid] * (rmass[i]/grid_vol);
-		// m' = rm
-		// mt+1 = mt + rm*dt = m(1+r*dt)
-
-		// sc' = sc2(ca+gf)SC - sc20*SC - abase*SC
-		// sct+1 = sct +  (sc2(ca+gf) - sc20 - abase) bio_dt * SC
-		// sct+1 = SC (1+R*dt)
-
-		//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
-		//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
-
-		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol);
-//		nur[gf][grid] += - (R1 + R4) * (rmass[i]/grid_vol); //consumption by reactions
-//		nur[gf][grid] += sc2gf * (rmass[i]/grid_vol) - gf20 * nus[gf][grid]; //production by cell
-		nur[ca][grid] += ca2 * (rmass[i]/grid_vol)  - (R1 + R4) * (rmass[i]/grid_vol);
-//		nur[il17][grid] -= ((R1_1 + R4_1) * (rmass[i]/grid_vol));
-//		nur[tnfa][grid] -= ((R1_2 + R4_2) * (rmass[i]/grid_vol));
-
-		//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1_1 + R1_2, R2, R3, R1_1 + R1_2 - R2 - R3);
-//		printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1, R2, R3, R1 - R2 - R3);
-
-
-//		growrate_sc = R1_1 + R1_2 - R2 - R3;
-//		growrate_ta = R4_1 + R4_2; //sc can divide to a TA cell
-		growrate_sc = R1 - R2 - R3;
-		//growrate_ta = R4;
-		double new_rmass = rmass[i] * (1 + growrate_sc * dt);
-
-//       printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
-//       printf("current rmass is %e \n", rmass[i]);
-//       printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", new_rmass);
-//       printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (new_rmass / density), third));
-
-        if (!gflag || !external_gflag){
-        	continue;
-        }
-
-        /*
-         * Update biomass
-         * */
-       // printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-        //rmass[i] = rmass[i] + rmass[i] * (1 + growrate_sc * dt);
-        rmass[i] = rmass[i] * (1 + growrate_sc * dt);
-		//outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
-		//outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
-		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		//printf("properties of new sc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-      }
-    }
-  }
 }
 
 
