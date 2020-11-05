@@ -257,75 +257,77 @@ void FixPGrowthTA::growth(double dt, int gflag) {
   double *rmass = atom->rmass;
   double *outer_mass = avec->outer_mass;
   double *outer_radius = avec->outer_radius;
-  double grid_vol = kinetics->stepx * kinetics->stepy * kinetics->stepz;
 
   double *mu = bio->mu;
   double *decay = bio->decay;
   double *diff_coeff = bio->diff_coeff;
+  double **ks = bio->ks;
 
   double **xdensity = kinetics->xdensity;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
+  double growrate_ta = 0;
+
+  for (int grid = 0; grid < kinetics->bgrids; grid++) {
+	  //grid without atom is not considered
+	  if(!xdensity[0][grid]) continue;
+
+	  for (int i = 1; i <= ntypes; i++) {
+		  int spec = species[i];
+
+		  // ta cell model
+		  if (spec == 2) {
+			 // printf("------- start of growth/ta  -------- \n");
+
+			//growth rate
+			double r5 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (nus[ca][grid] / (ks[i][ca] + nus[ca][grid]));
+			//decay rate
+			double r6 = decay[i];
+			//apoptosis rate
+			double r7 = abase;
+
+			//printf("growrate_ta nus il17 %e tnfa %e gf %e ca %e \n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid], nus[ca][grid]);
+
+			nur[gf][grid] += r5 * xdensity[i][grid] - gf20 * xdensity[i][grid];
+			nur[ca][grid] += r5 * xdensity[i][grid];
+
+			//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", r5, r6, r7, r5 - r6 - r7);
+
+			growrate_ta = r5 - r6 - r7;
+
+			if (!gflag || !external_gflag){
+				update_biomass(growrate_ta, dt);
+			}
+      }
+    }
+  }
+}
+/* ----------------------------------------------------------------------
+ update particle attributes: biomass, outer mass, radius etc
+ ------------------------------------------------------------------------- */
+void FixPGrowthTA::update_biomass(double growrate, double dt) {
+  int *mask = atom->mask;
+  int nlocal = atom->nlocal;
+  int *type = atom->type;
+
+  double *radius = atom->radius;
+  double *rmass = atom->rmass;
+
   const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
   const double third = 1.0 / 3.0;
 
-  double growrate_d = 0;
-  double growrate_ta = 0;
-  int nta = 0;
-
   for (int i = 0; i < nlocal; i++) {
-	if (atom->mask[i] & groupbit) {
-		nta++;
-	}
-  }
+    if (mask[i] & groupbit) {
 
-  for (int i = 0; i < nlocal; i++) {
-	if (mask[i] & groupbit) {
-	  int t = type[i];
-	  int grid = kinetics->position(i); //find grid that atom is in
+      double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
-
-      // ta cell model
-      if (species[t] == 2) {
-    	 // printf("------- start of growth/ta  -------- \n");
-    	double R5 = mu[t] * (nus[gf][grid]* grid_vol + nus[ca][grid]* grid_vol);
-		double R6 = decay[t];
-		double R7 = abase;
-//		double R8 = ta2d * (nus[gf][grid] + nus[ca][grid]) * (rmass[i]/grid_vol);
-
-		//printf("growrate_ta nus il17 %e tnfa %e gf %e ca %e \n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid], nus[ca][grid]);
-
-		nur[gf][grid] += ta2gf * (rmass[i]/grid_vol);
-		//nur[ca][grid] += ca2 * (rmass[i]/grid_vol);
-
-		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5_1 + R5_2, R6, R7, R5_1 + R5_2 - R6 - R7);
-		//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", R5, R6, R7, R5 - R6 - R7);
-
-		growrate_ta = R5 - R6 - R7;
-
-		double new_rmass = rmass[i] * (1 + growrate_ta * dt);
-
-//        printf("growrate ta %e 		growrate_d %e \n", growrate_ta, growrate_d);
-//        printf("current rmass is %e \n", rmass[i]);
-//        printf("new rmass will be rmass[i] * (1 + growrate_ta * dt) = %e \n", new_rmass);
-//        printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (new_rmass / density), third));
-
-        if (!gflag || !external_gflag){
-        	continue;
-        }
-
-        //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-        //rmass[i] = rmass[i] +  rmass[i] * (1 + growrate_ta * dt);
-        rmass[i] = rmass[i] * (1 + growrate_ta * dt);
-		//outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * ta_dens + growrate_d * rmass[i] * dt;
-		//outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / ta_dens), third);
+      //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		rmass[i] = rmass[i] * (1 + growrate * dt);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
 		//printf("properties of new ta %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-      }
     }
   }
 }

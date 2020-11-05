@@ -245,17 +245,11 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 
   double *radius = atom->radius;
   double *rmass = atom->rmass;
-  double *outer_mass = avec->outer_mass;
-  double *outer_radius = avec->outer_radius;
-  double grid_vol = kinetics->stepx * kinetics->stepy * kinetics->stepz;
-
-  const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
-  const double four_thirds_pi = 4.0 * MY_PI / 3.0;
-  const double third = 1.0 / 3.0;
 
   double *mu = bio->mu;
   double *decay = bio->decay;
   double *diff_coeff = bio->diff_coeff;
+  double **ks = bio->ks;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
@@ -263,56 +257,68 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
   double **xdensity = kinetics->xdensity;
 
   double growrate_tcell = 0;
-  int ntc = 0;
 
-  for (int i = 0; i < nlocal; i++) {
-	if (atom->mask[i] & groupbit) {
-		ntc++;
-	}
-  }
 
-  for (int i = 0; i < nlocal; i++) {
-	if (mask[i] & groupbit) {
-	  int t = type[i];
-	  int grid = kinetics->position(i); //find grid that atom is in
+  for (int grid = 0; grid < kinetics->bgrids; grid++) {
+	  //grid without atom is not considered
+	  if(!xdensity[0][grid]) continue;
 
-	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
+	  for (int i = 1; i <= ntypes; i++) {
+		  int spec = species[i];
 
-	  //printf("species is %i \n", species[t]);
-      // t cell model
-      if (species[t] == 4) {
+		  if (spec == 4) {
     	  //printf("------- start of growth/tcell  -------- \n");
-    	double R16 = mu[t] * nus[il23][grid] * grid_vol;
-    	double R17 = decay[t];
-    	double R18 = abase;
+
+			//growth rate
+			double r16 = mu[i] * (nus[il23][grid] / (ks[i][il23] + nus[il23][grid]));
+			//decay rate
+			double r17 = decay[i];
+			//apoptosis rate
+			double r18 = abase;
 
     	//printf("growrate_tcell grid %i BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e  \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 
-    	//nur[il23][grid] += il232 * (rmass[i]/grid_vol) - R16 * (rmass[i]/grid_vol);
-    	nur[il17][grid] += il172 * (rmass[i]/grid_vol);
-    	nur[tnfa][grid] += tnfa2 * (rmass[i]/grid_vol);
+    	nur[il23][grid] += r16 * xdensity[i][grid];
+    	nur[il17][grid] += r16 * xdensity[i][grid] - il1720 * xdensity[i][grid];
+    	nur[tnfa][grid] += r16 * xdensity[i][grid] - tnfa20 * xdensity[i][grid];
 
-    	//printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", R16, R17, R18, R16 - R17 - R18);
+    	//printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", r16, r17, r18, r16 - r17 - r18);
 
 
-        growrate_tcell = R16 - R17 - R18;
-//        printf("rmass is %e , growrate_tcell is %e  , dt %e , 1 + growrate_tcell * dt %e \n", rmass[i], growrate_tcell, dt, 1 + growrate_tcell * dt);
-//        printf("new rmass will be %e \n", rmass[i] * (1 + growrate_tcell * dt));
-//        printf("----- calculations ---- \n");
-//        printf("Growth is %.4f    decay is %.4f    apoptosis is %.4f \n", g_perc, d_perc, a_perc);
+        growrate_tcell = r16 - r17 - r18;
 
         if (!gflag || !external_gflag){
-        	continue;
+        	update_biomass(growrate_tcell, dt);
         }
+	  }
+	}
+  }
+}
 
-        //todo potential issues with updating cell rmass, radius
-        //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-		rmass[i] = rmass[i] * (1 + growrate_tcell * dt);
-		outer_mass[i] = rmass[i];
-		outer_radius[i] = radius[i];
+/* ----------------------------------------------------------------------
+ update particle attributes: biomass, outer mass, radius etc
+ ------------------------------------------------------------------------- */
+void FixPGrowthTCELL::update_biomass(double growrate, double dt) {
+  int *mask = atom->mask;
+  int nlocal = atom->nlocal;
+  int *type = atom->type;
+
+  double *radius = atom->radius;
+  double *rmass = atom->rmass;
+
+  const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
+  const double four_thirds_pi = 4.0 * MY_PI / 3.0;
+  const double third = 1.0 / 3.0;
+
+  for (int i = 0; i < nlocal; i++) {
+    if (mask[i] & groupbit) {
+      double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
+
+      //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		rmass[i] = rmass[i] * (1 + growrate * dt);
 		radius[i] = radius[i];
 		//printf("properties of new tcell %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-      }
     }
   }
 }
+

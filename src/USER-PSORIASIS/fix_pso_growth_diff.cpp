@@ -241,88 +241,98 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
   double *radius = atom->radius;
   double *rmass = atom->rmass;
-  double *outer_mass = avec->outer_mass;
-  double *outer_radius = avec->outer_radius;
-  double grid_vol = kinetics->stepx * kinetics->stepy * kinetics->stepz;
 
   double *mu = bio->mu;
   double *decay = bio->decay;
   double *diff_coeff = bio->diff_coeff;
+  double **ks = bio->ks;
+
   double **xdensity = kinetics->xdensity;
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
+
+
+  double growrate_d = 0;
+
+  for (int grid = 0; grid < kinetics->bgrids; grid++) {
+	  //grid without atom is not considered
+	  if(!xdensity[0][grid]) continue;
+
+	  for (int i = 1; i <= ntypes; i++) {
+		  int spec = species[i];
+	  //different heights for diff cells
+	//	  double sgheight = zhi * 0.85; //cubic domain
+	//	  double sc1height = zhi * 0.92;
+	//	  double sc2height = zhi * 1;
+		  double sgheight = zhi * 0.835; //smaller domain
+		  double sc1height = zhi * 0.9;
+		  double sc2height = zhi * 1;
+
+		  if (spec == 3) {
+			  //printf("------- start of growth/diff  -------- \n");
+
+			 //decay rate
+			double r9 = decay[i];
+			//apoptosis rate
+			double r10 = abase;
+			//desquamation rate
+			double r11 = ddesq;
+
+			//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
+
+			if (atom->x[i][2] < sgheight) {
+				nur[ca][grid] += diff2ca1 * xdensity[i][grid] - ca20 * xdensity[i][grid];
+			} else {
+				nur[ca][grid] += diff2ca2 * xdensity[i][grid] - ca20 * xdensity[i][grid];
+			}
+
+			if (atom->x[i][2] < sc1height) {
+				growrate_d = - (r9 + r10);
+			} else {
+				growrate_d = - (r9 + r10 + r11);
+			}
+
+			if (!gflag || !external_gflag){
+				update_biomass(growrate_d, dt);
+			}
+
+		  }
+	  }
+  	}
+}
+
+/* ----------------------------------------------------------------------
+ update particle attributes: biomass, outer mass, radius etc
+ ------------------------------------------------------------------------- */
+void FixPGrowthDIFF::update_biomass(double growrate, double dt) {
+  int *mask = atom->mask;
+  int nlocal = atom->nlocal;
+  int *type = atom->type;
+
+  double *radius = atom->radius;
+  double *rmass = atom->rmass;
 
   const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
   const double third = 1.0 / 3.0;
 
-  double growrate_d = 0;
-  int ndiff = 0;
+  double sgheight = zhi * 0.835; //smaller domain
+  double sc1height = zhi * 0.9;
+  double sc2height = zhi * 1;
 
   for (int i = 0; i < nlocal; i++) {
-	if (atom->mask[i] & groupbit) {
-		ndiff++;
-	}
-  }
+    if (mask[i] & groupbit) {
+      int t = type[i];
+      int pos = kinetics->position(i);
+      double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-  for (int i = 0; i < nlocal; i++) {
-	if (mask[i] & groupbit) {
-	  int t = type[i];
-	  int grid = kinetics->position(i); //find grid that atom is in
-
-	  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
-
-	  //different heights for diff cells
-//	  double sgheight = zhi * 0.85; //cubic domain
-//	  double sc1height = zhi * 0.92;
-//	  double sc2height = zhi * 1;
-	  double sgheight = zhi * 0.835; //smaller domain
-	  double sc1height = zhi * 0.9;
-	  double sc2height = zhi * 1;
-
-	  //printf("heights sb %e    ss %e    sg %e    sc1 %e     sc2 %e\n", sbheight, ssheight, sgheight, sc1height, sc2height);
-
-      // diff cell model
-      if (species[t] == 3) {
-    	  //printf("------- start of growth/diff  -------- \n");
-		double R9 = decay[t];
-		double R10 = abase;
-		double R11 = ddesq; //desquamation should occur when diff cells reach zhi
-
-		//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
-
-        if (atom->x[i][2] < sgheight) {
-        	nur[ca][grid] += diff2ca1 * (rmass[i]/grid_vol);
-        } else {
-        	nur[ca][grid] += diff2ca2 * (rmass[i]/grid_vol);
-        }
-
-
-		//todo after the model is more or less ready - update cytokine concentration levels
-
-        if (!gflag || !external_gflag){
-        	continue;
-        }
-
-        //printf("rmass before %e\n", rmass[i]);
-
-        if (atom->x[i][2] < sc1height) {
-        	growrate_d = - (R9 + R10);
-        	rmass[i] = rmass[i] * (1 + growrate_d * dt);
-        	//printf("growrate_d 1 is %e rmass is %e \n", growrate_d, rmass[i]);
-        } else if (atom->x[i][2] > sc1height) {
-        	growrate_d = - (R9 + R10 + R11);
-        	rmass[i] = rmass[i] * (1 + growrate_d * dt);
-        	//printf("growrate_d 2 is %e rmass is %e \n", growrate_d, rmass[i]);
-        } else {
-        	rmass[i] = rmass[i];
-        }
-
-        radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-//        outer_mass[i] = rmass[i];
-//        outer_radius[i] = radius[i];
-
+      if (atom->x[i][2] < sc1height && atom->x[i][2] > sgheight) {
+      	rmass[i] = rmass[i] * (1 + growrate * dt);
+      } else {
+      	rmass[i] = rmass[i];
       }
+
+      radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
     }
   }
 }

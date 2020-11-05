@@ -256,73 +256,82 @@ void FixPGrowthSC::growth(double dt, int gflag) {
   double *rmass = atom->rmass;
   double *outer_mass = avec->outer_mass;
   double *outer_radius = avec->outer_radius;
-  double grid_vol = kinetics->stepx * kinetics->stepy * kinetics->stepz;
 
   double *mu = bio->mu;
   double *decay = bio->decay;
   double *diff_coeff = bio->diff_coeff;
+  double **ks = bio->ks;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
   double **xdensity = kinetics->xdensity;
 
+  double growrate_sc = 0;
+
+  for (int grid = 0; grid < kinetics->bgrids; grid++) {
+	  //grid without atom is not considered
+	  if(!xdensity[0][grid]) continue;
+
+	  for (int i = 1; i <= ntypes; i++) {
+		  int spec = species[i];
+
+		  // Stem cell model
+		  if (spec == 1) {
+			  //printf("------- start of growth/sc  -------- \n");
+
+			//growth rate
+			double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (nus[ca][grid] / (ks[i][ca] + nus[ca][grid]));
+			//decay rate
+			double r2 =  decay[i];
+			//apoptosis rate
+			double r3 =  abase;
+
+			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
+			printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
+
+			nur[gf][grid] += r1 * xdensity[i][grid] - gf20 * xdensity[i][grid];
+			nur[ca][grid] += r1 * xdensity[i][grid];
+
+			printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
+
+			growrate_sc = r1 - r2 - r3;
+
+			if (!gflag || !external_gflag){
+				update_biomass(growrate_sc, dt);
+			}
+
+		  }
+	}
+  }
+}
+
+/* ----------------------------------------------------------------------
+ update particle attributes: biomass, outer mass, radius etc
+ ------------------------------------------------------------------------- */
+void FixPGrowthSC::update_biomass(double growrate, double dt) {
+  int *mask = atom->mask;
+  int nlocal = atom->nlocal;
+  int *type = atom->type;
+
+  double *radius = atom->radius;
+  double *rmass = atom->rmass;
+
   const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
   const double third = 1.0 / 3.0;
 
-  double growrate_sc = 0;
+  for (int i = 0; i < nlocal; i++) {
+    if (mask[i] & groupbit) {
 
-  for (int grid = 0; grid < kinetics->bgrids; grid++) {
-	  for (int i = 0; i < nlocal; i++) {
-		if (mask[i] & groupbit) {
-		  int t = type[i];
-		  int pos = kinetics->position(i); //find grid that atom is in
+      double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-		  double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
-
-		  // Stem cell model
-		  if (species[t] == 1) {
-			  //printf("------- start of growth/sc  -------- \n");
-			double R1 = mu[t] * (nus[gf][pos]*grid_vol + nus[ca][pos]*grid_vol);
-			double R2 =  decay[t];
-			double R3 =  abase;
-
-			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
-			printf("growth_sc grid %i gf %e ca %e \n", pos, nus[gf][pos], nus[ca][pos]);
-
-			nur[gf][pos] += sc2gf * (rmass[i]/grid_vol) - gf20 * xdensity[t][grid];
-			//nur[ca][grid] += ca2 * (rmass[i]/grid_vol);
-
-			//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1_1 + R1_2, R2, R3, R1_1 + R1_2 - R2 - R3);
-			printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", R1, R2, R3, R1 - R2 - R3);
-
-			growrate_sc = R1 - R2 - R3;
-			double new_rmass = rmass[i] * (1 + growrate_sc * dt);
-
-	//       printf("growrate sc %e 		growrate_ta %e \n", growrate_sc, growrate_ta);
-	//       printf("current rmass is %e \n", rmass[i]);
-	//       printf("new rmass will be rmass[i] * (1 + growrate_sc * dt) = %e \n", new_rmass);
-	//       printf("old radius is %e     new radius is %e \n", radius[i], pow(three_quarters_pi * (new_rmass / density), third));
-
-			if (!gflag || !external_gflag){
-				continue;
-			}
-
-			/*
-			 * Update biomass
-			 * */
-		   // printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-			//rmass[i] = rmass[i] + rmass[i] * (1 + growrate_sc * dt);
-			rmass[i] = rmass[i] * (1 + growrate_sc * dt);
-			//outer_mass[i] = four_thirds_pi * (outer_radius[i] * outer_radius[i] * outer_radius[i] - radius[i] * radius[i] * radius[i]) * sc_dens + growrate_ta * rmass[i] * dt;
-			//outer_radius[i] =  pow(three_quarters_pi * (rmass[i] / density + outer_mass[i] / sc_dens), third);
-			radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-			//printf("properties of new sc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
-		  }
-		}
-	  }
-	}
+	   // printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		rmass[i] = rmass[i] * (1 + growrate * dt);
+		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+		//printf("properties of new sc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+    }
+  }
 }
 
 
