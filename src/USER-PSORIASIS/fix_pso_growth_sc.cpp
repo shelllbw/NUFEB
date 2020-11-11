@@ -151,6 +151,8 @@ void FixPGrowthSC::init() {
 	error->all(FLERR, "fix_psoriasis/growth/sc requires Decay input");
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/sc requires Growth Rate input");
+  else if (bio->ks == NULL)
+      error->all(FLERR, "fix_kinetics/sc requires Ks input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -289,9 +291,11 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
 			printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
+			printf("ks for gf %e     ks for ca %e \n", ks[i][gf], ks[i][ca]);
+			printf("mu sc %e xdensity[i][grid] %e\n", mu[i], xdensity);
 
 			nur[gf][grid] += r1 * xdensity[i][grid] - gf20 * xdensity[i][grid];
-			nur[ca][grid] += r1 * xdensity[i][grid];
+			nur[ca][grid] += - (r1 * xdensity[i][grid]);
 
 			printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
 

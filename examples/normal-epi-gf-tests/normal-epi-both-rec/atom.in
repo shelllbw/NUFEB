@@ -28,8 +28,18 @@ Type Name
 
 Diffusion Coeffs
 
-   gf 1.6e-9
-   ca 1.6e-9
+   gf 1e-9
+   ca 1e-9
+
+ Ks
+
+    stem 5e-6 5e-6
+    ta 5e-6 5e-6
+    diff 0 0
+    tcell 0 0
+    dc 0 0
+    apop 0 0
+    bm 0 0
 
 Division Counter
 
@@ -43,8 +53,8 @@ Division Counter
 
  Growth Rate
 
-    stem 2.049784
-    ta 2.03300002091
+    stem 7.98611e-6
+    ta 7.98611e-6
     diff 0
     tcell 6.365
     dc 0.0694
@@ -53,8 +63,8 @@ Division Counter
 
   Decay
 
-   stem 2.111e-8
-   ta 4.320e-9
+   stem 0
+   ta 0
    diff 5.845e-7
    tcell 5.748e-5
    dc 1.747685e-5

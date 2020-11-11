@@ -152,6 +152,8 @@ void FixPGrowthTCELL::init() {
 	error->all(FLERR, "fix_psoriasis/growth/tcell requires Decay input");
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/tcell requires Growth Rate input");
+  else if (bio->ks == NULL)
+      error->all(FLERR, "fix_kinetics/tcell requires Ks input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;

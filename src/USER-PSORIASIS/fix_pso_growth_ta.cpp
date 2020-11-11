@@ -151,6 +151,8 @@ void FixPGrowthTA::init() {
 	error->all(FLERR, "fix_psoriasis/growth/ta requires Decay input");
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/ta requires Growth Rate input");
+  else if (bio->ks == NULL)
+      error->all(FLERR, "fix_kinetics/ta requires Ks input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -291,7 +293,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 			//printf("growrate_ta nus il17 %e tnfa %e gf %e ca %e \n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid], nus[ca][grid]);
 
 			nur[gf][grid] += r5 * xdensity[i][grid] - gf20 * xdensity[i][grid];
-			nur[ca][grid] += r5 * xdensity[i][grid];
+			nur[ca][grid] += -(r5 * xdensity[i][grid]);
 
 			//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", r5, r6, r7, r5 - r6 - r7);
 

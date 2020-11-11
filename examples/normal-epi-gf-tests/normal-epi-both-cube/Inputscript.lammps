@@ -134,7 +134,7 @@ variable tol equal 1e-6
 
 #common variables used in growth
 variable abaseT equal 7.384e-8
-variable abaseSC equal 4.000e-10
+variable abaseSC equal 0
 variable abaseTA equal 4.000e-8
 variable abaseD equal 4.167e-13
 variable ca2 equal 0.00000578703
@@ -176,7 +176,6 @@ fix k1 all kinetics 1 10 10 10 v_diffT v_layer demflag 0 niter 5000
 #fix kgdc DC psoriasis/growth/dc v_DCdens v_abase1 v_dckp v_dcact v_il232
 #fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abaseT v_il172 v_tnfa2 v_il1720 v_tnfa20 v_il232
 fix g1 all kinetics/diffusion v_tol pp pp nd dcflag 2
-#fix g1 all kinetics/diffusion v_tol pp pp nd closedflag 1
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abaseSC v_sc2ta v_sc2gf v_gf20 v_ca2
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
 #fix kgta TA psoriasis/growth/ta v_TAdens v_abaseTA v_ta2d v_ta2gf v_gf20 v_ca2
@@ -208,4 +207,4 @@ run 2000 pre no post no every 1 &
 "run 1000 pre no post no" &
 "timestep 3600"  &
 "fix_modify k1 demflag 0" &
-"fix_modify d1 demflag 0" 
+"fix_modify d1 demflag 0"
