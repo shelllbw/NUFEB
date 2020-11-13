@@ -56,7 +56,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/tcell requires atom style bio");
 
-  if (narg < 10)
+  if (narg < 5)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/tcell command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthTCELL::FixPGrowthTCELL(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 10;
+  int iarg = 5;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -138,11 +138,6 @@ void FixPGrowthTCELL::init() {
 
   tc_dens = input->variable->compute_equal(ivar[0]);
   abase = input->variable->compute_equal(ivar[1]);
-  il172 = input->variable->compute_equal(ivar[2]);
-  tnfa2 = input->variable->compute_equal(ivar[3]);
-  il1720 = input->variable->compute_equal(ivar[4]);
-  tnfa20 = input->variable->compute_equal(ivar[5]);
-  il232 = input->variable->compute_equal(ivar[6]);
 
   bio = kinetics->bio;
 
@@ -154,6 +149,8 @@ void FixPGrowthTCELL::init() {
 	error->all(FLERR, "fix_psoriasis/growth/tcell requires Growth Rate input");
   else if (bio->ks == NULL)
       error->all(FLERR, "fix_kinetics/tcell requires Ks input");
+  else if (bio->yield == NULL)
+        error->all(FLERR, "fix_kinetics/sc requires Yield input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -252,6 +249,7 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
   double *decay = bio->decay;
   double *diff_coeff = bio->diff_coeff;
   double **ks = bio->ks;
+  double *yield = bio->yield;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
@@ -272,22 +270,22 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
     	  //printf("------- start of growth/tcell  -------- \n");
 
 			//growth rate
-			double r16 = mu[i] * (nus[il23][grid] / (ks[i][il23] + nus[il23][grid]));
+			double r11 = mu[i] * (nus[il23][grid] / (ks[i][il23] + nus[il23][grid]));
 			//decay rate
-			double r17 = decay[i];
+			double r12 = decay[i];
 			//apoptosis rate
-			double r18 = abase;
+			double r13 = abase;
 
     	//printf("growrate_tcell grid %i BEFORE: il17 conc : %e tnfa conc :  %e  il23 conc : %e  \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid]);
 
-    	nur[il23][grid] += r16 * xdensity[i][grid];
-    	nur[il17][grid] += r16 * xdensity[i][grid] - il1720 * xdensity[i][grid];
-    	nur[tnfa][grid] += r16 * xdensity[i][grid] - tnfa20 * xdensity[i][grid];
+    	nur[il23][grid] += - (r11 * xdensity[i][grid]);
+    	nur[il17][grid] += yield[i] * r11 * xdensity[i][grid] - r11 * xdensity[i][grid];
+    	nur[tnfa][grid] += yield[i] * r11 * xdensity[i][grid] - r11 * xdensity[i][grid];
 
     	//printf("growrate_tcell equation is R16 %e - R17 %e - R18 %e = %e\n", r16, r17, r18, r16 - r17 - r18);
 
 
-        growrate_tcell = r16 - r17 - r18;
+        growrate_tcell = r11 - r12 - r13;
 
         if (!gflag || !external_gflag){
         	update_biomass(growrate_tcell, dt);

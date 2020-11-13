@@ -56,7 +56,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/diff requires atom style bio");
 
-  if (narg < 8)
+  if (narg < 6)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/diff command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 8;
+  int iarg = 6;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -139,8 +139,6 @@ void FixPGrowthDIFF::init() {
   diff_dens = input->variable->compute_equal(ivar[0]);
   abase = input->variable->compute_equal(ivar[1]);
   ddesq = input->variable->compute_equal(ivar[2]);
-  diff2ca1 = input->variable->compute_equal(ivar[3]);
-  diff2ca2 = input->variable->compute_equal(ivar[4]);
 
   bio = kinetics->bio;
 
@@ -152,6 +150,8 @@ void FixPGrowthDIFF::init() {
 	error->all(FLERR, "fix_psoriasis/growth/diff requires Growth Rate input");
   else if (bio->ks == NULL)
       error->all(FLERR, "fix_kinetics/diff requires Ks input");
+  else if (bio->yield == NULL)
+        error->all(FLERR, "fix_kinetics/ta requires Yield input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -221,9 +221,6 @@ void FixPGrowthDIFF::init_param() {
 	  else
 		error->all(FLERR, "unknown species in fix_psoriasis/growth/diff");
 
-//	  if (species[i] == 3){
-//		  printf("cell type %i detected \n", species[i]);
-//	  }
   }
 }
 
@@ -248,6 +245,7 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
   double *decay = bio->decay;
   double *diff_coeff = bio->diff_coeff;
   double **ks = bio->ks;
+  double *yield = bio->yield;
 
   double **xdensity = kinetics->xdensity;
   double **nus = kinetics->nus;
@@ -274,24 +272,19 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 			  //printf("------- start of growth/diff  -------- \n");
 
 			 //decay rate
-			double r9 = decay[i];
+			double r8 = decay[i];
 			//apoptosis rate
-			double r10 = abase;
+			double r9 = abase;
 			//desquamation rate
-			double r11 = ddesq;
+			double r10 = ddesq;
 
 			//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
 
-			if (atom->x[i][2] < sgheight) {
-				nur[ca][grid] += diff2ca1 * xdensity[i][grid] - ca20 * xdensity[i][grid];
-			} else {
-				nur[ca][grid] += diff2ca2 * xdensity[i][grid] - ca20 * xdensity[i][grid];
-			}
-
 			if (atom->x[i][2] < sc1height) {
-				growrate_d = - (r9 + r10);
+				nur[ca][grid] += yield[i] * r10 *  xdensity[i][grid];
+				growrate_d = - (r8 + r9);
 			} else {
-				growrate_d = - (r9 + r10 + r11);
+				growrate_d = - (r8 + r9 + r10);
 			}
 
 			if (!gflag || !external_gflag){

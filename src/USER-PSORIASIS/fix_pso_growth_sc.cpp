@@ -56,7 +56,7 @@ FixPGrowthSC::FixPGrowthSC(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/sc requires atom style bio");
 
-  if (narg < 9)
+  if (narg < 5)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/sc command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthSC::FixPGrowthSC(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 9;
+  int iarg = 5;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -138,10 +138,6 @@ void FixPGrowthSC::init() {
 
   sc_dens = input->variable->compute_equal(ivar[0]);
   abase = input->variable->compute_equal(ivar[1]);
-  sc2ta = input->variable->compute_equal(ivar[2]);
-  sc2gf = input->variable->compute_equal(ivar[3]);
-  gf20 = input->variable->compute_equal(ivar[4]);
-  ca2 = input->variable->compute_equal(ivar[5]);
 
   bio = kinetics->bio;
 
@@ -153,6 +149,8 @@ void FixPGrowthSC::init() {
 	error->all(FLERR, "fix_psoriasis/growth/sc requires Growth Rate input");
   else if (bio->ks == NULL)
       error->all(FLERR, "fix_kinetics/sc requires Ks input");
+  else if (bio->yield == NULL)
+      error->all(FLERR, "fix_kinetics/sc requires Yield input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -203,8 +201,6 @@ void FixPGrowthSC::init_param() {
 		gf = nu;
 	if (strcmp(bio->nuname[nu], "ca") == 0)
 		ca = nu;
-//	if (strcmp(bio->nuname[nu], "il23") == 0)
-//		  il23 = nu;
   }
 
 //  if (il17 == 0)
@@ -215,8 +211,6 @@ void FixPGrowthSC::init_param() {
     	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient gf");
   if (ca == 0)
      	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
-//  if (il23 == 0)
-//  	error->all(FLERR, "fix_psoriasis/growth/tcell requires nutrient il23");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -263,6 +257,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
   double *decay = bio->decay;
   double *diff_coeff = bio->diff_coeff;
   double **ks = bio->ks;
+  double *yield = bio->yield;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
@@ -290,16 +285,16 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 			double r3 =  abase;
 
 			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
-			printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
-			printf("ks for gf %e     ks for ca %e \n", ks[i][gf], ks[i][ca]);
-			printf("mu sc %e xdensity[i][grid] %e\n", mu[i], xdensity);
+			//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
-			nur[gf][grid] += r1 * xdensity[i][grid] - gf20 * xdensity[i][grid];
-			nur[ca][grid] += - (r1 * xdensity[i][grid]);
-
-			printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
+			nur[gf][grid] += yield[i] * r1 * xdensity[i][grid] - r1 * xdensity[i][grid];
+			//nur[gf][grid] += r1 * xdensity[i][grid];
+			nur[ca][grid] += -(r1 * xdensity[i][grid]);
 
 			growrate_sc = r1 - r2 - r3;
+
+			//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
+			//printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_sc * dt));
 
 			if (!gflag || !external_gflag){
 				update_biomass(growrate_sc, dt);
@@ -330,10 +325,10 @@ void FixPGrowthSC::update_biomass(double growrate, double dt) {
 
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-	   // printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+	    //printf("BEFORE %i - rmass: %e, radius: %e \n", i, rmass[i], radius[i]);
 		rmass[i] = rmass[i] * (1 + growrate * dt);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		//printf("properties of new sc %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		//printf("properties of new sc %i is rmass %e, radius %e \n", i, rmass[i], radius[i]);
     }
   }
 }

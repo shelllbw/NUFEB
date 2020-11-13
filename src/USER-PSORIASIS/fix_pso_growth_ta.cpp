@@ -56,7 +56,7 @@ FixPGrowthTA::FixPGrowthTA(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/ta requires atom style bio");
 
-  if (narg < 9)
+  if (narg < 5)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/ta command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthTA::FixPGrowthTA(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 9;
+  int iarg = 5;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -138,10 +138,6 @@ void FixPGrowthTA::init() {
 
   ta_dens = input->variable->compute_equal(ivar[0]);
   abase = input->variable->compute_equal(ivar[1]);
-  ta2d = input->variable->compute_equal(ivar[2]);
-  ta2gf = input->variable->compute_equal(ivar[3]);
-  gf20 = input->variable->compute_equal(ivar[4]);
-  ca2 = input->variable->compute_equal(ivar[5]);
 
   bio = kinetics->bio;
 
@@ -153,6 +149,8 @@ void FixPGrowthTA::init() {
 	error->all(FLERR, "fix_psoriasis/growth/ta requires Growth Rate input");
   else if (bio->ks == NULL)
       error->all(FLERR, "fix_kinetics/ta requires Ks input");
+  else if (bio->yield == NULL)
+      error->all(FLERR, "fix_kinetics/ta requires Yield input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -264,6 +262,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
   double *decay = bio->decay;
   double *diff_coeff = bio->diff_coeff;
   double **ks = bio->ks;
+  double *yield = bio->yield;
 
   double **xdensity = kinetics->xdensity;
 
@@ -292,7 +291,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 
 			//printf("growrate_ta nus il17 %e tnfa %e gf %e ca %e \n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid], nus[ca][grid]);
 
-			nur[gf][grid] += r5 * xdensity[i][grid] - gf20 * xdensity[i][grid];
+			nur[gf][grid] += yield[i] * r5 * xdensity[i][grid] - r5 * xdensity[i][grid];
 			nur[ca][grid] += -(r5 * xdensity[i][grid]);
 
 			//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", r5, r6, r7, r5 - r6 - r7);

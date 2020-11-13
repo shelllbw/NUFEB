@@ -320,11 +320,11 @@ void FixPDivideStem::init() {
 
 	 newX = oldX;
 	 newY = oldY;
-	 if (parentType == stem_id){
+	 //if (parentType == stem_id){
 		 newZ = oldZ;
-	 } else {
-		 newZ = oldZ + atom->radius[i];
-	 }
+//	 } else {
+//		 newZ = oldZ + atom->radius[i];
+//	 }
 	 if (newX - avec->outer_radius[i] < xlo) {
 		 newX = xlo + avec->outer_radius[i];
 	 } else if (newX + avec->outer_radius[i] > xhi) {

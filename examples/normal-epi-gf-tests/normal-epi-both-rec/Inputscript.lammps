@@ -135,27 +135,18 @@ variable tol equal 1e-6
 #common variables used in growth
 variable abaseT equal 7.384e-8
 variable abaseSC equal 0
-variable abaseTA equal 4.000e-8
+variable abaseTA equal 0
 variable abaseD equal 4.167e-13
-variable ca2 equal 0.00001157407
 
 #variables used in growth/sc
 variable STEMdens equal 30
-#variable sc2ta equal 8.784e-3
-variable sc2ta equal 1.784e-8
-variable sc2gf equal 0.00001157407
-variable gf20 equal 0.0004224537
 
 #variables used in growth/ta
 variable TAdens equal 30
-variable ta2d equal 2.091e-8
-variable ta2gf equal 0.00001157407
 
 #variable used in growth/diff
 variable DIFFdens equal 30
 variable ddesq equal 5.501e-8
-variable diff2ca1 equal 0.005
-variable diff2ca2 equal 0.01
 
 #variables used in growth/tcell
 variable TCELLdens equal 30
@@ -164,12 +155,6 @@ variable tnfa2 equal 0.00001157407
 variable il1720 equal 0.0004224537
 variable tnfa20 equal 0.0004224537
 
-#variables used in growth/dc
-variable DCdens equal 30
-variable dckp equal 3.472e7
-variable dcact equal 0.02083333333
-variable il232 equal 0.00001157407
-
 ##############Define IBm Commands##############
 
 fix k1 all kinetics 1 10 4 6 v_diffT v_layer demflag 0 niter 5000
@@ -177,11 +162,11 @@ fix k1 all kinetics 1 10 4 6 v_diffT v_layer demflag 0 niter 5000
 #fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abaseT v_il172 v_tnfa2 v_il1720 v_tnfa20 v_il232
 fix g1 all kinetics/diffusion v_tol pp pp dn dcflag 2
 #fix g1 all kinetics/diffusion v_tol pp pp nd closedflag 1
-fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abaseSC v_sc2ta v_sc2gf v_gf20 v_ca2
+fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abaseSC
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
-fix kgta TA psoriasis/growth/ta v_TAdens v_abaseTA v_ta2d v_ta2gf v_gf20 v_ca2
+fix kgta TA psoriasis/growth/ta v_TAdens v_abaseTA
 fix d2 TA psoriasis/divide_ta 1 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
-fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abaseD v_ddesq v_diff2ca1 v_diff2ca2
+fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abaseD v_ddesq
 
 ##############Define IBm Computes##############
 
@@ -204,8 +189,10 @@ thermo_modify	lost ignore
 run 2000 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
 "fix_modify d1 demflag 1" &
+"fix_modify d2 demflag 1" &
 "timestep 1e-3" &
 "run 1000 pre no post no" &
 "timestep 3600"  &
 "fix_modify k1 demflag 0" &
-"fix_modify d1 demflag 0"
+"fix_modify d1 demflag 0" &
+"fix_modify d2 demflag 0"
