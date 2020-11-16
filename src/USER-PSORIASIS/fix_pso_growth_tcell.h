@@ -53,9 +53,8 @@ class FixPGrowthTCELL : public Fix {
   double xlo,xhi,ylo,yhi,zlo,zhi;   // computational domain size
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
-  double tc_dens; //cell density
+  double tc_dens, apop;
   double il232, il2320, il172, il1720, tnfa2, tnfa20;
-  double abase;
 
   class AtomVecBio *avec;
   class FixKinetics *kinetics;

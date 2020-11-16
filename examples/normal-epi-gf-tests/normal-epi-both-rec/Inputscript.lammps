@@ -134,9 +134,7 @@ variable tol equal 1e-6
 
 #common variables used in growth
 variable abaseT equal 7.384e-8
-variable abaseSC equal 0
-variable abaseTA equal 0
-variable abaseD equal 4.167e-13
+variable apop equal 0.0012
 
 #variables used in growth/sc
 variable STEMdens equal 30
@@ -159,13 +157,13 @@ variable tnfa20 equal 0.0004224537
 
 fix k1 all kinetics 1 10 4 6 v_diffT v_layer demflag 0 niter 5000
 #fix kgdc DC psoriasis/growth/dc v_DCdens v_abase1 v_dckp v_dcact v_il232
-#fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_abaseT
+#fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_apop
 fix g1 all kinetics/diffusion v_tol pp pp dn dcflag 2
-fix kgsc STEM psoriasis/growth/sc v_STEMdens v_abaseSC
+fix kgsc STEM psoriasis/growth/sc v_STEMdens v_apop
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_stemPercent 64564 demflag 0
-fix kgta TA psoriasis/growth/ta v_TAdens v_abaseTA
+fix kgta TA psoriasis/growth/ta v_TAdens v_apop
 fix d2 TA psoriasis/divide_ta 1 v_divDia v_asym v_TAdens v_maxDivCount 64564 demflag 0
-fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_abaseD v_ddesq
+fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_apop v_ddesq
 
 ##############Define IBm Computes##############
 

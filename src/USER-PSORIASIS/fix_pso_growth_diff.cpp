@@ -137,7 +137,7 @@ void FixPGrowthDIFF::init() {
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
   diff_dens = input->variable->compute_equal(ivar[0]);
-  abase = input->variable->compute_equal(ivar[1]);
+  apop = input->variable->compute_equal(ivar[1]);
   ddesq = input->variable->compute_equal(ivar[2]);
 
   bio = kinetics->bio;
@@ -273,18 +273,19 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
 			 //decay rate
 			double r8 = decay[i];
-			//apoptosis rate
-			double r9 = abase;
 			//desquamation rate
-			double r10 = ddesq;
+			double r9 = ddesq;
+			//apoptosis rate
+			double r10 = apop;
+
 
 			//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
 
 			if (atom->x[i][2] < sc1height) {
 				nur[ca][grid] += yield[i] * r10 *  xdensity[i][grid];
-				growrate_d = - (r8 + r9);
+				growrate_d = - (r8 + r8 * r10) ;
 			} else {
-				growrate_d = - (r8 + r9 + r10);
+				growrate_d = - (r8 + (r8 + r9 * r10));
 			}
 
 		  }

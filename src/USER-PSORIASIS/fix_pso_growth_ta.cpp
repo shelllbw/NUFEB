@@ -137,7 +137,7 @@ void FixPGrowthTA::init() {
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
   ta_dens = input->variable->compute_equal(ivar[0]);
-  abase = input->variable->compute_equal(ivar[1]);
+  apop = input->variable->compute_equal(ivar[1]);
 
   bio = kinetics->bio;
 
@@ -283,7 +283,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 			//decay rate
 			double r6 = decay[i];
 			//apoptosis rate
-			double r7 = abase;
+			double r7 = (r5 - r6) * apop;
 
 			//printf("growrate_ta nus il17 %e tnfa %e gf %e ca %e \n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid], nus[ca][grid]);
 			//printf("cell type %i\n", spec);
