@@ -148,9 +148,9 @@ void FixPGrowthSC::init() {
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/sc requires Growth Rate input");
   else if (bio->ks == NULL)
-      error->all(FLERR, "fix_kinetics/sc requires Ks input");
+      error->all(FLERR, "fix_psoriasis/growth/sc requires Ks input");
   else if (bio->yield == NULL)
-      error->all(FLERR, "fix_kinetics/sc requires Yield input");
+      error->all(FLERR, "fix_psoriasis/growth/sc requires Yield input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -285,7 +285,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 			double r3 =  abase;
 
 			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
-			//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
+			printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
 			nur[gf][grid] += yield[i] * r1 * xdensity[i][grid] - r1 * xdensity[i][grid];
 			//nur[gf][grid] += r1 * xdensity[i][grid];
@@ -293,16 +293,13 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 			growrate_sc = r1 - r2 - r3;
 
-			//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
+			printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
 			//printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_sc * dt));
-
-			if (!gflag || !external_gflag){
-				update_biomass(growrate_sc, dt);
-			}
-
 		  }
 	}
   }
+  //update physical attributes
+    if (gflag && external_gflag) update_biomass(growrate_sc, dt);
 }
 
 /* ----------------------------------------------------------------------
@@ -325,6 +322,7 @@ void FixPGrowthSC::update_biomass(double growrate, double dt) {
 
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
+      //printf("growrate is %e \n", growrate);
 	    //printf("BEFORE %i - rmass: %e, radius: %e \n", i, rmass[i], radius[i]);
 		rmass[i] = rmass[i] * (1 + growrate * dt);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);

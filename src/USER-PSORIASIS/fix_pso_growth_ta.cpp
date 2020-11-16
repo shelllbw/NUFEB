@@ -148,9 +148,9 @@ void FixPGrowthTA::init() {
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/ta requires Growth Rate input");
   else if (bio->ks == NULL)
-      error->all(FLERR, "fix_kinetics/ta requires Ks input");
+      error->all(FLERR, "fix_psoriasis/growth/ta requires Ks input");
   else if (bio->yield == NULL)
-      error->all(FLERR, "fix_kinetics/ta requires Yield input");
+      error->all(FLERR, "fix_psoriasis/growth/ta requires Yield input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -232,10 +232,6 @@ void FixPGrowthTA::init_param() {
 	  	species[i] = 7;
 	  else
 		error->all(FLERR, "unknown species in fix_psoriasis/growth/ta");
-
-//	  if (species[i] == 2){
-//		  printf("cell type %i detected \n", species[i]);
-//	  }
   }
 }
 
@@ -290,20 +286,22 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 			double r7 = abase;
 
 			//printf("growrate_ta nus il17 %e tnfa %e gf %e ca %e \n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid], nus[ca][grid]);
+			//printf("cell type %i\n", spec);
+			//printf("growth_ta grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
 			nur[gf][grid] += yield[i] * r5 * xdensity[i][grid] - r5 * xdensity[i][grid];
 			nur[ca][grid] += -(r5 * xdensity[i][grid]);
 
-			//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", r5, r6, r7, r5 - r6 - r7);
-
 			growrate_ta = r5 - r6 - r7;
 
-			if (!gflag || !external_gflag){
-				update_biomass(growrate_ta, dt);
-			}
+			//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", r5, r6, r7, r5 - r6 - r7);
+			//printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_ta * dt));
+
       }
     }
   }
+  //update physical attributes
+    if (gflag && external_gflag) update_biomass(growrate_ta, dt);
 }
 /* ----------------------------------------------------------------------
  update particle attributes: biomass, outer mass, radius etc
@@ -325,10 +323,10 @@ void FixPGrowthTA::update_biomass(double growrate, double dt) {
 
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-      //printf("BEFORE %i - rmass: %e, radius: %e, outer mass: %e, outer radius: %e\n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+      //printf("BEFORE %i - rmass: %e, radius: %e \n", i, rmass[i], radius[i]);
 		rmass[i] = rmass[i] * (1 + growrate * dt);
 		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		//printf("properties of new ta %i is rmass %e, radius %e, outer mass %e, outer radius %e \n", i, rmass[i], radius[i], outer_mass[i], outer_radius[i]);
+		//printf("properties of new ta %i is rmass %e, radius %e \n", i, rmass[i], radius[i]);
     }
   }
 }

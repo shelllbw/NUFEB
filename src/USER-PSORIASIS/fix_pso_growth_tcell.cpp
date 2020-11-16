@@ -286,13 +286,12 @@ void FixPGrowthTCELL::growth(double dt, int gflag) {
 
 
         growrate_tcell = r11 - r12 - r13;
-
-        if (!gflag || !external_gflag){
-        	update_biomass(growrate_tcell, dt);
-        }
 	  }
 	}
   }
+
+  //update physical attributes
+  if (gflag && external_gflag) update_biomass(growrate_tcell, dt);
 }
 
 /* ----------------------------------------------------------------------

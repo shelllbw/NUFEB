@@ -149,9 +149,9 @@ void FixPGrowthDIFF::init() {
   else if (bio->mu == NULL)
 	error->all(FLERR, "fix_psoriasis/growth/diff requires Growth Rate input");
   else if (bio->ks == NULL)
-      error->all(FLERR, "fix_kinetics/diff requires Ks input");
+      error->all(FLERR, "fix_psoriasis/growth/diff requires Ks input");
   else if (bio->yield == NULL)
-        error->all(FLERR, "fix_kinetics/ta requires Yield input");
+        error->all(FLERR, "fix_psoriasis/growth/diff requires Yield input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
@@ -287,13 +287,11 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 				growrate_d = - (r8 + r9 + r10);
 			}
 
-			if (!gflag || !external_gflag){
-				update_biomass(growrate_d, dt);
-			}
-
 		  }
 	  }
   	}
+  //update physical attributes
+    if (gflag && external_gflag) update_biomass(growrate_d, dt);
 }
 
 /* ----------------------------------------------------------------------
