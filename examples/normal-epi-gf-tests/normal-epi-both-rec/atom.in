@@ -14,7 +14,7 @@ Atoms
 Nutrients
 
    1 gf l 0 0 0 0 0 0 0
-   2 ca l 1e-3 1e-3 1e-3 1e-3 1e-3 1e-3 1e-3
+   2 ca l 1.8e-4 1.8e-4 1.8e-4 1.8e-4 1.8e-4 1.8e-4 1.8e-4
 
 Type Name
 
@@ -73,8 +73,8 @@ Division Counter
 
   Decay
 
-   stem 0
-   ta 0
+   stem 2.1105324e-6
+   ta 4.3195602e-7
    diff 5.845e-7
    tcell 5.748e-5
    dc 1.747685e-5

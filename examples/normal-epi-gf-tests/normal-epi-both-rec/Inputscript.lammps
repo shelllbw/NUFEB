@@ -134,7 +134,7 @@ variable tol equal 1e-6
 
 #common variables used in growth
 variable abaseT equal 7.384e-8
-variable apop equal 0.0012
+variable apop equal 0.12
 
 #variables used in growth/sc
 variable STEMdens equal 30
