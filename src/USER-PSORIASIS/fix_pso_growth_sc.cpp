@@ -282,7 +282,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 			//decay rate
 			double r2 =  decay[i];
 			//apoptosis rate
-			double r3 = r1  * apop;
+			double r3 = (r1 - r2)  * apop;
 
 			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
 			//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
@@ -293,7 +293,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 			growrate_sc = r1 - r2 - r3;
 
-			printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
+			//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
 			//printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_sc * dt));
 		  }
 	}

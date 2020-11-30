@@ -244,13 +244,6 @@ void FixPDivideStem::init() {
       int ta_id = bio->find_typeid("ta");
       int stem_id = bio->find_typeid("stem");
 
-      //stem cell takes up approximately 5% of the population
-      max_cap = round((nlocal - nbm) * stem_percent);
-
-      if (max_cap < 2){
-    	  max_cap = round(nlocal * 0.5);
-      }
-
       //double sbheight = zhi * 0.7; //cubic domain
       double sbheight = zhi * 0.66; //smaller domain
 
@@ -260,29 +253,17 @@ void FixPDivideStem::init() {
 		   childType = stem_id;
 		   parentMask = atom->mask[i];
 		   childMask = atom->mask[i];
-		   selfcounter++;
 	  } else if (atom->x[i][2] > sbheight) {
-		  // printf("enters sym \n");
 			 parentType = ta_id;
 			 childType = ta_id;
 			 parentMask = ta_mask;
 			 childMask = ta_mask;
-			 symcounter++;
-//   	   } else if (1 - rand < (1-asym)/ 2){
-//			 parentType = ta_id;
-//			 childType = ta_id;
-//			 parentMask = ta_mask;
-//			 childMask = ta_mask;
-//			 symcounter++;
 	   } else {
 		   parentType = ta_id;
 		   childType = stem_id;
 		   parentMask = ta_mask;
 		   childMask = atom->mask[i];
-		   asymcounter++;
 	   }
-
-	//	 printf("symcounter %i , selfcounter %i asymcounter %i TOTAL divisions_sc %i \n", symcounter, selfcounter, asymcounter, symcounter + selfcounter + asymcounter);
 
      double splitF = 0.4 + (random->uniform() *0.2);
 	 double parentMass = atom->rmass[i] * splitF;
@@ -320,6 +301,7 @@ void FixPDivideStem::init() {
 
 	 newX = oldX;
 	 newY = oldY;
+	 //if (rand < 0.6)
 	 if (parentType == stem_id){
 		 newZ = oldZ;
 	 } else {

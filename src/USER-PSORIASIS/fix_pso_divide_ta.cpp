@@ -246,10 +246,10 @@ void FixPDivideTa::post_integrate() {
       std::uniform_real_distribution<double>  distribution(0.0, 1.0);
       double rand = distribution(gen);
 
-//      double ssheight = zhi * 0.7; //cubic domain
-//      double sbheight = zhi * 0.8;
-      double ssheight = zhi * 0.66; //smaller domain
-      double sbheight = zhi * 0.7;
+//      double sbheight = zhi * 0.7; //cubic domain
+//      double ssheight = zhi * 0.8;
+      double sbheight = zhi * 0.66; //smaller domain
+      double ssheight = zhi * 0.74;
 
       if (atom->radius[i] * 2 >= div_dia){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
@@ -257,30 +257,23 @@ void FixPDivideTa::post_integrate() {
     		  childType = ta_id;
     		  parentMask = diff_mask;
     		  childMask = atom->mask[i];
-    		  asymcounter++;
     	  } else if (atom->x[i][2] > ssheight){
     		  parentType = diff_id;
 			  childType = diff_id;
 			  parentMask = diff_mask;
 			  childMask = diff_mask;
-			  symcounter++;
       	 // }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2) {
     	  }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2 || atom->x[i][2] < sbheight) {
-      		  parentType = type_id;
-      		  childType = type_id;
+      		  parentType = ta_id;
+      		  childType = ta_id;
       		  parentMask = atom->mask[i];
       		  childMask = atom->mask[i];
-      		  selfcounter++;
-      		  cself++;
 		  } else {
-			  parentType = type_id;
-			  childType = diff_id;
-			  parentMask = atom->mask[i];
-			  childMask = diff_mask;
-			  asymcounter++;
+			  parentType = diff_id;
+			  childType = ta_id;
+			  parentMask = diff_mask;
+			  childMask = atom->mask[i];
     	  }
-
- 		 //printf("symcounter %i , asymcounter %i, selfcounter %i cself %i,  TOTAL divisions_ta %i \n", symcounter, asymcounter, selfcounter, cself, symcounter + asymcounter + cself);
 
 
 		parentDivisionCount = avec->d_counter[i] + 1;

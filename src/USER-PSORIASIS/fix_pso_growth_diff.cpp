@@ -261,12 +261,12 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 	  for (int i = 1; i <= ntypes; i++) {
 		  int spec = species[i];
 	  //different heights for diff cells
-	//	  double sgheight = zhi * 0.85; //cubic domain
-	//	  double sc1height = zhi * 0.92;
-	//	  double sc2height = zhi * 1;
-		  double sgheight = zhi * 0.835; //smaller domain
-		  double sc1height = zhi * 0.9;
-		  double sc2height = zhi * 1;
+//		  double sgheight = zhi * 0.85; //cubic domain
+//		  double scheight = zhi * 0.92;
+//		  double ssheight = zhi * 0.8;
+		  double ssheight = zhi * 0.74; //smaller domain
+		  double sgheight = zhi * 0.85;
+		  double scheight = zhi * 0.9;
 
 		  if (spec == 3) {
 			  //printf("------- start of growth/diff  -------- \n");
@@ -281,13 +281,14 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
 			//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
 
-			if (atom->x[i][2] < sc1height) {
+			if (atom->x[i][2] < sgheight && atom->x[i][2] > ssheight) { //if in SG layer then secrete out most calcium
 				nur[ca][grid] += yield[i] * r10 *  xdensity[i][grid];
 				growrate_d = - (r8 + r8 * r10) ;
-			} else {
-				growrate_d = - (r8 + (r8 + r9 * r10));
 			}
 
+			if (atom->x[i][2] < scheight && atom->x[i][2] > sgheight) { // if in SC layer, calcium should be 0
+				growrate_d = - (r8 + r9 + (r8 + r9 * r10));
+			}
 		  }
 	  }
   	}

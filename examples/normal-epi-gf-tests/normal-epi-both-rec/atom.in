@@ -14,7 +14,7 @@ Atoms
 Nutrients
 
    1 gf l 0 0 0 0 0 0 0
-   2 ca l 1.8e-4 1.8e-4 1.8e-4 1.8e-4 1.8e-4 1.8e-4 1.8e-4
+   2 ca l 1.8e-4 1.8e-4 1.8e-4 1.8e-4 1.8e-4 1.8e-4 0
 
 Type Name
 
@@ -28,7 +28,7 @@ Type Name
 
 Diffusion Coeffs
 
-   gf 1e-9
+   gf 1e-10
    ca 1e-9
 
  Ks
@@ -73,8 +73,8 @@ Division Counter
 
   Decay
 
-   stem 2.1105324e-6
-   ta 4.3195602e-7
+   stem 3.5105324e-7
+   ta 5.3195602e-7
    diff 5.845e-7
    tcell 5.748e-5
    dc 1.747685e-5
