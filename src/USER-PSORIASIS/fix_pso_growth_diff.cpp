@@ -264,7 +264,7 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 //		  double sgheight = zhi * 0.85; //cubic domain
 //		  double scheight = zhi * 0.92;
 //		  double ssheight = zhi * 0.8;
-		  double ssheight = zhi * 0.74; //smaller domain
+		  double ssheight = zhi * 0.75; //smaller domain
 		  double sgheight = zhi * 0.85;
 		  double scheight = zhi * 0.9;
 
@@ -284,10 +284,10 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 			if (atom->x[i][2] < sgheight && atom->x[i][2] > ssheight) { //if in SG layer then secrete out most calcium
 				nur[ca][grid] += yield[i] * r10 *  xdensity[i][grid];
 				growrate_d = - (r8 + r8 * r10) ;
-			}
-
-			if (atom->x[i][2] < scheight && atom->x[i][2] > sgheight) { // if in SC layer, calcium should be 0
+			} else if (atom->x[i][2] < scheight && atom->x[i][2] > sgheight) { // if in SC layer, calcium should be 0
 				growrate_d = - (r8 + r9 + (r8 + r9 * r10));
+			} else {
+				growrate_d = 0; //if diff cell is below sg layer, no update
 			}
 		  }
 	  }
@@ -311,9 +311,9 @@ void FixPGrowthDIFF::update_biomass(double growrate, double dt) {
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
   const double third = 1.0 / 3.0;
 
-  double sgheight = zhi * 0.835; //smaller domain
-  double sc1height = zhi * 0.9;
-  double sc2height = zhi * 1;
+  double ssheight = zhi * 0.75; //smaller domain
+  double sgheight = zhi * 0.85;
+  double scheight = zhi * 0.9;
 
   for (int i = 0; i < nlocal; i++) {
     if (mask[i] & groupbit) {
@@ -321,11 +321,11 @@ void FixPGrowthDIFF::update_biomass(double growrate, double dt) {
       int pos = kinetics->position(i);
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-      if (atom->x[i][2] < sc1height && atom->x[i][2] > sgheight) {
+//      if (atom->x[i][2] > sgheight && atom->x[i][2] < scheight) {
       	rmass[i] = rmass[i] * (1 + growrate * dt);
-      } else {
-      	rmass[i] = rmass[i];
-      }
+//      } else {
+//      	rmass[i] = rmass[i];
+//      }
 
       radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
     }

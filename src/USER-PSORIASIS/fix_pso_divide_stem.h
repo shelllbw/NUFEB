@@ -59,7 +59,7 @@ class FixPDivideStem : public Fix {
   int parentType, childType;
   int ta_mask;
   int parentMask, childMask;
-  double asym, cell_dens, stem_percent;
+  double asym, cell_dens;
   int max_cap;
   int nx, ny, nz;
   double stepx, stepy, stepz;       // grids size
@@ -69,6 +69,8 @@ class FixPDivideStem : public Fix {
   int asymcounter;
   int symcounter;
   int selfcounter;
+  double horiDiv; //horizontal division percentage for
+
 
   class RanPark *random;
   class AtomVecBio *avec;

@@ -63,6 +63,7 @@ class FixPDivideTa : public Fix {
   int snxx, snyy, snzz;                   // # of local grids in x, y and z
   double vol;                       // grid volume and gas volume
   int asymcounter, symcounter, selfcounter;
+  double horiDiv; //horizontal division percentage for
 
   class RanPark *random;
   class AtomVecBio *avec;

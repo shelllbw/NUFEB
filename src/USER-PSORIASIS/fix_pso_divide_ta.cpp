@@ -59,23 +59,23 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 9)
+  if (narg < 10)
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[4];
-  ivar = new int[4];
+  var = new char*[5];
+  ivar = new int[5];
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[8]);
+  seed = force->inumeric(FLERR, arg[9]);
 
   // read optional param
   demflag = 0;
@@ -97,7 +97,7 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
 
-  int iarg = 9;
+  int iarg = 10;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -157,7 +157,7 @@ FixPDivideTa::~FixPDivideTa() {
   delete random;
 
   int i;
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < 5; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -180,7 +180,7 @@ void FixPDivideTa::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 4; n++) {
+  for (int n = 0; n < 5; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -192,6 +192,7 @@ void FixPDivideTa::init() {
   asym = input->variable->compute_equal(ivar[1]);
   cell_dens = input->variable->compute_equal(ivar[2]);
   max_division_counter = input->variable->compute_equal(ivar[3]);
+  horiDiv = input->variable->compute_equal(ivar[4]);
 
   //dinika's edits - adding division counter
   int nlocal = atom->nlocal;
@@ -245,11 +246,12 @@ void FixPDivideTa::post_integrate() {
       std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
       std::uniform_real_distribution<double>  distribution(0.0, 1.0);
       double rand = distribution(gen);
+      double randdiv = distribution(gen);
 
 //      double sbheight = zhi * 0.7; //cubic domain
 //      double ssheight = zhi * 0.8;
-      double sbheight = zhi * 0.66; //smaller domain
-      double ssheight = zhi * 0.74;
+      double sbheight = zhi * 0.67; //smaller domain
+      double ssheight = zhi * 0.75;
 
       if (atom->radius[i] * 2 >= div_dia){
     	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
@@ -315,7 +317,7 @@ void FixPDivideTa::post_integrate() {
     	newX = oldX;
     	newY = oldY;
 
-        if (parentType == ta_id) {
+        if (parentType == ta_id && rand < horiDiv) {
         	newZ = oldZ;
         } else {
 			newZ = oldZ + atom->radius[i];
@@ -355,7 +357,7 @@ void FixPDivideTa::post_integrate() {
         newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
         newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
 
-        if (childType == ta_id) {
+        if (childType == ta_id && rand < horiDiv) {
 			newZ = oldZ;
 		} else {
 			newZ = oldZ + atom->radius[i];

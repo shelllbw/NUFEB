@@ -190,7 +190,7 @@ void FixPDivideStem::init() {
   div_dia = input->variable->compute_equal(ivar[0]);
   asym = input->variable->compute_equal(ivar[1]);
   cell_dens = input->variable->compute_equal(ivar[2]);
-  stem_percent = input->variable->compute_equal(ivar[3]);
+  horiDiv = input->variable->compute_equal(ivar[3]);
 
   //Dinika's edits
   //modify atom mask
@@ -240,12 +240,13 @@ void FixPDivideStem::init() {
       std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
       std::uniform_real_distribution<double>  distribution(0.0, 1.0);
       double rand = distribution(gen);
+      double randdiv = distribution(gen);
 
       int ta_id = bio->find_typeid("ta");
       int stem_id = bio->find_typeid("stem");
 
       //double sbheight = zhi * 0.7; //cubic domain
-      double sbheight = zhi * 0.66; //smaller domain
+      double sbheight = zhi * 0.67; //smaller domain
 
    if (atom->radius[i] * 2 >= div_dia){
 	  if (rand < (1 - asym)/2 && atom->x[i][2] < sbheight){
@@ -301,8 +302,7 @@ void FixPDivideStem::init() {
 
 	 newX = oldX;
 	 newY = oldY;
-	 //if (rand < 0.6)
-	 if (parentType == stem_id){
+	 if (parentType == stem_id || parentType == ta_id && rand < horiDiv){
 		 newZ = oldZ;
 	 } else {
 		 newZ = oldZ + atom->radius[i];
@@ -338,11 +338,12 @@ void FixPDivideStem::init() {
 	 double* coord = new double[3];
 	 newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
 	 newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
-//	 if (childType == stem_id){
+
+	 if (childType == stem_id || childType == ta_id && rand < horiDiv){
 		 newZ = oldZ;
-//	 } else {
-//		 newZ = oldZ + atom->radius[i];
-//	 }
+	 } else {
+		 newZ = oldZ + atom->radius[i];
+	 }
 
 	 if (newX - childOuterRadius < xlo) {
 		 newX = xlo + childOuterRadius;
