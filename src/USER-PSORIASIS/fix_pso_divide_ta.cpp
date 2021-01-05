@@ -254,7 +254,7 @@ void FixPDivideTa::post_integrate() {
       double ssheight = zhi * 0.75;
 
       if (atom->radius[i] * 2 >= div_dia){
-    	  if (parentDivisionCount >= max_division_counter){ //if TA cell division counter has reached the max, only divide to diff cells
+    	  if (parentDivisionCount >= max_division_counter){
     		  parentType = diff_id;
     		  childType = ta_id;
     		  parentMask = diff_mask;
@@ -265,16 +265,16 @@ void FixPDivideTa::post_integrate() {
 			  parentMask = diff_mask;
 			  childMask = diff_mask;
       	 // }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2) {
-    	  }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2 || atom->x[i][2] < sbheight) {
+    	  }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2 || atom->x[i][2] <= sbheight) {
       		  parentType = ta_id;
       		  childType = ta_id;
       		  parentMask = atom->mask[i];
       		  childMask = atom->mask[i];
 		  } else {
-			  parentType = diff_id;
-			  childType = ta_id;
-			  parentMask = diff_mask;
-			  childMask = atom->mask[i];
+			  parentType = ta_id;
+			  childType = diff_id;
+			  parentMask= atom->mask[i];
+			  childMask = diff_mask;
     	  }
 
 

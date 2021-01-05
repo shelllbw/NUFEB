@@ -249,7 +249,7 @@ void FixPDivideStem::init() {
       double sbheight = zhi * 0.67; //smaller domain
 
    if (atom->radius[i] * 2 >= div_dia){
-	  if (rand < (1 - asym)/2 && atom->x[i][2] < sbheight){
+	  if (rand < (1 - asym)/2 && atom->x[i][2] <= sbheight){
 		   parentType = stem_id;
 		   childType = stem_id;
 		   parentMask = atom->mask[i];
