@@ -14,7 +14,7 @@
  See the README file in the top-level LAMMPS directory.
  ------------------------------------------------------------------------- */
 
-#include "fix_pso_growth_diff.h"
+#include "fix_pso_psoriasis.h"
 
 #include <math.h>
 #include <string.h>
@@ -50,14 +50,14 @@ using namespace std;
 
 /* ---------------------------------------------------------------------- */
 
-FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
+FixPPsoriasis::FixPPsoriasis(LAMMPS *lmp, int narg, char **arg) :
 	Fix(lmp, narg, arg) {
   avec = (AtomVecBio *) atom->style_match("bio");
   if (!avec)
-	error->all(FLERR, "Fix psoriasis/growth/diff requires atom style bio");
+	error->all(FLERR, "Fix pso/psoriasis requires atom style bio");
 
-  if (narg < 6)
-	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/diff command");
+  if (narg < 5)
+	error->all(FLERR, "Not enough arguments in fix pso/psoriasis command");
 
   varg = narg-3;
   var = new char*[varg];
@@ -73,21 +73,21 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 6;
+  int iarg = 5;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
 	  if (external_gflag != 0 && external_gflag != 1)
-		error->all(FLERR, "Illegal fix psoriasis/growth/diff command: gflag");
+		error->all(FLERR, "Illegal fix pso/psoriasis command: gflag");
 	  iarg += 2;
 	} else
-	  error->all(FLERR, "Illegal fix psoriasis/growth/diff command");
+	  error->all(FLERR, "Illegal fix pso/psoriasis command");
   }
 }
 
 /* ---------------------------------------------------------------------- */
 
-FixPGrowthDIFF::~FixPGrowthDIFF() {
+FixPPsoriasis::~FixPPsoriasis() {
   int i;
   for (i = 0; i < varg; i++) {
 	delete[] var[i];
@@ -100,7 +100,7 @@ FixPGrowthDIFF::~FixPGrowthDIFF() {
 
 /* ---------------------------------------------------------------------- */
 
-int FixPGrowthDIFF::setmask() {
+int FixPPsoriasis::setmask() {
   int mask = 0;
   mask |= PRE_FORCE;
   return mask;
@@ -110,16 +110,16 @@ int FixPGrowthDIFF::setmask() {
  if need to restore per-atom quantities, create new fix STORE styles
  ------------------------------------------------------------------------- */
 
-void FixPGrowthDIFF::init() {
+void FixPPsoriasis::init() {
   if (!atom->radius_flag)
 	error->all(FLERR, "Fix requires atom attribute diameter");
 
   for (int n = 0; n < varg; n++) {
 	ivar[n] = input->variable->find(var[n]);
 	if (ivar[n] < 0)
-	  error->all(FLERR, "Variable name for fix psoriasis/growth/diff does not exist");
+	  error->all(FLERR, "Variable name for fix pso/psoriasis does not exist");
 	if (!input->variable->equalstyle(ivar[n]))
-	  error->all(FLERR, "Variable for fix psoriasis/growth/diff is invalid style");
+	  error->all(FLERR, "Variable for fix pso/psoriasis is invalid style");
   }
 
   // register fix kinetics with this class
@@ -136,28 +136,27 @@ void FixPGrowthDIFF::init() {
   if (kinetics == NULL)
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
-  diff_dens = input->variable->compute_equal(ivar[0]);
+  sc_dens = input->variable->compute_equal(ivar[0]);
   apop = input->variable->compute_equal(ivar[1]);
-  ddesq = input->variable->compute_equal(ivar[2]);
 
   bio = kinetics->bio;
 
   if (bio->nnu == 0)
-	error->all(FLERR, "fix_psoriasis/growth/diff requires Nutrients input");
+	error->all(FLERR, "fix_pso/psoriasis requires Nutrients input");
   else if (bio->decay == NULL)
-	error->all(FLERR, "fix_psoriasis/growth/diff requires Decay input");
+	error->all(FLERR, "fix_pso/psoriasisrequires Decay input");
   else if (bio->mu == NULL)
-	error->all(FLERR, "fix_psoriasis/growth/diff requires Growth Rate input");
+	error->all(FLERR, "fix_pso/psoriasis requires Growth Rate input");
   else if (bio->ks == NULL)
-      error->all(FLERR, "fix_psoriasis/growth/diff requires Ks input");
+      error->all(FLERR, "fix_pso/psoriasis requires Ks input");
   else if (bio->yield == NULL)
-        error->all(FLERR, "fix_psoriasis/growth/diff requires Yield input");
+      error->all(FLERR, "fix_pso/psoriasisc requires Yield input");
 
   nx = kinetics->nx;
   ny = kinetics->ny;
   nz = kinetics->nz;
 
-  species = memory->create(species, atom->ntypes+1, "diff:species");
+  species = memory->create(species, atom->ntypes+1, "pso:species");
 
   //Get computational domain size
   if (domain->triclinic == 0) {
@@ -188,17 +187,34 @@ void FixPGrowthDIFF::init() {
 
 /* ---------------------------------------------------------------------- */
 
-void FixPGrowthDIFF::init_param() {
-	ca = 0;
+void FixPPsoriasis::init_param() {
+	il17, tnfa, gf, ca, il23 = 0;
+	//gf, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
+	if (strcmp(bio->nuname[nu], "il17") == 0)
+	  il17 = nu;
+	if (strcmp(bio->nuname[nu], "tnfa") == 0)
+		  tnfa = nu;
+	if (strcmp(bio->nuname[nu], "il23") == 0)
+			  il23 = nu;
+	if (strcmp(bio->nuname[nu], "gf") == 0)
+		gf = nu;
 	if (strcmp(bio->nuname[nu], "ca") == 0)
-			ca = nu;
+		ca = nu;
   }
 
+  if (il17 == 0)
+	error->all(FLERR, "fix_psoriasis requires nutrient il17");
+  if (tnfa == 0)
+  	error->all(FLERR, "fix_psoriasis requires nutrient tnfa");
+  if (il23 == 0)
+    	error->all(FLERR, "fix_psoriasis requires nutrient tnfa");
+  if (gf == 0)
+    	error->all(FLERR, "fix_psoriasis requires nutrient gf");
   if (ca == 0)
-         	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient ca");
+     	error->all(FLERR, "fix_psoriasis requires nutrient ca");
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -219,11 +235,9 @@ void FixPGrowthDIFF::init_param() {
 	  else if (strcmp(name, "bm") == 0)
 	  	species[i] = 7;
 	  else
-		error->all(FLERR, "unknown species in fix_psoriasis/growth/diff");
-
+		error->all(FLERR, "unknown species in fix_psoriasis");
   }
 }
-
 
 /* ----------------------------------------------------------------------
  metabolism and atom update
@@ -232,7 +246,7 @@ void FixPGrowthDIFF::init_param() {
 
  todo: place update biomass in here since we are calculating based on cell rather than grid
  ------------------------------------------------------------------------- */
-void FixPGrowthDIFF::growth(double dt, int gflag) {
+void FixPPsoriasis::growth(double dt, int gflag) {
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
   int *type = atom->type;
@@ -240,6 +254,8 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
   double *radius = atom->radius;
   double *rmass = atom->rmass;
+  double *outer_mass = avec->outer_mass;
+  double *outer_radius = avec->outer_radius;
 
   double *mu = bio->mu;
   double *decay = bio->decay;
@@ -247,12 +263,12 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
   double **ks = bio->ks;
   double *yield = bio->yield;
 
-  double **xdensity = kinetics->xdensity;
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
+  double **xdensity = kinetics->xdensity;
 
-  double growrate_d = 0;
+  double growrate = 0;
 
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
 	  //grid without atom is not considered
@@ -260,47 +276,78 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
 	  for (int i = 1; i <= ntypes; i++) {
 		  int spec = species[i];
-	  //different heights for diff cells
-//		  double sgheight = zhi * 0.85; //cubic domain
-//		  double scheight = zhi * 0.92;
-//		  double ssheight = zhi * 0.8;
-		  double ssheight = zhi * 0.73; //smaller domain
-		  double sgheight = zhi * 0.85;
-		  double scheight = zhi * 0.9;
 
-		  if (spec == 3) {
-			  //printf("------- start of growth/diff  -------- \n");
+		  // Stem cell model
+		  if (spec == 1) {
+			  //printf("------- start of psoriasis/sc  -------- \n");
 
-			 //decay rate
-			double r8 = decay[i];
-			//desquamation rate
-			double r9 = ddesq;
+			//growth rate
+			double r1 = mu[i] * (nus[il17][grid] / (ks[i][il17] + nus[il17][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
+			//decay rate
+			double r2 =  decay[i];
 			//apoptosis rate
-			double r10 = apop;
+			double r3 = (r1 - r2)  * apop;
 
+			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
+			//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
-			//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
+			nur[il17][grid] += yield[i] * r1 * xdensity[i][grid] - r1 * xdensity[i][grid];
+			nur[tnfa][grid] += yield[i] * r1 * xdensity[i][grid] - r1 * xdensity[i][grid];
 
-			if (atom->x[i][2] < sgheight && atom->x[i][2] > ssheight) { //if in SG layer then secrete out most calcium
-				nur[ca][grid] += r8 *  xdensity[i][grid];
-				growrate_d = - (r8 + r8 * r10) ;
-			} else if (atom->x[i][2] < scheight && atom->x[i][2] > sgheight) { // if in SC layer, calcium should be 0
-				nur[ca][grid] += (r8 + r9) *  xdensity[i][grid];
-				growrate_d = - (r8 + r9 + (r8 + r9 * r10));
-			} else {
-				growrate_d = 0; //if diff cell is below sg layer, no update
-			}
+			growrate = r1 - r2 - r3;
+
+			//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
+			//printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_sc * dt));
+		  } else if (spec == 2) {
+			  //printf("------- start of psoriasis/ta  -------- \n");
+			  //growth rate
+			double r4 = mu[i] * (nus[il17][grid] / (ks[i][il17] + nus[il17][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
+			//decay rate
+			double r5 =  decay[i];
+			//apoptosis rate
+			double r6 = (r4 - r5)  * apop;
+
+			nur[il17][grid] += yield[i] * r4 * xdensity[i][grid] - r4 * xdensity[i][grid];
+			nur[tnfa][grid] += yield[i] * r4 * xdensity[i][grid] - r4 * xdensity[i][grid];
+
+			growrate = r4 - r5 - r6;
+
+//		  } else if (spec == 3) {
+//			  //printf("------- start of psoriasis/diff  -------- \n");
+//			//decay rate
+//			double r7 =  decay[i];
+//			//desquamation rate
+//			double r8 = ddesq;
+//			//apoptosis rate
+//			double r9 = (r7 - r8)  * apop;
+//
+//
+
+		  } else if (spec == 4) {
+			  //printf("------- start of psoriasis/tcell  -------- \n");
+			  //growth rate
+			double r10 = mu[i] * (nus[il23][grid] / (ks[i][il23] + nus[il23][grid]));
+			//decay rate
+			double r11 =  decay[i];
+			//apoptosis rate
+			double r12 = (r10 - r11)  * apop;
+
+			nur[il23][grid] += - (r10 * xdensity[i][grid]);
+			nur[il17][grid] += yield[i] * r10 * xdensity[i][grid] - r10 * xdensity[i][grid];
+			nur[tnfa][grid] += yield[i] * r10 * xdensity[i][grid] - r10 * xdensity[i][grid];
+
+			growrate = r10 - r11 - r12;
 		  }
-	  }
-  	}
+	}
+  }
   //update physical attributes
-    if (gflag && external_gflag) update_biomass(growrate_d, dt);
+    if (gflag && external_gflag) update_biomass(growrate, dt);
 }
 
 /* ----------------------------------------------------------------------
  update particle attributes: biomass, outer mass, radius etc
  ------------------------------------------------------------------------- */
-void FixPGrowthDIFF::update_biomass(double growrate, double dt) {
+void FixPPsoriasis::update_biomass(double growrate, double dt) {
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
   int *type = atom->type;
@@ -312,24 +359,18 @@ void FixPGrowthDIFF::update_biomass(double growrate, double dt) {
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
   const double third = 1.0 / 3.0;
 
-  double ssheight = zhi * 0.73; //smaller domain
-  double sgheight = zhi * 0.85;
-  double scheight = zhi * 0.9;
-
   for (int i = 0; i < nlocal; i++) {
     if (mask[i] & groupbit) {
-      int t = type[i];
-      int pos = kinetics->position(i);
+
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-//      if (atom->x[i][2] > sgheight && atom->x[i][2] < scheight) {
-      	rmass[i] = rmass[i] * (1 + growrate * dt);
-//      } else {
-//      	rmass[i] = rmass[i];
-//      }
-
-      radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+      //printf("growrate is %e \n", growrate);
+	    //printf("BEFORE %i - rmass: %e, radius: %e \n", i, rmass[i], radius[i]);
+		rmass[i] = rmass[i] * (1 + growrate * dt);
+		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+		//printf("properties of new sc %i is rmass %e, radius %e \n", i, rmass[i], radius[i]);
     }
   }
 }
+
 

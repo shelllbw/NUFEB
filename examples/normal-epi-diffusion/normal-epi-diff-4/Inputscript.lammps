@@ -37,8 +37,7 @@ set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
-#create_atoms 5 random 100 64565 reg2
-#create_atoms 4 random 50 64564 reg2
+create_atoms 4 random 100 64564 reg2
 
 group TA type 2
 group DIFF type 3
@@ -114,8 +113,8 @@ variable divDia equal 1.36e-6
 variable divisionCounter equal 4
 variable asym equal 0.8
 variable maxDivCount equal 4
-variable horiDivSC equal 0.3
-variable horiDivTA equal 1.0
+variable horiDivSC equal 0.25
+variable horiDivTA equal 0.9
 
 #variables used in fix kinetics
 variable diffT equal 1e-4

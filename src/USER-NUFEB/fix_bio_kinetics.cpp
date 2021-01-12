@@ -39,6 +39,7 @@
 #include "fix_pso_growth_tcell.h"
 #include "fix_pso_growth_ta.h"
 #include "fix_pso_growth_diff.h"
+#include "fix_pso_psoriasis.h"
 #include "comm.h"
 #include "fix_bio_sedifoam.h"
 #include "compute.h"
@@ -244,6 +245,7 @@ void FixKinetics::init() {
   psotcell = NULL;
   psota = NULL;
   psodiff = NULL;
+  psopsoriasis = NULL;
 
 
   int nfix = modify->nfix;
@@ -268,6 +270,8 @@ void FixKinetics::init() {
     	psota = static_cast<FixPGrowthTA *>(lmp->modify->fix[j]);
     } else if (strcmp(modify->fix[j]->style, "psoriasis/growth/diff") == 0) {
     	psodiff = static_cast<FixPGrowthDIFF *>(lmp->modify->fix[j]);
+    } else if (strcmp(modify->fix[j]->style, "psoriasis/psoriasis") == 0) {
+    	psopsoriasis = static_cast<FixPPsoriasis *>(lmp->modify->fix[j]);
     }
   }
 
@@ -408,7 +412,9 @@ void FixKinetics::integration() {
     	psota->growth(diff_dt * devery, grow_flag);
     } else if (psodiff != NULL){
     	psodiff->growth(diff_dt * devery, grow_flag);
-    	}
+    } else if (psopsoriasis != NULL){
+    	psopsoriasis->growth(diff_dt * devery, grow_flag);
+    }
      }
 
       iter++;
@@ -460,6 +466,8 @@ void FixKinetics::integration() {
 	  psota->growth(update->dt * nevery, grow_flag);
   if (psodiff != NULL)
   	  psodiff->growth(update->dt * nevery, grow_flag);
+  if (psopsoriasis != NULL)
+    	  psopsoriasis->growth(update->dt * nevery, grow_flag);
 
   if (ph != NULL && ph->buffer_flag)
     ph->buffer_ph();

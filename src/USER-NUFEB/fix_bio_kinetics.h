@@ -38,6 +38,7 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
   friend class FixPGrowthTCELL;
   friend class FixPGrowthTA;
   friend class FixPGrowthDIFF;
+  friend class FixPPsoriasis;
 
  public:
   FixKinetics(class LAMMPS *, int, char **);
@@ -100,6 +101,7 @@ class FixKinetics : public Fix, public DecompGrid<FixKinetics> {
   class FixPGrowthTCELL *psotcell;
   class FixPGrowthTA *psota;
   class FixPGrowthDIFF *psodiff;
+  class FixPPsoriasis *psopsoriasis;
 
   void init_param();
   void integration();

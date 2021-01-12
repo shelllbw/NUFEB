@@ -115,7 +115,7 @@ variable divisionCounter equal 4
 variable asym equal 0.8
 variable maxDivCount equal 4
 variable horiDivSC equal 0.25
-variable horiDivTA equal 0.95
+variable horiDivTA equal 0.9
 
 #variables used in fix kinetics
 variable diffT equal 1e-4

@@ -251,31 +251,49 @@ void FixPDivideTa::post_integrate() {
 //      double sbheight = zhi * 0.7; //cubic domain
 //      double ssheight = zhi * 0.8;
       double sbheight = zhi * 0.67; //smaller domain
-      double ssheight = zhi * 0.75;
+      double ssheight = zhi * 0.73;
+      //double cheight = zhi * 0.69;
 
       if (atom->radius[i] * 2 >= div_dia){
-    	  if (parentDivisionCount >= max_division_counter){
-    		  parentType = diff_id;
-    		  childType = ta_id;
-    		  parentMask = diff_mask;
-    		  childMask = atom->mask[i];
-    	  } else if (atom->x[i][2] > ssheight){
+//    	  if (parentDivisionCount >= max_division_counter && (atom->x[i][2] > sbheight && atom->x[i][2] < ssheight)){
+//    		  parentType = diff_id;
+//    		  childType = ta_id;
+//    		  parentMask = diff_mask;
+//    		  childMask = atom->mask[i];
+//    	  } else
+    		  if (atom->x[i][2] > ssheight){
     		  parentType = diff_id;
 			  childType = diff_id;
 			  parentMask = diff_mask;
 			  childMask = diff_mask;
-      	 // }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2) {
-    	  }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2 || atom->x[i][2] <= sbheight) {
-      		  parentType = ta_id;
-      		  childType = ta_id;
-      		  parentMask = atom->mask[i];
-      		  childMask = atom->mask[i];
-		  } else {
+    	  }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2 || atom->x[i][2] < sbheight) {
 			  parentType = ta_id;
-			  childType = diff_id;
-			  parentMask= atom->mask[i];
-			  childMask = diff_mask;
+			  childType = ta_id;
+			  parentMask = atom->mask[i];
+			  childMask = atom->mask[i];
+		  } else {
+			  parentType = diff_id;
+			  childType = ta_id;
+			  parentMask = diff_mask;
+			  childMask = atom->mask[i];
     	  }
+
+//		  if (parentDivisionCount >= max_division_counter && rand < (1-asym)/2){
+//			  parentType = diff_id;
+//			  childType = diff_id;
+//			  parentMask = diff_mask;
+//			  childMask = diff_mask;
+//		  } else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2) {
+//			  parentType = ta_id;
+//			  childType = ta_id;
+//			  parentMask = atom->mask[i];
+//			  childMask = atom->mask[i];
+//		  } else {
+//			  parentType = ta_id;
+//			  childType = diff_id;
+//			  parentMask= atom->mask[i];
+//			  childMask = diff_mask;
+//		  }
 
 
 		parentDivisionCount = avec->d_counter[i] + 1;
