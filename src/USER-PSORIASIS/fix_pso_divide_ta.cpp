@@ -59,23 +59,23 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 10)
+  if (narg < 11)
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[5];
-  ivar = new int[5];
+  var = new char*[6];
+  ivar = new int[6];
 
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 6; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[9]);
+  seed = force->inumeric(FLERR, arg[10]);
 
   // read optional param
   demflag = 0;
@@ -97,7 +97,7 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
 
-  int iarg = 10;
+  int iarg = 11;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -157,7 +157,7 @@ FixPDivideTa::~FixPDivideTa() {
   delete random;
 
   int i;
-  for (i = 0; i < 5; i++) {
+  for (i = 0; i < 6; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -180,7 +180,7 @@ void FixPDivideTa::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 5; n++) {
+  for (int n = 0; n < 6; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -190,9 +190,10 @@ void FixPDivideTa::init() {
 
   div_dia = input->variable->compute_equal(ivar[0]);
   asym = input->variable->compute_equal(ivar[1]);
-  cell_dens = input->variable->compute_equal(ivar[2]);
-  max_division_counter = input->variable->compute_equal(ivar[3]);
-  horiDiv = input->variable->compute_equal(ivar[4]);
+  self = input->variable->compute_equal(ivar[2]);
+  cell_dens = input->variable->compute_equal(ivar[3]);
+  max_division_counter = input->variable->compute_equal(ivar[4]);
+  horiDiv = input->variable->compute_equal(ivar[5]);
 
   //dinika's edits - adding division counter
   int nlocal = atom->nlocal;
@@ -261,39 +262,62 @@ void FixPDivideTa::post_integrate() {
 //    		  parentMask = diff_mask;
 //    		  childMask = atom->mask[i];
 //    	  } else
-    		  if (atom->x[i][2] > ssheight){
-    		  parentType = diff_id;
-			  childType = diff_id;
-			  parentMask = diff_mask;
-			  childMask = diff_mask;
-    	  }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2 || atom->x[i][2] < sbheight) {
-			  parentType = ta_id;
-			  childType = ta_id;
-			  parentMask = atom->mask[i];
-			  childMask = atom->mask[i];
-		  } else {
-			  parentType = diff_id;
-			  childType = ta_id;
-			  parentMask = diff_mask;
-			  childMask = atom->mask[i];
-    	  }
+//    		  if (atom->x[i][2] > ssheight){
+//    		  parentType = diff_id;
+//			  childType = diff_id;
+//			  parentMask = diff_mask;
+//			  childMask = diff_mask;
+//    	  }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2 || atom->x[i][2] < sbheight) {
+//			  parentType = ta_id;
+//			  childType = ta_id;
+//			  parentMask = atom->mask[i];
+//			  childMask = atom->mask[i];
+//		  } else {
+//			  parentType = diff_id;
+//			  childType = ta_id;
+//			  parentMask = diff_mask;
+//			  childMask = atom->mask[i];
+//    	  }
 
 //		  if (parentDivisionCount >= max_division_counter && rand < (1-asym)/2){
 //			  parentType = diff_id;
 //			  childType = diff_id;
 //			  parentMask = diff_mask;
 //			  childMask = diff_mask;
-//		  } else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2) {
+//		  //} else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2) {
+//		  } else if (parentDivisionCount >= max_division_counter && rand < asym) {
+//			  parentType = diff_id;
+//			  childType = ta_id;
+//			  parentMask = diff_mask;
+//			  childMask = atom->mask[i];
+//		  } else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2){
 //			  parentType = ta_id;
 //			  childType = ta_id;
-//			  parentMask = atom->mask[i];
+//			  parentMask= atom->mask[i];
 //			  childMask = atom->mask[i];
 //		  } else {
-//			  parentType = ta_id;
-//			  childType = diff_id;
-//			  parentMask= atom->mask[i];
-//			  childMask = diff_mask;
+//			  parentType = diff_id;
+//			  childType = ta_id;
+//			  parentMask = diff_mask;
+//			  childMask = atom->mask[i];
 //		  }
+
+    	  if (parentDivisionCount < max_division_counter && rand < self){
+    		  parentType = ta_id;
+			  childType = ta_id;
+			  parentMask= atom->mask[i];
+			  childMask = atom->mask[i];
+    	  } else if (rand < asym) {
+    		  parentType = diff_id;
+			  childType = ta_id;
+			  parentMask = diff_mask;
+			  childMask = atom->mask[i];
+    	  } else {
+    		  parentType = diff_id;
+			  childType = diff_id;
+			  parentMask = diff_mask;
+			  childMask = diff_mask;
+    	  }
 
 
 		parentDivisionCount = avec->d_counter[i] + 1;

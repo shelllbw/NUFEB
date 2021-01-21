@@ -276,17 +276,19 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 			//desquamation rate
 			double r9 = ddesq;
 			//apoptosis rate
-			double r10 = apop;
+			double r10 = (r8 + r9) * apop;
 
 
-			//printf("growrate_diff equation is R9 %e  R10 %e  R11 %e \n", R9, R10, R11);
+			//printf("growrate_diff equation is R8 %e  R9 %e  R10 %e \n", r8, r9, r10);
+			//printf("growth_diff grid %i ca %e \n", grid, nus[ca][grid]);
 
-			if (atom->x[i][2] < sgheight && atom->x[i][2] > ssheight) { //if in SG layer then secrete out most calcium
-				nur[ca][grid] += r8 *  xdensity[i][grid];
-				growrate_d = - (r8 + r8 * r10) ;
-			} else if (atom->x[i][2] < scheight && atom->x[i][2] > sgheight) { // if in SC layer, calcium should be 0
+			if (atom->x[i][2] > sgheight && atom->x[i][2] < scheight) { //if in SG layer then secrete out most calcium
 				nur[ca][grid] += (r8 + r9) *  xdensity[i][grid];
-				growrate_d = - (r8 + r9 + (r8 + r9 * r10));
+				//nur[ca][grid] += yield[i] * (r8 + r9) * xdensity[i][grid];
+				growrate_d = - (r8 + r9 + r10) ;
+//			} else if (atom->x[i][2] < scheight && atom->x[i][2] > sgheight) { // if in SC layer, calcium should be 0
+//				nur[ca][grid] += (r8 + r9) *  xdensity[i][grid];
+//				growrate_d = - (r8 + r9 + (r8 + r9 * r10));
 			} else {
 				growrate_d = 0; //if diff cell is below sg layer, no update
 			}

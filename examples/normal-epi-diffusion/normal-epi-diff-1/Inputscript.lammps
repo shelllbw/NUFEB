@@ -104,18 +104,20 @@ fix zwt TA wall/gran hooke/history 2000 NULL 500.0 NULL 1.5. 0 zplane 1.6e-5 0.3
 variable kanc equal 50
 
 # a1 = bm-sc  a2 = bm-ta a3 = sc-ta  a4 =sc-diff  a5 = ta-diff a6 = same cell type
-fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-16 0 1.6e-16 1.6e-13
+fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-13 0 0 1.6e-13
 
 ##############Define IBm Variables##############
 
 
 #variables used in fix division
 variable divDia equal 1.36e-6
-variable divisionCounter equal 4
-variable asym equal 0.8
+variable asymSC equal 0.8
+variable selfSC equal 0.2
 variable maxDivCount equal 4
 variable horiDivSC equal 0.25
 variable horiDivTA equal 0.9
+variable asymTA equal 0.77
+variable selfTA equal 0.2
 
 #variables used in fix kinetics
 variable diffT equal 1e-4
@@ -150,10 +152,10 @@ fix k1 all kinetics 1 50 20 30 v_diffT v_layer demflag 0 niter 5000
 #fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_apop
 fix g1 all kinetics/diffusion v_tol pp pp dn dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_apop
-fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asym v_STEMdens v_horiDivSC 64564 demflag 0
+fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asymSC v_selfSC v_STEMdens v_horiDivSC 64564 demflag 0
 fix kgta TA psoriasis/growth/ta v_TAdens v_apop
-fix d2 TA psoriasis/divide_ta 1 v_divDia v_asym v_TAdens v_maxDivCount v_horiDivTA 64564 demflag 0
-#fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_apop v_ddesq
+fix d2 TA psoriasis/divide_ta 1 v_divDia v_asymTA v_selfTA v_TAdens v_maxDivCount v_horiDivTA 64564 demflag 0
+fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_apop v_ddesq
 
 ##############Define IBm Computes##############
 
@@ -173,7 +175,7 @@ thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 2000 pre no post no every 1 &
+run 2500 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
 "fix_modify d1 demflag 1" &
 "fix_modify d2 demflag 1" &

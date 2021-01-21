@@ -57,7 +57,7 @@ class FixPDivideTa : public Fix {
   char* type_name;
   int parentType, childType;
   int parentMask, childMask;
-  double asym, cell_dens;
+  double asym, self, cell_dens;
   int nx, ny, nz;
   double stepx, stepy, stepz;       // grids size
   int snxx, snyy, snzz;                   // # of local grids in x, y and z

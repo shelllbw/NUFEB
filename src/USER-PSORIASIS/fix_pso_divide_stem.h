@@ -59,7 +59,7 @@ class FixPDivideStem : public Fix {
   int parentType, childType;
   int ta_mask;
   int parentMask, childMask;
-  double asym, cell_dens;
+  double asym, self, cell_dens;
   int max_cap;
   int nx, ny, nz;
   double stepx, stepy, stepz;       // grids size
