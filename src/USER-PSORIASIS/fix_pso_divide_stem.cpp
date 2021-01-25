@@ -236,6 +236,8 @@ void FixPDivideStem::init() {
       type_id = atom->type[i];
       type_name = bio->tname[type_id];
 
+      max_cap = round((nlocal - nbm) * 0.05); //assume 5% for now
+
       //random generator to set probabilities of division
       std::random_device rd;  //Will be used to obtain a seed for the random number engine
       std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -266,7 +268,7 @@ void FixPDivideStem::init() {
 //		   parentMask = ta_mask;
 //		   childMask = atom->mask[i];
 //	   }
-	  if (rand < self){
+	  if (rand < self || nstem < max_cap){
 		   parentType = stem_id;
 		   childType = stem_id;
 		   parentMask = atom->mask[i];
