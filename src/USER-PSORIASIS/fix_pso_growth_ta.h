@@ -44,7 +44,7 @@ class FixPGrowthTA : public Fix {
   int varg;
   char *itype;
 
-  int il17, tnfa, gf, ca;
+  int il22, tnfa, gf, ca;
 
   int *species;                     // species index 0 = unknow, 1 = sc, 2 = ta, 3 = d, 4 = tc, 5 = dc
 
@@ -53,7 +53,6 @@ class FixPGrowthTA : public Fix {
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
   double ta_dens, apop;
-  double il172, il1720, tnfa2,tnfa20, ca2, ca20;
 
   class AtomVecBio *avec;
   class FixKinetics *kinetics;

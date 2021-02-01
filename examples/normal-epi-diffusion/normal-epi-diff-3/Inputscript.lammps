@@ -91,6 +91,12 @@ pair_coeff 2 7
 pair_style  gran/hooke/history 2500 NULL 2500 NULL 0.0 1
 pair_coeff  3 7
 
+#pair_style  gran/hooke/history 2500 NULL 2500 NULL 0.0 1
+#pair_coeff  1 3
+
+#pair_style  gran/hooke/history 2200 NULL 2200 NULL 0.0 1
+#pair_coeff  2 3
+
 timestep 1e-3
 
 velocity BASE set 0.0 0.0 0.0 units box
@@ -111,11 +117,11 @@ fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-13 0 0 1.6e-13
 
 #variables used in fix division
 variable divDia equal 1.36e-6
-variable asymSC equal 0.75
+variable asymSC equal 0.8
 variable selfSC equal 0.18
 variable maxDivCount equal 4
 variable horiDivSC equal 0.25
-variable horiDivTA equal 0.9
+variable horiDivTA equal 0.25
 variable asymTA equal 0.77
 variable selfTA equal 0.2
 
@@ -175,7 +181,7 @@ thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 2500 pre no post no every 1 &
+run 3500 pre no post no every 1 &
 "fix_modify k1 demflag 1" &
 "fix_modify d1 demflag 1" &
 "fix_modify d2 demflag 1" &

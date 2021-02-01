@@ -37,7 +37,8 @@ set type 1 density 150
 set type 1 diameter 1.0e-6
 set type 1 mass 7.853981e-17
 
-#create_atoms 4 random 100 64564 reg2
+#create_atoms 5 random 100 64565 reg2
+create_atoms 4 random 100 64564 reg2
 
 group TA type 2
 group DIFF type 3
@@ -110,11 +111,11 @@ fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-13 0 0 1.6e-13
 
 #variables used in fix division
 variable divDia equal 1.36e-6
-variable asymSC equal 0.8
+variable asymSC equal 0.75
 variable selfSC equal 0.18
 variable maxDivCount equal 4
 variable horiDivSC equal 0.25
-variable horiDivTA equal 0.25
+variable horiDivTA equal 0.3
 variable asymTA equal 0.77
 variable selfTA equal 0.2
 
@@ -126,6 +127,7 @@ variable tol equal 1e-6
 #common variables used in growth
 variable abaseT equal 7.384e-8
 variable apop equal 0.12
+variable Cdens equal 30
 
 #variables used in growth/sc
 variable STEMdens equal 30
@@ -149,6 +151,7 @@ variable tnfa20 equal 0.0004224537
 fix k1 all kinetics 1 50 20 30 v_diffT v_layer demflag 0 niter 5000
 #fix kgdc DC psoriasis/growth/dc v_DCdens v_abase1 v_dckp v_dcact v_il232
 #fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_apop
+#fix kgdp all psoriasis/psoriasis v_Cdens v_apop
 fix g1 all kinetics/diffusion v_tol pp pp dd dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_apop
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asymSC v_selfSC v_STEMdens v_horiDivSC 64564 demflag 0
@@ -174,7 +177,21 @@ thermo_modify	lost ignore
 
 ##############Define Bio-loop and DEM-subloop##############
 
-run 3500 pre no post no every 1 &
+run 3500 pre no post yes every 1 &
+"fix_modify k1 demflag 1" &
+"fix_modify d1 demflag 1" &
+"fix_modify d2 demflag 1" &
+"timestep 1e-3" &
+"run 1000 pre no post no" &
+"timestep 3600"  &
+"fix_modify k1 demflag 0" &
+"fix_modify d1 demflag 0" &
+"fix_modify d2 demflag 0"
+
+run 3500 pre yes post no every 1 &
+"unfix fz1" &
+"unfix nomove" &
+"fix kgdp all psoriasis/psoriasis v_Cdens v_apop" &
 "fix_modify k1 demflag 1" &
 "fix_modify d1 demflag 1" &
 "fix_modify d2 demflag 1" &

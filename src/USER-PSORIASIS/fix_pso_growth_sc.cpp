@@ -188,13 +188,13 @@ void FixPGrowthSC::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthSC::init_param() {
-	//il17, tnfa, gf, ca, il23 = 0;
+	//il22, tnfa, gf, ca = 0;
 	gf, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
-//	if (strcmp(bio->nuname[nu], "il17") == 0)
-//	  il17 = nu;
+//	if (strcmp(bio->nuname[nu], "il22") == 0)
+//	  il22 = nu;
 //	if (strcmp(bio->nuname[nu], "tnfa") == 0)
 //		  tnfa = nu;
 	if (strcmp(bio->nuname[nu], "gf") == 0)
@@ -203,8 +203,8 @@ void FixPGrowthSC::init_param() {
 		ca = nu;
   }
 
-//  if (il17 == 0)
-//	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il17");
+//  if (il22 == 0)
+//	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il22");
 //  if (tnfa == 0)
 //  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
   if (gf == 0)
@@ -266,6 +266,15 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
   double growrate_sc = 0;
 
+//  for (int i = 0; i < nlocal; i++) {
+//    	if (atom->type[i] == 1) {
+//  		 //printf("diff cell type %i x: %e y: %e z: %e update_timestep %e age of cell %e \n", atom->type[i], atom->x[i][0], atom->x[i][1], atom->x[i][2], update->ntimestep, update->ntimestep/1001);
+//  		 //printf("age hour to min %e \n", (update->ntimestep/1001)*60);
+//    		printf("type %i   i %i  update_ntimestep %i age %i \n", atom->type[i], i, update->ntimestep, update->ntimestep/1001);
+//    		printf("atom coords x %e y %e z %e \n", atom->x[i][0], atom->x[i][1], atom->x[i][2]);
+//    	}
+//    }
+
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
 	  //grid without atom is not considered
 	  if(!xdensity[0][grid]) continue;
@@ -279,19 +288,23 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 			//growth rate
 			double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (nus[ca][grid] / (ks[i][ca] + nus[ca][grid]));
+			//psoriasis
+			//double r2 = mu[i] * (nus[il22][grid] / (ks[i][il22] + nus[il22][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
 			//decay rate
-			double r2 =  decay[i];
+			double r3 =  decay[i];
 			//apoptosis rate
-			double r3 = (r1 - r2)  * apop;
+			double r4 = (r1 - r3)  * apop;
+			//double r4 = (r1 + r2 - r3)  * apop;
 
 			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
 			//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
 			nur[gf][grid] += yield[i] * r1 * xdensity[i][grid] - r1 * xdensity[i][grid];
-			//nur[gf][grid] += r1 * xdensity[i][grid];
 			nur[ca][grid] += -(r1 * xdensity[i][grid]);
+			//nur[il22][grid] += -(r2 * xdensity[i][grid]);
 
-			growrate_sc = r1 - r2 - r3;
+			growrate_sc = r1 - r3 - r4;
+			//growrate_sc = r1 + r2 - r3 - r4;
 
 			//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
 			//printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_sc * dt));

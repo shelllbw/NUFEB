@@ -268,7 +268,7 @@ void FixPDivideStem::init() {
 //		   parentMask = ta_mask;
 //		   childMask = atom->mask[i];
 //	   }
-	  if (rand < self || nstem < max_cap){
+	  if (rand < self && atom->x[i][2] <= sbheight){
 		   parentType = stem_id;
 		   childType = stem_id;
 		   parentMask = atom->mask[i];

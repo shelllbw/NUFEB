@@ -302,12 +302,12 @@ void FixPDivideTa::post_integrate() {
 //			  childMask = atom->mask[i];
 //		  }
 
-    	  if (parentDivisionCount < max_division_counter && rand < self){
+    	  if (parentDivisionCount < max_division_counter && rand < self || atom->x[i][2] < sbheight){
     		  parentType = ta_id;
 			  childType = ta_id;
 			  parentMask= atom->mask[i];
 			  childMask = atom->mask[i];
-    	  } else if (rand < asym) {
+    	  } else if (rand < asym && (atom->x[i][2] > sbheight && atom->x[i][2] < ssheight)){
     		  parentType = diff_id;
 			  childType = ta_id;
 			  parentMask = diff_mask;

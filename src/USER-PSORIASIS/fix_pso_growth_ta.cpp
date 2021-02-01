@@ -188,13 +188,13 @@ void FixPGrowthTA::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthTA::init_param() {
-	//il17, tnfa, gf, ca = 0;
+	//il22, tnfa, gf, ca = 0;
 	gf, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
-//	if (strcmp(bio->nuname[nu], "il17") == 0)
-//	  il17 = nu;
+//	if (strcmp(bio->nuname[nu], "il22") == 0)
+//	  il22 = nu;
 //	if (strcmp(bio->nuname[nu], "tnfa") == 0)
 //		tnfa = nu;
 	if (strcmp(bio->nuname[nu], "gf") == 0)
@@ -203,8 +203,8 @@ void FixPGrowthTA::init_param() {
 		ca = nu;
   }
 
-//  if (il17 == 0)
-//	error->all(FLERR, "fix_psoriasis/growth/ta requires nutrient il17");
+//  if (il22 == 0)
+//	error->all(FLERR, "fix_psoriasis/growth/ta requires nutrient il22");
 //  if (tnfa == 0)
 //    	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
   if (gf == 0)
@@ -280,10 +280,13 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 
 			//growth rate
 			double r5 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (nus[ca][grid] / (ks[i][ca] + nus[ca][grid]));
+			//psoriasis
+			//double r6 = mu[i] * (nus[il22][grid] / (ks[i][il22] + nus[il22][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
 			//decay rate
-			double r6 = decay[i];
+			double r7 = decay[i];
 			//apoptosis rate
-			double r7 = (r5 - r6) * apop;
+			double r8 = (r5 - r7) * apop;
+			//double r8 = (r5 + r6 - r7) * apop;
 
 			//printf("growrate_ta nus il17 %e tnfa %e gf %e ca %e \n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid], nus[ca][grid]);
 			//printf("cell type %i\n", spec);
@@ -291,8 +294,10 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 
 			nur[gf][grid] += yield[i] * r5 * xdensity[i][grid] - r5 * xdensity[i][grid];
 			nur[ca][grid] += -(r5 * xdensity[i][grid]);
+			//nur[il22][grid] += -(r6 * xdensity[i][grid]);
 
-			growrate_ta = r5 - r6 - r7;
+			growrate_ta = r5 - r7 - r8;
+			//growrate_ta = r5 + r6 - r7 - r8;
 
 			//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", r5, r6, r7, r5 - r6 - r7);
 			//printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_ta * dt));

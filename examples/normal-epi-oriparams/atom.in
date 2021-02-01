@@ -13,7 +13,7 @@ Atoms
 
 Nutrients
 
-   1 il17 l 0 0 0 0 0 0 0
+   1 il22 l 0 0 0 0 0 0 0
    2 tnfa l 0 0 0 0 0 0 0
    3 il23 l 1.5e-3 1.5e-3 1.5e-3 1.5e-3 1.5e-3 1.5e-3 0
    4 gf l 0 0 0 0 0 0 0
@@ -30,7 +30,7 @@ Type Name
 
 Diffusion Coeffs
 
-   il17 1.6e-9
+   il22 1.6e-9
    tnfa 1.6e-9
    il23 1.6e-9
    gf 1.6e-9

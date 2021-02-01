@@ -78,6 +78,7 @@ class AtomVecBio : public AtomVec {
    * Dinika's edits
    * */
   int *d_counter; //division counter for each atom
+ // double *cell_age; // get age of cell
 
   class BIO *bio;
 

@@ -54,10 +54,10 @@ FixPPsoriasis::FixPPsoriasis(LAMMPS *lmp, int narg, char **arg) :
 	Fix(lmp, narg, arg) {
   avec = (AtomVecBio *) atom->style_match("bio");
   if (!avec)
-	error->all(FLERR, "Fix pso/psoriasis requires atom style bio");
+	error->all(FLERR, "Fix psoriasis/psoriasis requires atom style bio");
 
   if (narg < 5)
-	error->all(FLERR, "Not enough arguments in fix pso/psoriasis command");
+	error->all(FLERR, "Not enough arguments in fix psoriasis/psoriasis command");
 
   varg = narg-3;
   var = new char*[varg];
@@ -78,10 +78,10 @@ FixPPsoriasis::FixPPsoriasis(LAMMPS *lmp, int narg, char **arg) :
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
 	  if (external_gflag != 0 && external_gflag != 1)
-		error->all(FLERR, "Illegal fix pso/psoriasis command: gflag");
+		error->all(FLERR, "Illegal fix psoriasis/psoriasis command: gflag");
 	  iarg += 2;
 	} else
-	  error->all(FLERR, "Illegal fix pso/psoriasis command");
+	  error->all(FLERR, "Illegal fix psoriasis/psoriasis command");
   }
 }
 
@@ -117,9 +117,9 @@ void FixPPsoriasis::init() {
   for (int n = 0; n < varg; n++) {
 	ivar[n] = input->variable->find(var[n]);
 	if (ivar[n] < 0)
-	  error->all(FLERR, "Variable name for fix pso/psoriasis does not exist");
+	  error->all(FLERR, "Variable name for fix psoriasis/psoriasis does not exist");
 	if (!input->variable->equalstyle(ivar[n]))
-	  error->all(FLERR, "Variable for fix pso/psoriasis is invalid style");
+	  error->all(FLERR, "Variable for fix psoriasis/psoriasis is invalid style");
   }
 
   // register fix kinetics with this class
@@ -289,10 +289,10 @@ void FixPPsoriasis::growth(double dt, int gflag) {
 			double r3 = (r1 - r2)  * apop;
 
 			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
-			//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
+			printf("growth_sc grid %i il17 %e tnfa %e \n", grid, nus[il17][grid], nus[tnfa][grid]);
 
-			nur[il17][grid] += yield[i] * r1 * xdensity[i][grid] - r1 * xdensity[i][grid];
-			nur[tnfa][grid] += yield[i] * r1 * xdensity[i][grid] - r1 * xdensity[i][grid];
+			nur[il17][grid] += - r1 * xdensity[i][grid];
+			nur[tnfa][grid] += - r1 * xdensity[i][grid];
 
 			growrate = r1 - r2 - r3;
 
@@ -307,8 +307,8 @@ void FixPPsoriasis::growth(double dt, int gflag) {
 			//apoptosis rate
 			double r6 = (r4 - r5)  * apop;
 
-			nur[il17][grid] += yield[i] * r4 * xdensity[i][grid] - r4 * xdensity[i][grid];
-			nur[tnfa][grid] += yield[i] * r4 * xdensity[i][grid] - r4 * xdensity[i][grid];
+			nur[il17][grid] +=  - r4 * xdensity[i][grid];
+			nur[tnfa][grid] +=  - r4 * xdensity[i][grid];
 
 			growrate = r4 - r5 - r6;
 
