@@ -256,35 +256,33 @@ void FixPDivideTa::post_integrate() {
       //double cheight = zhi * 0.69;
 
       if (atom->radius[i] * 2 >= div_dia){
-//    	  if (parentDivisionCount >= max_division_counter && (atom->x[i][2] > sbheight && atom->x[i][2] < ssheight)){
-//    		  parentType = diff_id;
-//    		  childType = ta_id;
-//    		  parentMask = diff_mask;
-//    		  childMask = atom->mask[i];
-//    	  } else
-//    		  if (atom->x[i][2] > ssheight){
-//    		  parentType = diff_id;
-//			  childType = diff_id;
-//			  parentMask = diff_mask;
-//			  childMask = diff_mask;
-//    	  }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2 || atom->x[i][2] < sbheight) {
-//			  parentType = ta_id;
-//			  childType = ta_id;
-//			  parentMask = atom->mask[i];
-//			  childMask = atom->mask[i];
-//		  } else {
-//			  parentType = diff_id;
-//			  childType = ta_id;
-//			  parentMask = diff_mask;
-//			  childMask = atom->mask[i];
-//    	  }
+    	  if (parentDivisionCount >= max_division_counter && (atom->x[i][2] > sbheight && atom->x[i][2] < ssheight)){
+    		  parentType = diff_id;
+    		  childType = ta_id;
+    		  parentMask = diff_mask;
+    		  childMask = atom->mask[i];
+    	  } else if (atom->x[i][2] > ssheight){
+    		  parentType = diff_id;
+			  childType = diff_id;
+			  parentMask = diff_mask;
+			  childMask = diff_mask;
+    	  }	else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2 || atom->x[i][2] < sbheight) {
+			  parentType = ta_id;
+			  childType = ta_id;
+			  parentMask = atom->mask[i];
+			  childMask = atom->mask[i];
+		  } else {
+			  parentType = diff_id;
+			  childType = ta_id;
+			  parentMask = diff_mask;
+			  childMask = atom->mask[i];
+    	  }
 
 //		  if (parentDivisionCount >= max_division_counter && rand < (1-asym)/2){
 //			  parentType = diff_id;
 //			  childType = diff_id;
 //			  parentMask = diff_mask;
 //			  childMask = diff_mask;
-//		  //} else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2) {
 //		  } else if (parentDivisionCount >= max_division_counter && rand < asym) {
 //			  parentType = diff_id;
 //			  childType = ta_id;
@@ -302,22 +300,22 @@ void FixPDivideTa::post_integrate() {
 //			  childMask = atom->mask[i];
 //		  }
 
-    	  if (parentDivisionCount < max_division_counter && rand < self || atom->x[i][2] < sbheight){
-    		  parentType = ta_id;
-			  childType = ta_id;
-			  parentMask= atom->mask[i];
-			  childMask = atom->mask[i];
-    	  } else if (rand < asym && (atom->x[i][2] > sbheight && atom->x[i][2] < ssheight)){
-    		  parentType = diff_id;
-			  childType = ta_id;
-			  parentMask = diff_mask;
-			  childMask = atom->mask[i];
-    	  } else {
-    		  parentType = diff_id;
-			  childType = diff_id;
-			  parentMask = diff_mask;
-			  childMask = diff_mask;
-    	  }
+//    	  if (parentDivisionCount < max_division_counter && rand < self || atom->x[i][2] < sbheight){
+//    		  parentType = ta_id;
+//			  childType = ta_id;
+//			  parentMask= atom->mask[i];
+//			  childMask = atom->mask[i];
+//    	  } else if (atom->x[i][2] > ssheight || parentDivisionCount >= max_division_counter && rand < (1 - asym - self)){
+//    		  parentType = diff_id;
+//			  childType = diff_id;
+//			  parentMask = diff_mask;
+//			  childMask = diff_mask;
+//    	  } else {
+//    		  parentType = diff_id;
+//			  childType = ta_id;
+//			  parentMask = diff_mask;
+//			  childMask = atom->mask[i];
+//    	  }
 
 
 		parentDivisionCount = avec->d_counter[i] + 1;

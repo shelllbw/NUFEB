@@ -1,7 +1,7 @@
 # NUFEB simulation
 
 atom_style	bio
-atom_modify	map array sort 100 5.0e-7
+atom_modify	map array sort 100 5.0e-6
 boundary	pp pp ff
 newton		off
 processors  * * 1
@@ -29,12 +29,12 @@ group STEM type 1
 
 create_atoms 7 region reg var v set x xx set y yy set z zz
 set type 7 density 150
-set type 7 diameter 1.0e-6
+set type 7 diameter 1.0e-5
 set type 7 mass 7.853981e-17
 
 create_pso_atoms 1 stem 1e-8 150 1.0e-6 500 64564
 set type 1 density 150
-set type 1 diameter 1.0e-6
+set type 1 diameter 1.0e-5
 set type 1 mass 7.853981e-17
 
 #create_atoms 5 random 100 64565 reg2
@@ -57,23 +57,23 @@ neighbor	5e-7 bin
 neigh_modify delay 0 exclude group BASE BASE
 
 set type 2 density 150
-set type 2 diameter 1.0e-6
+set type 2 diameter 1.0e-5
 set type 2 mass 7.853981e-17
 
 set type 3 density 150
-set type 3 diameter 1.0e-6
+set type 3 diameter 1.0e-5
 set type 3 mass 7.853981e-17
 
 set type 4 density 150
-set type 4 diameter 1.0e-6
+set type 4 diameter 1.0e-5
 set type 4 mass 7.853981e-17
 
 set type 5 density 150
-set type 5 diameter 1.0e-6
+set type 5 diameter 1.0e-5
 set type 5 mass 7.853981e-17
 
 set type 6 density 150
-set type 6 diameter 1.0e-6
+set type 6 diameter 1.0e-5
 set type 6 mass 7.853981e-17
 
 ##############Define DEM Variables&Commands##############
@@ -110,7 +110,7 @@ fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-13 0 0 1.6e-13
 
 
 #variables used in fix division
-variable divDia equal 1.36e-6
+variable divDia equal 1.36e-5
 variable asymSC equal 0.75
 variable selfSC equal 0.18
 variable maxDivCount equal 4
