@@ -279,7 +279,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 			 // printf("------- start of growth/ta  -------- \n");
 
 			//growth rate
-			double r5 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (nus[ca][grid] / (ks[i][ca] + nus[ca][grid]));
+			double r5 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (ks[i][ca] / (ks[i][ca] + nus[ca][grid]));
 			//psoriasis
 			//double r6 = mu[i] * (nus[il22][grid] / (ks[i][il22] + nus[il22][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
 			//decay rate
@@ -292,7 +292,7 @@ void FixPGrowthTA::growth(double dt, int gflag) {
 			//printf("cell type %i\n", spec);
 			//printf("growth_ta grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
-			nur[gf][grid] += yield[i] * r5 * xdensity[i][grid] - r5 * xdensity[i][grid];
+			nur[gf][grid] += (1/yield[i]) * r5 * xdensity[i][grid] - r5 * xdensity[i][grid];
 			nur[ca][grid] += -(r5 * xdensity[i][grid]);
 			//nur[il22][grid] += -(r6 * xdensity[i][grid]);
 

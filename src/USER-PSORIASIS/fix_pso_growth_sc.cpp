@@ -287,7 +287,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 			  //printf("------- start of growth/sc  -------- \n");
 
 			//growth rate
-			double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (nus[ca][grid] / (ks[i][ca] + nus[ca][grid]));
+			double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (ks[i][ca] / (ks[i][ca] + nus[ca][grid]));
 			//psoriasis
 			//double r2 = mu[i] * (nus[il22][grid] / (ks[i][il22] + nus[il22][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
 			//decay rate
@@ -299,14 +299,15 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
 			//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
-			nur[gf][grid] += yield[i] * r1 * xdensity[i][grid] - r1 * xdensity[i][grid];
+			nur[gf][grid] += (1/yield[i]) * r1 * xdensity[i][grid] - r1 * xdensity[i][grid];
 			nur[ca][grid] += -(r1 * xdensity[i][grid]);
 			//nur[il22][grid] += -(r2 * xdensity[i][grid]);
 
 			growrate_sc = r1 - r3 - r4;
 			//growrate_sc = r1 + r2 - r3 - r4;
 
-			//printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
+			//printf("growrate_sc equation is R1 %e - R2 %e - R4 %e = %e\n", r1, r3, r4, r1 - r3 - r4);
+			//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 			//printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_sc * dt));
 		  }
 	}

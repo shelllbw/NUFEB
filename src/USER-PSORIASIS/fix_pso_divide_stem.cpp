@@ -268,21 +268,21 @@ void FixPDivideStem::init() {
 //		   parentMask = ta_mask;
 //		   childMask = atom->mask[i];
 //	   }
-	  if (rand < self && atom->x[i][2] <= sbheight){
+	  if (rand < self){
 		   parentType = stem_id;
 		   childType = stem_id;
 		   parentMask = atom->mask[i];
 		   childMask = atom->mask[i];
-	  } else if (atom->x[i][2] > sbheight || rand < (1-asym-self)){
+	  } else if (rand < asym){
 			parentType = ta_id;
-			childType = ta_id;
+			childType = stem_id;
 			parentMask = ta_mask;
-			childMask = ta_mask;
+			childMask = atom->mask[i];
 	  } else {
 		   parentType = ta_id;
-		   childType = stem_id;
+		   childType = ta_id;
 		   parentMask = ta_mask;
-		   childMask = atom->mask[i];
+		   childMask = ta_mask;
 	}
 
      double splitF = 0.4 + (random->uniform() *0.2);

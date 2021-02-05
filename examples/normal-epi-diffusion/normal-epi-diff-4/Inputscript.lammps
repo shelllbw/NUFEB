@@ -15,7 +15,7 @@ variable x equal 50
 variable y equal 20
 variable z equal 20
 
-lattice sc 1e-6 origin 0.5 0.5 0.5
+lattice sc 1e-5 origin 0.5 0.5 0.5
 
 region reg block 0 $x 0 $y 0 $z
 region reg2 block 0 $x 0 $y 0 1
@@ -32,7 +32,7 @@ set type 7 density 150
 set type 7 diameter 1.0e-5
 set type 7 mass 7.853981e-17
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-6 500 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-5 500 64564
 set type 1 density 150
 set type 1 diameter 1.0e-5
 set type 1 mass 7.853981e-17
@@ -125,7 +125,7 @@ variable tol equal 1e-6
 
 #common variables used in growth
 variable abaseT equal 7.384e-8
-variable apop equal 0.12
+variable apop equal 0.0012
 
 #variables used in growth/sc
 variable STEMdens equal 30

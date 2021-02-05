@@ -53,8 +53,8 @@ Division Counter
 
  Growth Rate
 
-   stem 7.986e-6
-   ta 7.986e-6
+   stem 7.986e-4
+   ta 7.986e-5
    diff 0
    tcell 6.365
    dc 0
@@ -65,7 +65,7 @@ Division Counter
 
    stem 0.05157
    ta  0.05157
-   diff 5.157
+   diff 0.05157
    tcell 0
    dc 0
    apop 0
@@ -73,9 +73,9 @@ Division Counter
 
 Decay
 
-  stem 3.510e-9
-  ta 4.319e-9
-  diff 5.845e-8
+  stem 3.510e-8
+  ta 4.319e-8
+  diff 5.845e-7
   tcell 5.748e-5
   dc 5.845e-7
   apop 0
