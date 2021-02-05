@@ -291,7 +291,7 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 			//printf("growth_diff grid %i ca %e \n", grid, nus[ca][grid]);
 
 			if (atom->x[i][2] > sgheight && atom->x[i][2] < scheight) { //if in SG layer then secrete out most calcium
-				nur[ca][grid] += (r8 + r9) *  xdensity[i][grid];
+				nur[ca][grid] += (1/yield[i]) * (r8 + r9) *  xdensity[i][grid];
 				//nur[ca][grid] += yield[i] * (r8 + r9) * xdensity[i][grid];
 				growrate_d = - (r8 + r9 + r10) ;
 //			} else if (atom->x[i][2] < scheight && atom->x[i][2] > sgheight) { // if in SC layer, calcium should be 0
