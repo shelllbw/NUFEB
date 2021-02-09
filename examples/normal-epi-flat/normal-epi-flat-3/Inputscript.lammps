@@ -95,8 +95,8 @@ velocity BASE set 0.0 0.0 0.0 units box
 fix 1 all nve/limit 1e-8
 fix fv1 all viscous 1e-5
 
-fix zwb STEM wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  1.6e-4  3.0e-4
-fix zwt TA wall/gran hooke/history 2050 NULL 500.0 NULL 1.5. 0 zplane 1.6e-4 3.0e-4
+fix zwb STEM wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  1.6e-4  3.0e-04
+fix zwt TA wall/gran hooke/history 2050 NULL 500.0 NULL 1.5. 0 zplane 1.6e-5 3.0e-04
 
 variable kanc equal 50
 
@@ -107,7 +107,7 @@ fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-13 0 0 1.6e-13
 
 
 #variables used in fix division
-variable divDia equal 1.3e-5
+variable divDia equal 1.35e-5
 variable asymSC equal 0.8
 variable selfSC equal 0.1
 variable maxDivCount equal 4
@@ -122,6 +122,7 @@ variable layer equal -1
 variable tol equal 1e-6
 
 #common variables used in growth
+variable abaseT equal 7.384e-8
 variable apop equal 0.0012
 
 #variables used in growth/sc
@@ -142,7 +143,7 @@ variable TCELLdens equal 1000
 fix k1 all kinetics 1 50 20 30 v_diffT v_layer demflag 0 niter 5000
 #fix kgdc DC psoriasis/growth/dc v_DCdens v_abase1 v_dckp v_dcact v_il232
 #fix kgtc TCELL psoriasis/growth/tcell v_TCELLdens v_apop
-fix g1 all kinetics/diffusion v_tol pp pp dd dcflag 2
+fix g1 all kinetics/diffusion v_tol pp pp dn dcflag 2
 fix kgsc STEM psoriasis/growth/sc v_STEMdens v_apop
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asymSC v_selfSC v_STEMdens v_horiDivSC 64564 demflag 0
 fix kgta TA psoriasis/growth/ta v_TAdens v_apop

@@ -254,14 +254,14 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
   double growrate_d = 0;
 
-  for (int i = 0; i < nlocal; i++) {
-  	if (atom->type[i] == 3 && i == 16004 || atom->type[i] == 3 && i == 18180 || atom->type[i] == 3 && i == 19909 || atom->type[i] == 3 && i == 20250) {
-		 //printf("diff cell type %i x: %e y: %e z: %e update_timestep %e age of cell %e \n", atom->type[i], atom->x[i][0], atom->x[i][1], atom->x[i][2], update->ntimestep, update->ntimestep/1001);
-		 //printf("age hour to min %e \n", (update->ntimestep/1001)*60);
-  		printf("type %i   i %i  update_ntimestep %i age %i \n", atom->type[i], i, update->ntimestep, update->ntimestep/1001);
-  		printf("atom coords x %e y %e z %e \n", atom->x[i][0], atom->x[i][1], atom->x[i][2]);
-  	}
-  }
+//  for (int i = 0; i < nlocal; i++) {
+//  	if (atom->type[i] == 3 && i == 16004 || atom->type[i] == 3 && i == 18180 || atom->type[i] == 3 && i == 19909 || atom->type[i] == 3 && i == 20250) {
+//		 //printf("diff cell type %i x: %e y: %e z: %e update_timestep %e age of cell %e \n", atom->type[i], atom->x[i][0], atom->x[i][1], atom->x[i][2], update->ntimestep, update->ntimestep/1001);
+//		 //printf("age hour to min %e \n", (update->ntimestep/1001)*60);
+//  		printf("type %i   i %i  update_ntimestep %i age %i \n", atom->type[i], i, update->ntimestep, update->ntimestep/1001);
+//  		printf("atom coords x %e y %e z %e \n", atom->x[i][0], atom->x[i][1], atom->x[i][2]);
+//  	}
+//  }
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
 	  //grid without atom is not considered
 	  if(!xdensity[0][grid]) continue;
@@ -291,7 +291,7 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 			//printf("growth_diff grid %i ca %e \n", grid, nus[ca][grid]);
 
 			if (atom->x[i][2] > sgheight && atom->x[i][2] < scheight) { //if in SG layer then secrete out most calcium
-				nur[ca][grid] += (1/yield[i]) * (r8 + r9) *  xdensity[i][grid];
+				nur[ca][grid] += yield[i] * (r8 + r9) *  xdensity[i][grid];
 				//nur[ca][grid] += yield[i] * (r8 + r9) * xdensity[i][grid];
 				growrate_d = - (r8 + r9 + r10) ;
 //			} else if (atom->x[i][2] < scheight && atom->x[i][2] > sgheight) { // if in SC layer, calcium should be 0
