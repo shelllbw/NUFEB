@@ -321,7 +321,7 @@ void FixPDivideStem::init() {
 
 	 newX = oldX;
 	 newY = oldY;
-	 if (parentType == stem_id || parentType == ta_id && rand < horiDiv){
+	 if (parentType == stem_id){
 		 newZ = oldZ;
 	 } else {
 		 newZ = oldZ + atom->radius[i];
@@ -358,7 +358,7 @@ void FixPDivideStem::init() {
 	 newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
 	 newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
 
-	 if (childType == stem_id || childType == ta_id && rand < horiDiv){
+	 if (childType == stem_id){
 		 newZ = oldZ;
 	 } else {
 		 newZ = oldZ + atom->radius[i];
