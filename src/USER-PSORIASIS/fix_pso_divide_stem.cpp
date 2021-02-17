@@ -239,11 +239,11 @@ void FixPDivideStem::init() {
       max_cap = round((nlocal - nbm) * 0.05); //assume 5% for now
 
       //random generator to set probabilities of division
-      std::random_device rd;  //Will be used to obtain a seed for the random number engine
-      std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-      std::uniform_real_distribution<double>  distribution(0.0, 1.0);
-      double rand = distribution(gen);
-      double randdiv = distribution(gen);
+//      std::random_device rd;  //Will be used to obtain a seed for the random number engine
+//      std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+//      std::uniform_real_distribution<double>  distribution(0.0, 1.0);
+//      double rand = distribution(gen);
+//      double randdiv = distribution(gen);
 
       int ta_id = bio->find_typeid("ta");
       int stem_id = bio->find_typeid("stem");
@@ -252,6 +252,7 @@ void FixPDivideStem::init() {
       double sbheight = zhi * 0.67; //smaller domain
 
    if (atom->radius[i] * 2 >= div_dia){
+	   double rand = random->uniform();
 //	  if (rand < (1 - asym)/2 && atom->x[i][2] <= sbheight){
 //		   parentType = stem_id;
 //		   childType = stem_id;

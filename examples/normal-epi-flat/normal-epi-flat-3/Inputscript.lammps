@@ -29,7 +29,7 @@ set type 7 density 150
 set type 7 diameter 1.0e-5
 set type 7 mass 1e-12
 
-create_pso_atoms 1 stem 1e-8 150 1.0e-5 800 64564
+create_pso_atoms 1 stem 1e-8 150 1.0e-5 600 64564
 set type 1 density 150
 set type 1 diameter 1.0e-5
 set type 1 mass 1e-12
@@ -88,6 +88,16 @@ pair_coeff 2 7
 pair_style  gran/hooke/history 2500 NULL 2500 NULL 0.0 1
 pair_coeff  3 7
 
+#pair_style  gran/hooke/history 2050 NULL 2050 NULL 0.0 1
+#pair_coeff 1 2
+
+#pair_style  gran/hooke/history 2100 NULL 2100 NULL 0.0 1
+#pair_coeff 2 3
+
+#pair_style  gran/hooke/history 2500 NULL 2500 NULL 0.0 1
+#pair_coeff  1 3
+
+
 timestep 1e-3
 
 velocity BASE set 0.0 0.0 0.0 units box
@@ -109,11 +119,11 @@ fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-13 0 0 1.6e-13
 #variables used in fix division
 variable divDia equal 1.3e-5
 variable asymSC equal 0.8
-variable selfSC equal 0.1
+variable selfSC equal 0.2
 variable maxDivCount equal 4
 variable horiDivSC equal 0.25
 variable horiDivTA equal 0
-variable asymTA equal 0.77
+variable asymTA equal 0.8
 variable selfTA equal 0.2
 
 #variables used in fix kinetics
