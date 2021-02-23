@@ -33,8 +33,8 @@ Diffusion Coeffs
 
  Ks
 
-    stem 5e-9 5e-7
-    ta 5e-9 5e-7
+    stem 5e-7 5e-7
+    ta 5e-7 5e-7
     diff 0 0
     tcell 0 0
     dc 0 0
@@ -53,30 +53,30 @@ Division Counter
 
  Growth Rate
 
-   stem 7.986e-6
-   ta 7.986e-6
-   diff 0
-   tcell 6.365
-   dc 0
-   apop 0
-   bm 0
+    stem 7.986e-7
+    ta 7.986e-7
+    diff 0
+    tcell 6.365
+    dc 0
+    apop 0
+    bm 0
 
  Yield
 
-   stem 0.05157
-   ta  0.05157
-   diff 5.157
-   tcell 0
+    stem 5.157
+    ta  5.157
+    diff 5.157
+    tcell 0
+    dc 0
+    apop 0
+    bm 0
+
+  Decay
+
+   stem 3.510e-8
+   ta 4.319e-8
+   diff 5.845e-7
+   tcell 5.748e-5
    dc 0
    apop 0
    bm 0
-
-Decay
-
-  stem 3.510e-9
-  ta 4.319e-9
-  diff 5.845e-8
-  tcell 5.748e-5
-  dc 5.845e-7
-  apop 0
-  bm 0

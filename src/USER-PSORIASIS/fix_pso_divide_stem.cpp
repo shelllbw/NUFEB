@@ -253,7 +253,7 @@ void FixPDivideStem::init() {
 
    if (atom->radius[i] * 2 >= div_dia){
 	   double rand = random->uniform();
-//	  if (rand < (1 - asym)/2 && atom->x[i][2] <= sbheight){
+//	  if (rand < self && atom->x[i][2] <= sbheight){
 //		   parentType = stem_id;
 //		   childType = stem_id;
 //		   parentMask = atom->mask[i];

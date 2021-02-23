@@ -117,14 +117,14 @@ fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-13 0 0 1.6e-13
 
 
 #variables used in fix division
-variable divDia equal 1.3e-5
+variable divDia equal 1.36e-5
 variable asymSC equal 0.8
 variable selfSC equal 0.2
 variable maxDivCount equal 4
 variable horiDivSC equal 0.25
 variable horiDivTA equal 0
 variable asymTA equal 0.77
-variable selfTA equal 0.2
+variable selfTA equal 0.20
 
 #variables used in fix kinetics
 variable diffT equal 1e-4
