@@ -4,9 +4,9 @@ Granular Flow Simulation
      7 atom types
      2 nutrients
 
-     0.000000e-04   0.5e-04  xlo xhi
-     0.000000e-04   0.2e-04  ylo yhi
-     0.000000e-04   0.3e-04  zlo zhi
+     0.000000e-04   0.5e-03  xlo xhi
+     0.000000e-04   0.2e-03  ylo yhi
+     0.000000e-04   0.3e-03  zlo zhi
 
 Atoms
 
@@ -28,13 +28,13 @@ Type Name
 
 Diffusion Coeffs
 
-   gf 1e-10
-   ca 1e-9
+   gf 1e-7
+   ca 1e-7
 
  Ks
 
-    stem 5e-7 5e-7
-    ta 5e-7 5e-7
+    stem 5e-7 5e-5
+    ta 5e-7 5e-5
     diff 0 0
     tcell 0 0
     dc 0 0
@@ -53,8 +53,8 @@ Division Counter
 
  Growth Rate
 
-    stem 7.98611e-6
-    ta 7.98611e-6
+    stem 7.986e-7
+    ta 7.986e-7
     diff 0
     tcell 6.365
     dc 0
@@ -63,9 +63,9 @@ Division Counter
 
  Yield
 
-    stem 5.157407
-    ta  5.157407
-    diff 0
+    stem 1.157e-5
+    ta  1.157e-5
+    diff 1.157e-5
     tcell 0
     dc 0
     apop 0
@@ -73,8 +73,8 @@ Division Counter
 
   Decay
 
-   stem 3.5105324e-7
-   ta 5.3195602e-7
+   stem 3.510e-8
+   ta 4.319e-8
    diff 5.845e-7
    tcell 5.748e-5
    dc 0
