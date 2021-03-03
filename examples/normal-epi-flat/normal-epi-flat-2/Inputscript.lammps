@@ -40,11 +40,11 @@ set type 1 mass 1e-12
 group TA type 2
 group DIFF type 3
 group TCELL type 4
-group DC type 5
+group CC type 5
 group APOP type 6
 group BM type 7
 
-group BASE union BM TCELL DC
+group BASE union BM TCELL
 group PROLIF union STEM TA
 
 fix fz1 BASE freeze
@@ -117,11 +117,11 @@ fix fco all cohesivede 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-13 0 0 1.6e-13
 
 
 #variables used in fix division
-variable divDia equal 1.36e-5
-variable asymSC equal 0.8
-variable selfSC equal 0.2
+variable divDia equal 1.25e-5
+variable asymSC equal 0.75
+variable selfSC equal 0.18
 variable maxDivCount equal 4
-variable horiDivSC equal 0.25
+variable horiDivSC equal 0
 variable horiDivTA equal 0
 variable asymTA equal 0.77
 variable selfTA equal 0.20
@@ -142,6 +142,7 @@ variable TAdens equal 150
 
 #variable used in growth/diff
 variable DIFFdens equal 150
+variable decayCC equal 5.845e-7
 variable ddesq equal 5.501e-8
 
 #variables used in growth/tcell
@@ -157,7 +158,7 @@ fix kgsc STEM psoriasis/growth/sc v_STEMdens v_apop
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asymSC v_selfSC v_STEMdens v_horiDivSC 64564 demflag 0
 fix kgta TA psoriasis/growth/ta v_TAdens v_apop
 fix d2 TA psoriasis/divide_ta 1 v_divDia v_asymTA v_selfTA v_TAdens v_maxDivCount v_horiDivTA 64564 demflag 0
-fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_apop v_ddesq
+fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_apop v_decayCC v_ddesq
 
 ##############Define IBm Computes##############
 

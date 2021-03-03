@@ -224,7 +224,7 @@ void FixPGrowthTA::init_param() {
 		species[i] = 3;
 	  else if (strcmp(name, "tcell") == 0)
 		species[i] = 4;
-	  else if (strcmp(name, "dc") == 0)
+	  else if (strcmp(name, "cc") == 0)
 		species[i] = 5;
 	  else if (strcmp(name, "apop") == 0)
 		  species[i] = 6;

@@ -56,7 +56,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/diff requires atom style bio");
 
-  if (narg < 6)
+  if (narg < 7)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/diff command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 6;
+  int iarg = 7;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -122,6 +122,14 @@ void FixPGrowthDIFF::init() {
 	  error->all(FLERR, "Variable for fix psoriasis/growth/diff is invalid style");
   }
 
+  //modify atom mask
+    for (int i = 1; i < group->ngroup; i++) {
+      if (strcmp(group->names[i],"CC") == 0) {
+        cc_mask = pow(2, i) + 1;
+        break;
+      }
+    }
+
   // register fix kinetics with this class
   kinetics = NULL;
 
@@ -138,7 +146,8 @@ void FixPGrowthDIFF::init() {
 
   diff_dens = input->variable->compute_equal(ivar[0]);
   apop = input->variable->compute_equal(ivar[1]);
-  ddesq = input->variable->compute_equal(ivar[2]);
+  decay_cc = input->variable->compute_equal(ivar[2]);
+  ddesq = input->variable->compute_equal(ivar[3]);
 
   bio = kinetics->bio;
 
@@ -212,7 +221,7 @@ void FixPGrowthDIFF::init_param() {
 		species[i] = 3;
 	  else if (strcmp(name, "tcell") == 0)
 		species[i] = 4;
-	  else if (strcmp(name, "dc") == 0)
+	  else if (strcmp(name, "cc") == 0)
 		species[i] = 5;
 	  else if (strcmp(name, "apop") == 0)
 		  species[i] = 6;
@@ -251,8 +260,8 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
-
   double growrate_d = 0;
+  int cc_id = bio->find_typeid("cc");
 
 //  for (int i = 0; i < nlocal; i++) {
 //  	if (atom->type[i] == 3 && i == 16004 || atom->type[i] == 3 && i == 18180 || atom->type[i] == 3 && i == 19909 || atom->type[i] == 3 && i == 20250) {
@@ -276,31 +285,40 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 		  double sgheight = zhi * 0.85;
 		  double scheight = zhi * 0.9;
 
+		  //differentiated cells
 		  if (spec == 3) {
 			  //printf("------- start of growth/diff  -------- \n");
-
-			 //decay rate
+			 //decay rate for diff
 			double r8 = decay[i];
+			//apoptosis rate
+			double r9 = r8 * apop;
+
+			//printf("growrate_diff equation is R8 %e  R9 %e  R10 %e \n", r8, r9, r10);
+			//printf("growth_diff grid %i ca %e \n", grid, nus[ca][grid]);
+
+			if (atom->x[i][2] > sgheight) { //if in SG layer then secrete out most calcium
+				nur[ca][grid] += (1/yield[i]) * (r8 + r9) *  xdensity[i][grid];
+				growrate_d = - (r8 + r9) ;
+				//change atom type
+				atom->type[i] = cc_id;
+				atom->mask[i] = cc_mask;
+			} else {
+				growrate_d = 0;
+			}
+		  }
+
+		  // corneocytes
+		if (spec == 5) {
+			//decay rate for cc
+			double r8 = decay_cc;
 			//desquamation rate
 			double r9 = ddesq;
 			//apoptosis rate
 			double r10 = (r8 + r9) * apop;
 
-
-			//printf("growrate_diff equation is R8 %e  R9 %e  R10 %e \n", r8, r9, r10);
-			//printf("growth_diff grid %i ca %e \n", grid, nus[ca][grid]);
-
-			if (atom->x[i][2] > sgheight && atom->x[i][2] < scheight) { //if in SG layer then secrete out most calcium
-				nur[ca][grid] += (1/yield[i]) * (r8 + r9) *  xdensity[i][grid];
-				//nur[ca][grid] += yield[i] * (r8 + r9) * xdensity[i][grid];
-				growrate_d = - (r8 + r9 + r10) ;
-//			} else if (atom->x[i][2] < scheight && atom->x[i][2] > sgheight) { // if in SC layer, calcium should be 0
-//				nur[ca][grid] += (r8 + r9) *  xdensity[i][grid];
-//				growrate_d = - (r8 + r9 + (r8 + r9 * r10));
-			} else {
-				growrate_d = 0; //if diff cell is below sg layer, no update
-			}
-		  }
+			nur[ca][grid] += (1/yield[i]) * (r8 + r9 + r10) *  xdensity[i][grid];
+			growrate_d = - (r8 + r9 + r10);
+		}
 	  }
   	}
   //update physical attributes
@@ -328,16 +346,9 @@ void FixPGrowthDIFF::update_biomass(double growrate, double dt) {
 
   for (int i = 0; i < nlocal; i++) {
     if (mask[i] & groupbit) {
-      int t = type[i];
-      int pos = kinetics->position(i);
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-//      if (atom->x[i][2] > sgheight && atom->x[i][2] < scheight) {
-      	rmass[i] = rmass[i] * (1 + growrate * dt);
-//      } else {
-//      	rmass[i] = rmass[i];
-//      }
-
+      rmass[i] = rmass[i] * (1 + growrate * dt);
       radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
     }
   }

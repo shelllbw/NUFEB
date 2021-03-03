@@ -24,11 +24,11 @@ group STEM type 1
 group TA type 2
 group DIFF type 3
 group TCELL type 4
-group DC type 5
+group CC type 5
 group APOP type 6
 group BM type 7
 
-group BASE union BM TCELL DC
+group BASE union BM TCELL 
 group PROLIF union STEM TA
 group KERATINOCYTES union STEM TA DIFF
 
