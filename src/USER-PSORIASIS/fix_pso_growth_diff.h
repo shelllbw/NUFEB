@@ -52,7 +52,7 @@ class FixPGrowthDIFF : public Fix {
   double xlo,xhi,ylo,yhi,zlo,zhi;   // computational domain size
   int nx, ny, nz;
   double vol;                       // grid volume and gas volume
-  double diff_dens, apop, ddesq;
+  double diff_dens, apop, rate_ca;
   double ca2, ca20;
 
   class AtomVecBio *avec;

@@ -222,7 +222,6 @@ void FixPDivideTa::post_integrate() {
     return;
 
   int nlocal = atom->nlocal;
-  int cself;
 
   for (int i = 0; i < nlocal; i++) {
     //this groupbit will allow the input script to set each cell type to divide
