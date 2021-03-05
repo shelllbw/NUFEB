@@ -49,6 +49,7 @@ group BM type 7
 
 group BASE union BM TCELL
 group PROLIF union STEM TA
+group NONPROLIF union DIFF CC
 
 fix fz1 BASE freeze
 fix nomove BASE move linear 0.0 0.0 0.0 units box
@@ -151,7 +152,7 @@ fix kgsc STEM psoriasis/growth/sc v_STEMdens v_apop
 fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asymSC v_selfSC v_STEMdens v_horiDivSC 64564 demflag 0
 fix kgta TA psoriasis/growth/ta v_TAdens v_apop
 fix d2 TA psoriasis/divide_ta 1 v_divDia v_asymTA v_selfTA v_TAdens v_maxDivCount v_horiDivTA 64564 demflag 0
-fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_apop v_decayCC v_ddesq
+fix kgd NONPROLIF psoriasis/growth/diff v_DIFFdens v_apop v_decayCC v_ddesq
 
 ##############Define IBm Computes##############
 

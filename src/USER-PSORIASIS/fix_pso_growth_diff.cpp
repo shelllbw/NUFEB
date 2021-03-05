@@ -261,7 +261,15 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
   double **nur = kinetics->nur;
 
   double growrate_d = 0;
-  int cc_id = bio->find_typeid("cc");
+
+  //different heights for diff cells
+//		  double sgheight = zhi * 0.85; //cubic domain
+//		  double scheight = zhi * 0.92;
+//		  double ssheight = zhi * 0.8;
+	  double ssheight = zhi * 0.73; //smaller domain
+	  //double sgheight = zhi * 0.85;
+	  double sgheight = zhi * 0.7; // JUST FOR TESTING IF DIFF CELL WILL CHANGE TO CC
+	  double scheight = zhi * 0.9;
 
 //  for (int i = 0; i < nlocal; i++) {
 //  	if (atom->type[i] == 3 && i == 16004 || atom->type[i] == 3 && i == 18180 || atom->type[i] == 3 && i == 19909 || atom->type[i] == 3 && i == 20250) {
@@ -277,13 +285,6 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 
 	  for (int i = 1; i <= ntypes; i++) {
 		  int spec = species[i];
-	  //different heights for diff cells
-//		  double sgheight = zhi * 0.85; //cubic domain
-//		  double scheight = zhi * 0.92;
-//		  double ssheight = zhi * 0.8;
-		  double ssheight = zhi * 0.73; //smaller domain
-		  double sgheight = zhi * 0.85;
-		  double scheight = zhi * 0.9;
 
 		  //differentiated cells
 		  if (spec == 3) {
@@ -296,15 +297,11 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
 			//printf("growrate_diff equation is R8 %e  R9 %e  R10 %e \n", r8, r9, r10);
 			//printf("growth_diff grid %i ca %e \n", grid, nus[ca][grid]);
 
-			if (atom->x[i][2] > sgheight) { //if in SG layer then secrete out most calcium
-				nur[ca][grid] += (1/yield[i]) * (r8 + r9) *  xdensity[i][grid];
-				growrate_d = - (r8 + r9) ;
-				//change atom type
-				atom->type[i] = cc_id;
-				atom->mask[i] = cc_mask;
-			} else {
-				growrate_d = 0;
-			}
+			nur[ca][grid] += (1/yield[i]) * (r8 + r9) *  xdensity[i][grid];
+			growrate_d = - (r8 + r9) ;
+
+			//if (atom->x[i][2] > sgheight) { //if in SG layer then secrete out most calcium
+
 		  }
 
 		  // corneocytes
@@ -343,6 +340,8 @@ void FixPGrowthDIFF::update_biomass(double growrate, double dt) {
   double ssheight = zhi * 0.73; //smaller domain
   double sgheight = zhi * 0.85;
   double scheight = zhi * 0.9;
+  double dia = 0.6e-5;
+  int cc_id = bio->find_typeid("cc");
 
   for (int i = 0; i < nlocal; i++) {
     if (mask[i] & groupbit) {
@@ -350,6 +349,14 @@ void FixPGrowthDIFF::update_biomass(double growrate, double dt) {
 
       rmass[i] = rmass[i] * (1 + growrate * dt);
       radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+
+		if (radius[i] * 2 < dia){
+			//change atom type
+			atom->type[i] = cc_id;
+			atom->mask[i] = cc_mask;
+
+			printf("enters here");
+		}
     }
   }
 }
