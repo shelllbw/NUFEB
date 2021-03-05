@@ -244,7 +244,7 @@ void FixPDivideTa::post_integrate() {
       if (atom->radius[i] * 2 >= div_dia){
   	double prob = random->uniform();
 
-  	if (prob < self){
+  	if (parentDivisionCount < max_division_counter && prob < self){
   	  parentType = ta_id;
   	  childType = ta_id;
   	  parentMask = atom->mask[i];
