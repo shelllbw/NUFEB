@@ -1,0 +1,147 @@
+# NUFEB simulation
+
+atom_style	bio
+atom_modify	map array sort 1 1.25e-5
+boundary	ff ff ff
+newton		on
+processors  * * *
+
+units si
+
+comm_modify	vel yes
+read_data_bio atom.in
+
+variable x equal 20
+variable y equal 16
+variable z equal 12
+
+lattice sc 1.25e-5 origin 0.5 0.5 0.5
+
+region reg block 0 $x 0 $y 0 $z
+region reg2 block 0 $x 0 $y 0 1
+
+variable  xx internal 0.0
+variable  yy internal 0.0
+variable  zz internal 0.0
+variable  v equal "(0.12*v_z*zlat * cos(v_xx/xlat * 1.9*PI*PI/v_x) * cos(v_yy/ylat * 0.64 *PI*PI/v_y) + 0.9*v_z*zlat - v_zz  ) > 0.0"
+
+group STEM type 1
+group TA type 2
+group DIFF type 3
+group BM type 4
+
+group BASE union BM 
+group PROLIF union STEM TA DIFF
+
+create_atoms 4 region reg var v set x xx set y yy set z zz
+set type 4 density 150
+set type 4 mass 1e-12
+set type 4 diameter 1.25e-5
+
+create_pso_atoms 1 stem 1e-6 150 1.25e-5 50 13423
+set type 1 density 150
+set type 1 mass 1e-12
+set type 1 diameter 1.25e-5
+
+set type 2 density 150
+set type 2 mass 1e-12
+set type 2 diameter 1.25e-5
+
+set type 3 density 150
+set type 3 mass 1e-12
+set type 3 diameter 1.25e-5
+	
+
+##############Define DEM Variables&Commands##############
+
+
+pair_style  gran/hooke/history 2000 NULL 2000 NULL 0.0 1
+pair_coeff  * *
+
+neighbor	1.25e-5 bin
+neigh_modify delay 0 exclude group BASE BASE one 5000
+
+timestep 1e-3
+
+velocity BM set 0.0 0.0 0.0 units box
+
+fix fz1 BM freeze
+fix nomove BM move linear 0.0 0.0 0.0 units box
+
+fix 1 PROLIF nve/limit 1e-8
+fix fv1 all viscous 1e-5
+
+fix zwb STEM wall/gran hooke/history 2000 NULL 500.0 NULL 1.5 0 zplane  0  3.0e-4
+fix zwt TA wall/gran hooke/history 2050 NULL 500.0 NULL 1.5. 0 zplane 0 3.0e-4
+
+variable kanc equal 50
+
+# a1 = bm-sc  a2 = bm-ta a3 = sc-ta  a4 =sc-diff  a5 = ta-diff a6 = same cell type
+#fix fco all adhesion 1.6e-12 1 1e-8 1e-6 1 1.6-12 1.6e-13 0 0 1.6e-13
+
+##############Define IBm Variables##############
+#variables used in fix division
+variable divDia equal 1.25e-5
+variable asymSC equal 0.33
+variable selfSC equal 0.33
+variable maxDivCount equal 4
+variable horiDivTA equal 0
+variable asymTA equal 0.77
+variable selfTA equal 0.2
+
+#variables used in fix kinetics
+variable diffT equal 1e-4
+variable layer equal -1
+variable tol equal 1e-6
+
+#common variables used in growth
+variable apop equal 0.0012
+
+#variables used in growth/sc
+variable STEMdens equal 150
+
+#variables used in growth/ta
+variable TAdens equal 150
+
+#variable used in growth/diff
+variable DIFFdens equal 150
+variable ddesq equal 5.501e-8
+
+#variables used in growth/tcell
+variable TCELLdens equal 150
+
+##############Define IBm Commands##############
+
+fix k1 all kinetics 1 25 20 30 v_diffT v_layer demflag 0 niter 1
+fix g1 all kinetics/diffusion v_tol pp pp dn dcflag 2
+#fix kgsc STEM psoriasis/growth/sc v_STEMdens v_apop
+fix d1 STEM psoriasis/divide_stem 1 v_divDia v_asymSC v_selfSC v_TAdens 14231 demflag 0
+#fix kgta TA psoriasis/growth/ta v_TAdens v_apop
+#fix d2 TA psoriasis/divide_ta 1 v_divDia v_asymTA v_selfTA v_TAdens v_maxDivCount v_horiDivTA 64564 demflag 0
+#fix kgd DIFF psoriasis/growth/diff v_DIFFdens v_apop v_ddesq
+
+##############Define IBm Computes##############
+
+compute myNtypes all ntypes
+compute myMass all biomass
+
+##############Simulation Output##############
+
+dump		du1 all custom/vtk 1001 atom_*.vtu id type diameter x y z
+#dump		du2 all grid 3601 grid_%_*.vti con
+dump            du3 all image 1001 image.*.jpg type diameter size 1280 720 view 70 90 zoom 1.5
+dump_modify du3 acolor 4 green acolor 1 red  acolor 2 blue acolor 3 green
+thermo_style    custom step cpu atoms c_myNtypes[*]
+thermo		1001
+thermo_modify	lost ignore
+
+##############Define Bio-loop and DEM-subloop##############
+
+run 1 pre no post no every 1 &
+"fix_modify k1 demflag 1" &
+"fix_modify d1 demflag 1" &
+"timestep 1e-3" &
+"run 1000 pre no post no" &
+"timestep 3600"  &
+"fix_modify k1 demflag 0" &
+"fix_modify d1 demflag 0" 

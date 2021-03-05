@@ -242,105 +242,47 @@ void FixPDivideTa::post_integrate() {
       //printf("parent division counter is %i\n", parentDivisionCount);
       int childDivisionCount = 0;
 
-      //random generator to set probabilities of division
-//      std::random_device rd;  //Will be used to obtain a seed for the random number engine
-//      std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-//      std::uniform_real_distribution<double>  distribution(0.0, 1.0);
-//      double rand = distribution(gen);
-//      double randdiv = distribution(gen);
-
-//      double sbheight = zhi * 0.7; //cubic domain
-//      double ssheight = zhi * 0.8;
-      double sbheight = zhi * 0.67; //smaller domain
-      double ssheight = zhi * 0.73;
-      //double cheight = zhi * 0.69;
-
       if (atom->radius[i] * 2 >= div_dia){
-   	   double rand = random->uniform();
-//    	  if (parentDivisionCount >= max_division_counter && (atom->x[i][2] > sbheight && atom->x[i][2] < ssheight)){
-//    		  parentType = diff_id;
-//    		  childType = ta_id;
-//    		  parentMask = diff_mask;
-//    		  childMask = atom->mask[i];
-//    	  } else if (atom->x[i][2] > ssheight){
-//    		  parentType = diff_id;
-//			  childType = diff_id;
-//			  parentMask = diff_mask;
-//			  childMask = diff_mask;
-//    	  }	else if (parentDivisionCount < max_division_counter && rand < (1-asym-self) || atom->x[i][2] < sbheight) {
-//			  parentType = ta_id;
-//			  childType = ta_id;
-//			  parentMask = atom->mask[i];
-//			  childMask = atom->mask[i];
-//		  } else {
-//			  parentType = diff_id;
-//			  childType = ta_id;
-//			  parentMask = diff_mask;
-//			  childMask = atom->mask[i];
-//    	  }
+  	double prob = random->uniform();
 
-//		  if (parentDivisionCount >= max_division_counter && rand < (1-asym)/2){
-//			  parentType = diff_id;
-//			  childType = diff_id;
-//			  parentMask = diff_mask;
-//			  childMask = diff_mask;
-//		  } else if (parentDivisionCount >= max_division_counter && rand < asym) {
-//			  parentType = diff_id;
-//			  childType = ta_id;
-//			  parentMask = diff_mask;
-//			  childMask = atom->mask[i];
-//		  } else if (parentDivisionCount < max_division_counter && rand < (1-asym)/2){
-//			  parentType = ta_id;
-//			  childType = ta_id;
-//			  parentMask= atom->mask[i];
-//			  childMask = atom->mask[i];
-//		  } else {
-//			  parentType = diff_id;
-//			  childType = ta_id;
-//			  parentMask = diff_mask;
-//			  childMask = atom->mask[i];
-//		  }
+  	if (prob < self){
+  	  parentType = ta_id;
+  	  childType = ta_id;
+  	  parentMask = atom->mask[i];
+  	  childMask = atom->mask[i];
+  	} else if (prob < 1 - asym) {
+  	  parentType = diff_id;
+  	  childType = diff_id;
+  	  parentMask = diff_mask;
+  	  childMask = diff_mask;
+  	} else {
+  	  parentType = ta_id;
+  	  childType = diff_id;
+  	  parentMask = atom->mask[i];
+  	  childMask = diff_mask;
+  	}
 
-    	  if (parentDivisionCount < max_division_counter && rand < self){
-    		  parentType = ta_id;
-			  childType = ta_id;
-			  parentMask= atom->mask[i];
-			  childMask = atom->mask[i];
-    	  } else if (rand < asym){
-    		  parentType = diff_id;
-			  childType = ta_id;
-			  parentMask = diff_mask;
-			  childMask = atom->mask[i];
-    	  } else {
-    		  parentType = diff_id;
-			  childType = diff_id;
-			  parentMask = diff_mask;
-			  childMask = diff_mask;
-    	  }
+	parentDivisionCount = avec->d_counter[i] + 1;
+	childDivisionCount = 0;
 
+	double splitF = 0.4 + (random->uniform() *0.2);
+	double parentMass = atom->rmass[i] * splitF;
+	double childMass = atom->rmass[i] - parentMass;
 
-		parentDivisionCount = avec->d_counter[i] + 1;
-		childDivisionCount = 0;
+	double parentOuterMass = avec->outer_mass[i] * splitF;
+	double childOuterMass = avec->outer_mass[i] - parentOuterMass;
 
-		double splitF = 0.4 + (random->uniform() *0.2);
-		double parentMass = atom->rmass[i] * splitF;
-		double childMass = atom->rmass[i] - parentMass;
+	// forces are the same for both parent and child, x, y and z axis
+	double parentfx = atom->f[i][0] * splitF;
+	double childfx = atom->f[i][0] - parentfx;
 
-		double parentOuterMass = avec->outer_mass[i] * splitF;
-		double childOuterMass = avec->outer_mass[i] - parentOuterMass;
+	double parentfy = atom->f[i][1] * splitF;
+	double childfy = atom->f[i][1] - parentfy;
 
-		// forces are the same for both parent and child, x, y and z axis
-		double parentfx = atom->f[i][0] * splitF;
-		double childfx = atom->f[i][0] - parentfx;
-
-		double parentfy = atom->f[i][1] * splitF;
-		double childfy = atom->f[i][1] - parentfy;
-
-		double parentfz = atom->f[i][2] * splitF;
-		double childfz = atom->f[i][2] - parentfz;
+	double parentfz = atom->f[i][2] * splitF;
+	double childfz = atom->f[i][2] - parentfz;
 
         double thetaD = random->uniform() * 2 * MY_PI;
-        double phiD = random->uniform() * (MY_PI);
 
         double oldX = atom->x[i][0];
         double oldY = atom->x[i][1];
@@ -353,16 +295,17 @@ void FixPDivideTa::post_integrate() {
         atom->f[i][2] = parentfz;
 
         atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-        avec->outer_radius[i] = pow((3.0 / (4.0 * MY_PI)) * ((atom->rmass[i] / density) + (parentOuterMass / cell_dens)), (1.0 / 3.0));
+        avec->outer_radius[i] =  atom->radius[i];
 
-    	newX = oldX;
-    	newY = oldY;
-
-        if (parentType == ta_id) {
-        	newZ = oldZ;
-        } else {
-			newZ = oldZ + atom->radius[i];
-		}
+        if (childType == diff_id) {
+	  newX = oldX;
+	  newY = oldY;
+	  newZ = oldZ;
+	} else {
+	  newX = oldX - (atom->radius[i] * cos(thetaD));
+	  newY = oldY - (atom->radius[i]* sin(thetaD));
+	  newZ = oldZ;
+	}
 
         if (newX - avec->outer_radius[i] < xlo) {
           newX = xlo + avec->outer_radius[i];
@@ -376,10 +319,10 @@ void FixPDivideTa::post_integrate() {
         }
         if (newZ - avec->outer_radius[i] < zlo) {
           newZ = zlo + avec->outer_radius[i];
-          printf("enters here 5 parent type %i \n", parentType);
         } else if (newZ + avec->outer_radius[i] > zhi) {
           newZ = zhi - avec->outer_radius[i];
         }
+
         atom->x[i][0] = newX;
         atom->x[i][1] = newY;
         atom->x[i][2] = newZ;
@@ -395,14 +338,15 @@ void FixPDivideTa::post_integrate() {
         double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
         double* coord = new double[3];
 
-        newX = oldX + (childOuterRadius * cos(thetaD) * sin(phiD) * DELTA);
-        newY = oldY + (childOuterRadius * sin(thetaD) * sin(phiD) * DELTA);
-
-        if (childType == ta_id) {
-			newZ = oldZ;
-		} else {
-			newZ = oldZ + atom->radius[i];
-		}
+        if (childType == diff_id) {
+          newX = oldX;
+          newY = oldY;
+ 	  newZ = oldZ + 2*atom->radius[i];
+	} else {
+	  newX = oldX + (childOuterRadius * cos(thetaD));
+	  newY = oldY + (childOuterRadius * sin(thetaD));
+	  newZ = oldZ;
+	}
 
         if (newX - childOuterRadius < xlo) {
           newX = xlo + childOuterRadius;
@@ -416,7 +360,6 @@ void FixPDivideTa::post_integrate() {
         }
         if (newZ - childOuterRadius < zlo) {
           newZ = zlo + childOuterRadius;
-          printf("enters here 7 type: %i \n", childType);
         } else if (newZ + childOuterRadius > zhi) {
           newZ = zhi - childOuterRadius;
         }
@@ -446,7 +389,7 @@ void FixPDivideTa::post_integrate() {
         atom->omega[n][2] = atom->omega[i][2];
 
         atom->rmass[n] = childMass;
-        avec->outer_mass[n] = childOuterMass;
+        avec->outer_mass[n] = childMass;
 
         atom->f[n][0] = childfx;
         atom->f[n][1] = childfy;
@@ -457,7 +400,7 @@ void FixPDivideTa::post_integrate() {
         atom->torque[n][2] = atom->torque[i][2];
 
         atom->radius[n] = childRadius;
-        avec->outer_radius[n] = childOuterRadius;
+        avec->outer_radius[n] = childRadius;
 
         avec->d_counter[n] = childDivisionCount;
 

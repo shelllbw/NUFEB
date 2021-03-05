@@ -56,7 +56,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/diff requires atom style bio");
 
-  if (narg < 7)
+  if (narg < 6)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/diff command");
 
   varg = narg-3;
@@ -73,7 +73,7 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
 
   external_gflag = 1;
 
-  int iarg = 7;
+  int iarg = 6;
   while (iarg < narg){
 	if (strcmp(arg[iarg],"gflag") == 0) {
 	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -122,14 +122,6 @@ void FixPGrowthDIFF::init() {
 	  error->all(FLERR, "Variable for fix psoriasis/growth/diff is invalid style");
   }
 
-  //modify atom mask
-    for (int i = 1; i < group->ngroup; i++) {
-      if (strcmp(group->names[i],"CC") == 0) {
-        cc_mask = pow(2, i) + 1;
-        break;
-      }
-    }
-
   // register fix kinetics with this class
   kinetics = NULL;
 
@@ -146,8 +138,7 @@ void FixPGrowthDIFF::init() {
 
   diff_dens = input->variable->compute_equal(ivar[0]);
   apop = input->variable->compute_equal(ivar[1]);
-  decay_cc = input->variable->compute_equal(ivar[2]);
-  ddesq = input->variable->compute_equal(ivar[3]);
+  ddesq = input->variable->compute_equal(ivar[2]);
 
   bio = kinetics->bio;
 
@@ -221,7 +212,7 @@ void FixPGrowthDIFF::init_param() {
 		species[i] = 3;
 	  else if (strcmp(name, "tcell") == 0)
 		species[i] = 4;
-	  else if (strcmp(name, "cc") == 0)
+	  else if (strcmp(name, "dc") == 0)
 		species[i] = 5;
 	  else if (strcmp(name, "apop") == 0)
 		  species[i] = 6;
@@ -260,62 +251,56 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
+
   double growrate_d = 0;
 
-  //different heights for diff cells
-//		  double sgheight = zhi * 0.85; //cubic domain
-//		  double scheight = zhi * 0.92;
-//		  double ssheight = zhi * 0.8;
-	  double ssheight = zhi * 0.73; //smaller domain
-	  //double sgheight = zhi * 0.85;
-	  double sgheight = zhi * 0.7; // JUST FOR TESTING IF DIFF CELL WILL CHANGE TO CC
-	  double scheight = zhi * 0.9;
-
-//  for (int i = 0; i < nlocal; i++) {
-//  	if (atom->type[i] == 3 && i == 16004 || atom->type[i] == 3 && i == 18180 || atom->type[i] == 3 && i == 19909 || atom->type[i] == 3 && i == 20250) {
-//		 //printf("diff cell type %i x: %e y: %e z: %e update_timestep %e age of cell %e \n", atom->type[i], atom->x[i][0], atom->x[i][1], atom->x[i][2], update->ntimestep, update->ntimestep/1001);
-//		 //printf("age hour to min %e \n", (update->ntimestep/1001)*60);
-//  		printf("type %i   i %i  update_ntimestep %i age %i \n", atom->type[i], i, update->ntimestep, update->ntimestep/1001);
-//  		printf("atom coords x %e y %e z %e \n", atom->x[i][0], atom->x[i][1], atom->x[i][2]);
-//  	}
-//  }
+  for (int i = 0; i < nlocal; i++) {
+  	if (atom->type[i] == 3 && i == 16004 || atom->type[i] == 3 && i == 18180 || atom->type[i] == 3 && i == 19909 || atom->type[i] == 3 && i == 20250) {
+		 //printf("diff cell type %i x: %e y: %e z: %e update_timestep %e age of cell %e \n", atom->type[i], atom->x[i][0], atom->x[i][1], atom->x[i][2], update->ntimestep, update->ntimestep/1001);
+		 //printf("age hour to min %e \n", (update->ntimestep/1001)*60);
+  		printf("type %i   i %i  update_ntimestep %i age %i \n", atom->type[i], i, update->ntimestep, update->ntimestep/1001);
+  		printf("atom coords x %e y %e z %e \n", atom->x[i][0], atom->x[i][1], atom->x[i][2]);
+  	}
+  }
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
 	  //grid without atom is not considered
 	  if(!xdensity[0][grid]) continue;
 
 	  for (int i = 1; i <= ntypes; i++) {
 		  int spec = species[i];
+	  //different heights for diff cells
+//		  double sgheight = zhi * 0.85; //cubic domain
+//		  double scheight = zhi * 0.92;
+//		  double ssheight = zhi * 0.8;
+		  double ssheight = zhi * 0.73; //smaller domain
+		  double sgheight = zhi * 0.85;
+		  double scheight = zhi * 0.9;
 
-		  //differentiated cells
 		  if (spec == 3) {
 			  //printf("------- start of growth/diff  -------- \n");
-			 //decay rate for diff
+
+			 //decay rate
 			double r8 = decay[i];
-			//apoptosis rate
-			double r9 = r8 * apop;
-
-			//printf("growrate_diff equation is R8 %e  R9 %e  R10 %e \n", r8, r9, r10);
-			//printf("growth_diff grid %i ca %e \n", grid, nus[ca][grid]);
-
-			nur[ca][grid] += (1/yield[i]) * (r8 + r9) *  xdensity[i][grid];
-			growrate_d = - (r8 + r9) ;
-
-			//if (atom->x[i][2] > sgheight) { //if in SG layer then secrete out most calcium
-
-		  }
-
-		  // corneocytes
-		if (spec == 5) {
-			//decay rate for cc
-			double r8 = decay_cc;
 			//desquamation rate
 			double r9 = ddesq;
 			//apoptosis rate
 			double r10 = (r8 + r9) * apop;
 
-			nur[ca][grid] += (1/yield[i]) * (r8 + r9 + r10) *  xdensity[i][grid];
-			growrate_d = - (r8 + r9 + r10);
-		}
+
+			//printf("growrate_diff equation is R8 %e  R9 %e  R10 %e \n", r8, r9, r10);
+			//printf("growth_diff grid %i ca %e \n", grid, nus[ca][grid]);
+
+			if (atom->x[i][2] > sgheight && atom->x[i][2] < scheight) { //if in SG layer then secrete out most calcium
+				nur[ca][grid] += (r8 + r9) *  xdensity[i][grid];
+				//nur[ca][grid] += yield[i] * (r8 + r9) * xdensity[i][grid];
+				growrate_d = - (r8 + r9 + r10) ;
+//			} else if (atom->x[i][2] < scheight && atom->x[i][2] > sgheight) { // if in SC layer, calcium should be 0
+//				nur[ca][grid] += (r8 + r9) *  xdensity[i][grid];
+//				growrate_d = - (r8 + r9 + (r8 + r9 * r10));
+			} else {
+				growrate_d = 0; //if diff cell is below sg layer, no update
+			}
+		  }
 	  }
   	}
   //update physical attributes
@@ -340,23 +325,20 @@ void FixPGrowthDIFF::update_biomass(double growrate, double dt) {
   double ssheight = zhi * 0.73; //smaller domain
   double sgheight = zhi * 0.85;
   double scheight = zhi * 0.9;
-  double dia = 0.6e-5;
-  int cc_id = bio->find_typeid("cc");
 
   for (int i = 0; i < nlocal; i++) {
     if (mask[i] & groupbit) {
+      int t = type[i];
+      int pos = kinetics->position(i);
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-      rmass[i] = rmass[i] * (1 + growrate * dt);
+//      if (atom->x[i][2] > sgheight && atom->x[i][2] < scheight) {
+      	rmass[i] = rmass[i] * (1 + growrate * dt);
+//      } else {
+//      	rmass[i] = rmass[i];
+//      }
+
       radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-
-		if (radius[i] * 2 < dia){
-			//change atom type
-			atom->type[i] = cc_id;
-			atom->mask[i] = cc_mask;
-
-			printf("enters here");
-		}
     }
   }
 }

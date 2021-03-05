@@ -23,6 +23,7 @@ FixStyle(psoriasis/divide_stem,FixPDivideStem)
 #define LMP_FIX_PDIVIDESTEM_H
 
 #include "fix.h"
+#include <vector>
 
 namespace LAMMPS_NS {
 
@@ -35,7 +36,10 @@ class FixPDivideStem : public Fix {
   void init();
   void post_integrate();
   int modify_param(int, char **);
-  double uniformP();
+  void spatial_regulate_stem_stem(int, double*, double*, double, double);
+  void spatial_regulate_stem_ta(int, double*, double*, double, double);
+  void spatial_regulate_ta_ta(int, double*, double*, double, double);
+  void stem_neighbor(int, std::vector<int>&, int);
 
  private:
   char **var;
@@ -53,30 +57,18 @@ class FixPDivideStem : public Fix {
    *
    * cell type name and id
    * boolean to check if the cell can divide
-   * */
+  * */
   int type_id;
   char* type_name;
   int parentType, childType;
   int ta_mask;
   int parentMask, childMask;
-  double asym, self, cell_dens;
-  int max_cap;
-  int nx, ny, nz;
-  double stepx, stepy, stepz;       // grids size
-  int snxx, snyy, snzz;                   // # of local grids in x, y and z
-  double vol;                       // grid volume and gas volume
-  double caThreshold;
-  int asymcounter;
-  int symcounter;
-  int selfcounter;
-  double horiDiv; //horizontal division percentage for
-
+  double prob_asym, prob_self, ta_dens;
 
   class RanPark *random;
   class AtomVecBio *avec;
   class BIO *bio;
-  class FixFluid *nufebFoam;
-  class FixKinetics *kinetics;
+  class NeighList *list;
 };
 
 }

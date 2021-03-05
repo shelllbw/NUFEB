@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<VTKFile type="ImageData" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <ImageData WholeExtent="0 50 0 20 0 30" Origin="0 0 0" Spacing="1e-05 1e-05 1e-05">
+    <Piece Extent="0 50 0 20 0 30"                                                    >
+      <PointData>
+      </PointData>
+      <CellData>
+        <DataArray type="Float64" Name="gf concentration" format="appended" RangeMin="0"                    RangeMax="0"                    offset="0"                   />
+        <DataArray type="Float64" Name="ca concentration" format="appended" RangeMin="0.00018"              RangeMax="0.00018"              offset="592"                 />
+      </CellData>
+    </Piece>
+  </ImageData>
+  <AppendedData encoding="base64">
+   _CAAAAACAAACAKQAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAACEAAAA=eJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cExAQAAAMKg9U9tBn+gAAAAAAAAAAAAAHgMKYAAAQ==CAAAAACAAACAKQAAUwAAAFMAAABTAAAAUwAAAFMAAABTAAAAUwAAADQAAAA=eJztxTEBACAIALAIxDADFzEp5U0dDOL2LGbz9qmwbdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bfvjH6jRY6N4nO3FMQEAIAgAsAjEMAMXMSnlTR0M4vYsZvP2qbBt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt++MfqNFjo3ic7cUxAQAgCACwCMQwAxcxKeVNHQzi9ixm8/apsG3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm374x+o0WOjeJztxTEBACAIALAIxDADFzEp5U0dDOL2LGbz9qmwbdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bfvjH6jRY6N4nO3FMQEAIAgAsAjEMAMXMSnlTR0M4vYsZvP2qbBt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt27Zt++MfqNFjo3ic7cUxAQAgCACwCMQwAxcxKeVNHQzi9ixm8/apsG3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm3btm374x+o0WOjeJztxTEBACAIALAIxDADFzEp5U0dDOL2LGbz9qmwbdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bdu2bfvjH6jRY6N4nO3FMQEAIAgAsAjEMAMXMSnlTR2sYIDtWczm7VNh27Zt27Zt27Zt27Zt27btrx9Y9TpN
+  </AppendedData>
+</VTKFile>

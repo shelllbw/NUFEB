@@ -160,19 +160,19 @@ void FixPGrowthSC::init() {
 
   //Get computational domain size
   if (domain->triclinic == 0) {
-	xlo = domain->boxlo[0];
-	xhi = domain->boxhi[0];
-	ylo = domain->boxlo[1];
-	yhi = domain->boxhi[1];
-	zlo = domain->boxlo[2];
-	zhi = domain->boxhi[2];
+    xlo = domain->boxlo[0];
+    xhi = domain->boxhi[0];
+    ylo = domain->boxlo[1];
+    yhi = domain->boxhi[1];
+    zlo = domain->boxlo[2];
+    zhi = domain->boxhi[2];
   } else {
-	xlo = domain->boxlo_bound[0];
-	xhi = domain->boxhi_bound[0];
-	ylo = domain->boxlo_bound[1];
-	yhi = domain->boxhi_bound[1];
-	zlo = domain->boxlo_bound[2];
-	zhi = domain->boxhi_bound[2];
+    xlo = domain->boxlo_bound[0];
+    xhi = domain->boxhi_bound[0];
+    ylo = domain->boxlo_bound[1];
+    yhi = domain->boxhi_bound[1];
+    zlo = domain->boxlo_bound[2];
+    zhi = domain->boxhi_bound[2];
   }
 
   stepx = (xhi - xlo) / nx;
@@ -197,10 +197,10 @@ void FixPGrowthSC::init_param() {
 //	  il22 = nu;
 //	if (strcmp(bio->nuname[nu], "tnfa") == 0)
 //		  tnfa = nu;
-	if (strcmp(bio->nuname[nu], "gf") == 0)
-		gf = nu;
-	if (strcmp(bio->nuname[nu], "ca") == 0)
-		ca = nu;
+    if (strcmp(bio->nuname[nu], "gf") == 0)
+      gf = nu;
+    if (strcmp(bio->nuname[nu], "ca") == 0)
+      ca = nu;
   }
 
 //  if (il22 == 0)
@@ -214,24 +214,24 @@ void FixPGrowthSC::init_param() {
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
-	  char *name = bio->tname[i];
+    char *name = bio->tname[i];
 
-	  if (strcmp(name, "stem") == 0)
-		species[i] = 1;
-	  else if (strcmp(name, "ta") == 0)
-		species[i] = 2;
-	  else if (strcmp(name, "diff") == 0)
-		species[i] = 3;
-	  else if (strcmp(name, "tcell") == 0)
-		species[i] = 4;
-	  else if (strcmp(name, "cc") == 0)
-		species[i] = 5;
-	  else if (strcmp(name, "apop") == 0)
-		  species[i] = 6;
-	  else if (strcmp(name, "bm") == 0)
-	  	species[i] = 7;
-	  else
-		error->all(FLERR, "unknown species in fix_psoriasis/growth/sc");
+    if (strcmp(name, "stem") == 0)
+	  species[i] = 1;
+    else if (strcmp(name, "ta") == 0)
+	  species[i] = 2;
+    else if (strcmp(name, "diff") == 0)
+	  species[i] = 3;
+    else if (strcmp(name, "tcell") == 0)
+	  species[i] = 4;
+    else if (strcmp(name, "dc") == 0)
+	  species[i] = 5;
+    else if (strcmp(name, "apop") == 0)
+	    species[i] = 6;
+    else if (strcmp(name, "bm") == 0)
+	  species[i] = 7;
+    else
+	  error->all(FLERR, "unknown species in fix_psoriasis/growth/sc");
   }
 }
 
@@ -266,52 +266,42 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
   double growrate_sc = 0;
 
-//  for (int i = 0; i < nlocal; i++) {
-//    	if (atom->type[i] == 1) {
-//  		 //printf("diff cell type %i x: %e y: %e z: %e update_timestep %e age of cell %e \n", atom->type[i], atom->x[i][0], atom->x[i][1], atom->x[i][2], update->ntimestep, update->ntimestep/1001);
-//  		 //printf("age hour to min %e \n", (update->ntimestep/1001)*60);
-//    		printf("type %i   i %i  update_ntimestep %i age %i \n", atom->type[i], i, update->ntimestep, update->ntimestep/1001);
-//    		printf("atom coords x %e y %e z %e \n", atom->x[i][0], atom->x[i][1], atom->x[i][2]);
-//    	}
-//    }
-
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
-	  //grid without atom is not considered
-	  if(!xdensity[0][grid]) continue;
+    //grid without atom is not considered
+    if(!xdensity[0][grid]) continue;
 
-	  for (int i = 1; i <= ntypes; i++) {
-		  int spec = species[i];
+      for (int i = 1; i <= ntypes; i++) {
+	int spec = species[i];
 
-		  // Stem cell model
-		  if (spec == 1) {
-			  //printf("------- start of growth/sc  -------- \n");
+	      // Stem cell model
+	if (spec == 1) {
+		//printf("------- start of growth/sc  -------- \n");
 
-			//growth rate
-			double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (ks[i][ca] / (ks[i][ca] + nus[ca][grid]));
-			//psoriasis
-			//double r2 = mu[i] * (nus[il22][grid] / (ks[i][il22] + nus[il22][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
-			//decay rate
-			double r3 =  decay[i];
-			//apoptosis rate
-			double r4 = (r1 - r3)  * apop;
-			//double r4 = (r1 + r2 - r3)  * apop;
+	  //growth rate
+	  double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (ks[i][ca] / (ks[i][ca] + nus[ca][grid]));
 
-			//printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
-			//printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
+	  //psoriasis
+	  //double r2 = mu[i] * (nus[il22][grid] / (ks[i][il22] + nus[il22][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
+	  //decay rate
+	  double r3 =  decay[i];
+	  //apoptosis rate
+	  double r4 = (r1 - r3)  * apop;
+	  //double r4 = (r1 + r2 - r3)  * apop;
 
-			nur[gf][grid] += (1/yield[i]) * r1 * xdensity[i][grid];
-			nur[ca][grid] += -((1/yield[i]) * r1 * xdensity[i][grid]);
-			//nur[il22][grid] += -(r2 * xdensity[i][grid]);
+	  //printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
+	  //printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
 
-			growrate_sc = r1 - r3 - r4;
-			//growrate_sc = r1 + r2 - r3 - r4;
+	  nur[gf][grid] += 1/yield[i] * r1 * xdensity[i][grid];
+	  nur[ca][grid] += -(1/yield[i] * r1 * xdensity[i][grid]);
+	  //nur[il22][grid] += -(r2 * xdensity[i][grid]);
 
-//			printf("growrate_sc equation is R1 %e - R2 %e - R4 %e = %e\n", r1, r3, r4, r1 - r3 - r4);
-//			printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
-//			printf("rmass[i] %e * (1 + growrate_sc %e * dt %e) = %e\n", rmass[i], growrate_sc, dt, rmass[i] * (1 + growrate_sc * dt));
-//			printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_sc * dt));
-		  }
+	  growrate_sc = r1 - r3 - r4;
+	  //growrate_sc = r1 + r2 - r3 - r4;
+
+	  //printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
+	  //printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_sc * dt));
 	}
+    }
   }
   //update physical attributes
     if (gflag && external_gflag) update_biomass(growrate_sc, dt);
@@ -338,10 +328,10 @@ void FixPGrowthSC::update_biomass(double growrate, double dt) {
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
       //printf("growrate is %e \n", growrate);
-	    //printf("BEFORE %i - rmass: %e, radius: %e \n", i, rmass[i], radius[i]);
-		rmass[i] = rmass[i] * (1 + growrate * dt);
-		radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-		//printf("properties of new sc %i is rmass %e, radius %e \n", i, rmass[i], radius[i]);
+      //printf("BEFORE %i - rmass: %e, radius: %e \n", i, rmass[i], radius[i]);
+      rmass[i] = rmass[i] * (1 + growrate * dt);
+      radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
+      //printf("properties of new sc %i is rmass %e, radius %e \n", i, rmass[i], radius[i]);
     }
   }
 }

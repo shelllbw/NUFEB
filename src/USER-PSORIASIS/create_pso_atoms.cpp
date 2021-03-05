@@ -714,157 +714,90 @@ void CreatePsoAtoms::add_stem()
   // random number generator, same for all procs
 
   //RanPark *random = new RanPark(lmp,seed);
+  if (num_sc > 0) {
+  //refresh list and get all the empty locations
+    surfaceList.clear();
+    surface_list();
+    int atomId;
+    std::vector<int> freeLoc;
+    //shuffle the vector and assign to a new vector with the number of sc to initialise
+    std::random_shuffle (surfaceList.begin(), surfaceList.end());
+    freeLoc.assign(surfaceList.begin(), surfaceList.begin() + (num_sc));
 
-	if (num_sc > 0) {
-		//refresh list and get all the empty locations
-		emptyList.clear();
-		empty_loc();
-		int atomId;
-		std::vector<int> freeLoc;
-		//shuffle the vector and assign to a new vector with the number of sc to initialise
-		std::random_shuffle (emptyList.begin(), emptyList.end());
-		freeLoc.assign(emptyList.begin(), emptyList.begin() + (num_sc));
-
-		 //***bowen*** get mask
+    //***bowen*** get mask
     for (int i = 1; i < group->ngroup; i++) {
-    if (strcmp(group->names[i],"STEM") == 0) {
-      sc_mask = pow(2, i) + 1;
-      break;
+      if (strcmp(group->names[i],"STEM") == 0) {
+	sc_mask = pow(2, i) + 1;
+	break;
       }
     }
 
-	  if (sc_mask < 0) error->all(FLERR, "Cannot find STEM group.");
-	    //***bowen*** get type id
-		int stem_id = avec_bio->bio->find_typeid("stem");
-		double r = diameter/2;
-		//printf("radius is %e\n", r);
+    if (sc_mask < 0)
+      error->all(FLERR, "Cannot find STEM group.");
+    int stem_id = avec_bio->bio->find_typeid("stem");
+    double r = diameter/2;
 
-		for (int i = 0; i < freeLoc.size(); i++){
-			double* coord = new double[3];
+    for (int i = 0; i < freeLoc.size(); i++){
+      double* coord = new double[3];
 
-			atomId = freeLoc[i];
+      atomId = freeLoc[i];
 
-			 //***bowen*** x y are same with surface atom, z is 1 diameter higher
-			coord[0] = atom->x[atomId][0];
-			coord[1] = atom->x[atomId][1];
-			coord[2] = atom->x[atomId][2] + atom->radius[atomId] * 2;
-		//	printf("stem id is %i i=%i x=%e y=%e z=%e \n", stem_id, i, coord[0],coord[1],coord[2]);
-			int n = 0;
-			//create new sc to initialise on surface
-			avec_bio->create_atom(stem_id, coord);
-			//gets the new atom id
-			n = atom->nlocal - 1;
+      //***bowen*** x y are same with surface atom, z is 1 diameter higher
+      coord[0] = atom->x[atomId][0];
+      coord[1] = atom->x[atomId][1];
+      coord[2] = atom->x[atomId][2] + atom->radius[atomId] * 2;
 
-			//printf("density is %f\n", density);
+      int n = 0;
+      //create new sc to initialise on surface
+      avec_bio->create_atom(stem_id, coord);
+      //gets the new atom id
+      n = atom->nlocal - 1;
 
-			atom->radius[n] = r;
-			//printf("radius is %f\n", r);
-			atom->rmass[n] = 4.0*3.1415926/3.0*r*r*r*density;
-			avec_bio->outer_mass[n] = atom->rmass[n];
-			avec_bio->outer_radius[n] = r;
+      //printf("density is %f\n", density);
 
-			atom->mask[n] = sc_mask;
-			atom->tag[n] = 0;
+      atom->radius[n] = r;
+      //printf("radius is %f\n", r);
+      atom->rmass[n] = 4.0*3.1415926/3.0*r*r*r*density;
+      avec_bio->outer_mass[n] = atom->rmass[n];
+      avec_bio->outer_radius[n] = r;
 
-	    delete[] coord;
-	  }
-	}
-	int *type = atom->type;
+      atom->mask[n] = sc_mask;
+      atom->tag[n] = 0;
 
-//	for (int i = 0; i < atom->nlocal; i ++){
-//		if (type[i] == 1){
-//			printf("stem cell created. type %i \n", type[i]);
-//			printf("rmass of sc is %e\n", atom->rmass[i]);
-//		}
-//	}
+      delete[] coord;
+    }
+  }
 }
 
-//create a list of all the empty locations
-void CreatePsoAtoms::empty_loc() {
-	//get cutoff from inputscript
-	e_cutoff = cutoff;
-	nlist.clear();
-	emptyList.clear();
-	//build neighbor list
-	neighbor_list();
-	// free surface particles & bottom particles
-	int max_surface = 6;
-	double minx, miny, minz, maxx, maxy;
-	double gminx, gminy, gminz, gmaxx, gmaxy;
-
-	minx = miny = minz = 10;
-	maxx = maxy = 0;
-
-	for (int i = 0; i < nlist.size(); i++) {
-	  if(nlist[i].size() > max_surface) error->all(FLERR, "Too many neighbors, adjust cutoff value.");
-	  if(nlist[i].size() == max_surface) continue;
-
-	  if (atom->x[i][0] < minx) minx = atom->x[i][0];
-	  if (atom->x[i][1] < miny) miny = atom->x[i][1];
-	  if (atom->x[i][2] < minz) minz = atom->x[i][2];
-	  if (atom->x[i][0] > maxx) maxx = atom->x[i][0];
-	  if (atom->x[i][1] > maxy) maxy = atom->x[i][1];
-	}
-
-	MPI_Allreduce(&minx,&gminx,1,MPI_DOUBLE,MPI_MIN,world);
-	MPI_Allreduce(&miny,&gminy,1,MPI_DOUBLE,MPI_MIN,world);
-	MPI_Allreduce(&minz,&gminz,1,MPI_DOUBLE,MPI_MIN,world);
-	MPI_Allreduce(&maxx,&gmaxx,1,MPI_DOUBLE,MPI_MAX,world);
-	MPI_Allreduce(&maxy,&gmaxy,1,MPI_DOUBLE,MPI_MAX,world);
-
-	for (int i = 0; i < nlist.size(); i++) {
-	  int surface = nlist[i].size();
-	  if (surface == max_surface) continue;
-
-	  if (atom->x[i][0] == minx) {
-		surface++;
-	  }
-	  if (atom->x[i][1] == miny) {
-		surface++;
-	  }
-	  if (atom->x[i][2] == minz) {
-		surface++;
-	  }
-	  if (atom->x[i][0] == maxx) {
-		surface++;
-	  }
-	  if (atom->x[i][1] == maxy) {
-		surface++;
-	  }
-
-	  //if the atom has less than 6 surfaces, then it is a surface atom
-	  if (surface < max_surface) {
-		  emptyList.push_back(i);
-		}
-	}
-}
-
-//get a list of all the neighboring cells
-void CreatePsoAtoms::neighbor_list() {
+//get a list of surface particles
+void CreatePsoAtoms::surface_list() {
 
   for(int i = 0; i < atom->nlocal; i++){
     int type = atom->type[i];
+    int surface = 1;
+    if (!strcmp(avec_bio->bio->tname[type],"bm") == 0) continue;
 
-    if (strcmp(avec_bio->bio->tname[type],"bm") == 0) {
-      std::vector<int> subList;
+    for(int j = 0; j < atom->nlocal; j++){
+      int typej = atom->type[j];
+      if (!strcmp(avec_bio->bio->tname[typej],"bm") == 0) continue;
 
-      for(int j = 0; j < atom->nlocal; j++){
-        int typej = atom->type[j];
-        if (strcmp(avec_bio->bio->tname[typej],"bm") == 0) {
-          if(i != j) {
-            double xd = atom->x[i][0] - atom->x[j][0];
-            double yd = atom->x[i][1] - atom->x[j][1];
-            double zd = atom->x[i][2] - atom->x[j][2];
+      if(i == j) continue;
 
-            double rsq = (xd*xd + yd*yd + zd*zd);
-            double cut = (atom->radius[i] + atom->radius[j] + cutoff) * (atom->radius[i] + atom->radius[j]+ cutoff);
+      double xd = atom->x[i][0] - atom->x[j][0];
+      double yd = atom->x[i][1] - atom->x[j][1];
+      double zd = atom->x[i][2] - atom->x[j][2];
 
-            if (rsq <= cut) subList.push_back(j); //push.back = adding to the list
-          }
-        }
+      double rsq = (xd*xd + yd*yd + zd*zd);
+      double cut = (atom->radius[i] + atom->radius[j] + cutoff) * (atom->radius[i] + atom->radius[j]+ cutoff);
+
+      if (rsq <= cut) {
+	if (atom->x[j][2] > atom->x[i][2]) {
+	  surface = 0;
+	  break;
+	}
       }
-      nlist.push_back(subList);
-     }
+    }
+    if (surface) surfaceList.push_back(i);
   }
   //printf("size of nlist is %d \n",nlist.size());
 }
@@ -872,9 +805,9 @@ void CreatePsoAtoms::neighbor_list() {
 //function to test - prints vectors
 void CreatePsoAtoms::print(std::vector<double> const &input)
 {
-	for (int i = 0; i < input.size(); i++) {
-		std::cout << input.at(i) << ' ';
-	}
+  for (int i = 0; i < input.size(); i++) {
+	  std::cout << input.at(i) << ' ';
+  }
 }
 
 

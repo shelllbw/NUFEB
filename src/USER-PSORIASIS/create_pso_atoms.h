@@ -50,9 +50,9 @@ class CreatePsoAtoms : protected Pointers {
   int *visit;
   double cutoff, e_cutoff;
 
-  std::vector<int> emptyList;
-  void neighbor_list();
-  void empty_loc();
+  std::vector<int> surfaceList;
+  void surface_list();
+  void get_surface_atoms();
 
   class FixKinetics *kinetics;
   class BIO *bio;
