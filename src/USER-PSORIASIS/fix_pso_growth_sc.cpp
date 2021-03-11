@@ -243,19 +243,9 @@ void FixPGrowthSC::init_param() {
  todo: place update biomass in here since we are calculating based on cell rather than grid
  ------------------------------------------------------------------------- */
 void FixPGrowthSC::growth(double dt, int gflag) {
-  int *mask = atom->mask;
-  int nlocal = atom->nlocal;
-  int *type = atom->type;
   int ntypes = atom->ntypes;
 
-  double *radius = atom->radius;
-  double *rmass = atom->rmass;
-  double *outer_mass = avec->outer_mass;
-  double *outer_radius = avec->outer_radius;
-
   double *mu = bio->mu;
-  double *decay = bio->decay;
-  double *diff_coeff = bio->diff_coeff;
   double **ks = bio->ks;
   double *yield = bio->yield;
 
@@ -275,31 +265,12 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 
 	      // Stem cell model
 	if (spec == 1) {
-		//printf("------- start of growth/sc  -------- \n");
-
 	  //growth rate
-	  double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (ks[i][ca] / (ks[i][ca] + nus[ca][grid]));
-
-	  //psoriasis
-	  //double r2 = mu[i] * (nus[il22][grid] / (ks[i][il22] + nus[il22][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
-	  //decay rate
-	  double r3 =  decay[i];
-	  //apoptosis rate
-	  double r4 = (r1 - r3)  * apop;
-	  //double r4 = (r1 + r2 - r3)  * apop;
-
-	  //printf("growth_sc grid %i nus il17 %e tnfa %e il23 %e gf %e ca %e \n", grid, nus[il17][grid], nus[tnfa][grid], nus[il23][grid], nus[gf][grid], nus[ca][grid]);
-	  //printf("growth_sc grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
-
+	  double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid]));
+	  //substrate utilisation
 	  nur[gf][grid] += 1/yield[i] * r1 * xdensity[i][grid];
-	  nur[ca][grid] += -(1/yield[i] * r1 * xdensity[i][grid]);
-	  //nur[il22][grid] += -(r2 * xdensity[i][grid]);
 
-	  growrate_sc = r1 - r3 - r4;
-	  //growrate_sc = r1 + r2 - r3 - r4;
-
-	  //printf("growrate_sc equation is R1 %e - R2 %e - R3 %e = %e\n", r1, r2, r3, r1 - r2 - r3);
-	  //printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_sc * dt));
+	  growrate_sc = r1;
 	}
     }
   }
@@ -327,11 +298,8 @@ void FixPGrowthSC::update_biomass(double growrate, double dt) {
 
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-      //printf("growrate is %e \n", growrate);
-      //printf("BEFORE %i - rmass: %e, radius: %e \n", i, rmass[i], radius[i]);
       rmass[i] = rmass[i] * (1 + growrate * dt);
       radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-      //printf("properties of new sc %i is rmass %e, radius %e \n", i, rmass[i], radius[i]);
     }
   }
 }

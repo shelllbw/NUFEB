@@ -214,24 +214,24 @@ void FixPGrowthTA::init_param() {
 
   //initialise type
   for (int i = 1; i <= atom->ntypes; i++) {
-	  char *name = bio->tname[i];
+    char *name = bio->tname[i];
 
-	  if (strcmp(name, "stem") == 0)
-		species[i] = 1;
-	  else if (strcmp(name, "ta") == 0)
-		species[i] = 2;
-	  else if (strcmp(name, "diff") == 0)
-		species[i] = 3;
-	  else if (strcmp(name, "tcell") == 0)
-		species[i] = 4;
-	  else if (strcmp(name, "dc") == 0)
-		species[i] = 5;
-	  else if (strcmp(name, "apop") == 0)
-		  species[i] = 6;
-	  else if (strcmp(name, "bm") == 0)
-	  	species[i] = 7;
-	  else
-		error->all(FLERR, "unknown species in fix_psoriasis/growth/ta");
+    if (strcmp(name, "stem") == 0)
+      species[i] = 1;
+    else if (strcmp(name, "ta") == 0)
+      species[i] = 2;
+    else if (strcmp(name, "diff") == 0)
+      species[i] = 3;
+    else if (strcmp(name, "tcell") == 0)
+      species[i] = 4;
+    else if (strcmp(name, "dc") == 0)
+      species[i] = 5;
+    else if (strcmp(name, "apop") == 0)
+      species[i] = 6;
+    else if (strcmp(name, "bm") == 0)
+      species[i] = 7;
+    else
+      error->all(FLERR, "unknown species in fix_psoriasis/growth/ta");
   }
 }
 
@@ -244,69 +244,39 @@ void FixPGrowthTA::init_param() {
  todo: place update biomass in here since we are calculating based on cell rather than grid
  ------------------------------------------------------------------------- */
 void FixPGrowthTA::growth(double dt, int gflag) {
-  int *mask = atom->mask;
-  int nlocal = atom->nlocal;
-  int *type = atom->type;
   int ntypes = atom->ntypes;
 
-  double *radius = atom->radius;
-  double *rmass = atom->rmass;
-  double *outer_mass = avec->outer_mass;
-  double *outer_radius = avec->outer_radius;
-
   double *mu = bio->mu;
-  double *decay = bio->decay;
-  double *diff_coeff = bio->diff_coeff;
   double **ks = bio->ks;
   double *yield = bio->yield;
-
-  double **xdensity = kinetics->xdensity;
 
   double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
-  double growrate_ta = 0;
+  double **xdensity = kinetics->xdensity;
+
+  double growrate_sc = 0;
 
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
-	  //grid without atom is not considered
+    //grid without atom is not considered
     if(!xdensity[0][grid]) continue;
 
-    for (int i = 1; i <= ntypes; i++) {
-      int spec = species[i];
+      for (int i = 1; i <= ntypes; i++) {
+	int spec = species[i];
 
-      // ta cell model
-      if (spec == 2) {
-	 // printf("------- start of growth/ta  -------- \n");
+	// ta cell model
+	if (spec == 2) {
+	  //growth rate
+	  double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid]));
+	  //substrate utilisation
+	  nur[gf][grid] += 1/yield[i] * r1 * xdensity[i][grid];
 
-	//growth rate
-	double r5 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (ks[i][ca] / (ks[i][ca] + nus[ca][grid]));
-	//psoriasis
-	//double r6 = mu[i] * (nus[il22][grid] / (ks[i][il22] + nus[il22][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
-	//decay rate
-	double r7 = decay[i];
-	//apoptosis rate
-	double r8 = (r5 - r7) * apop;
-	//double r8 = (r5 + r6 - r7) * apop;
-
-	//printf("growrate_ta nus il17 %e tnfa %e gf %e ca %e \n", nus[il17][grid], nus[tnfa][grid], nus[gf][grid], nus[ca][grid]);
-	//printf("cell type %i\n", spec);
-	//printf("growth_ta grid %i gf %e ca %e \n", grid, nus[gf][grid], nus[ca][grid]);
-
-	nur[gf][grid] += 1/yield[i] * r5 * xdensity[i][grid];
-	nur[ca][grid] += -(1/yield[i] * r5 * xdensity[i][grid]);
-	//nur[il22][grid] += -(r6 * xdensity[i][grid]);
-
-	growrate_ta = r5 - r7 - r8;
-	//growrate_ta = r5 + r6 - r7 - r8;
-
-	//printf("growrate_ta equation is R5 %e - R6 %e - R7 %e = %e\n", r5, r6, r7, r5 - r6 - r7);
-	//printf("rmass %e    new rmass %e \n", rmass[i], rmass[i] * (1 + growrate_ta * dt));
-
-      }
+	  growrate_sc = r1;
+	}
     }
   }
   //update physical attributes
-    if (gflag && external_gflag) update_biomass(growrate_ta, dt);
+    if (gflag && external_gflag) update_biomass(growrate_sc, dt);
 }
 /* ----------------------------------------------------------------------
  update particle attributes: biomass, outer mass, radius etc
@@ -328,10 +298,8 @@ void FixPGrowthTA::update_biomass(double growrate, double dt) {
 
       double density = rmass[i] / (four_thirds_pi * radius[i] * radius[i] * radius[i]);
 
-      //printf("BEFORE %i - rmass: %e, radius: %e \n", i, rmass[i], radius[i]);
       rmass[i] = rmass[i] * (1 + growrate * dt);
       radius[i] = pow(three_quarters_pi * (rmass[i] / density), third);
-      //printf("properties of new ta %i is rmass %e, radius %e \n", i, rmass[i], radius[i]);
     }
   }
 }
