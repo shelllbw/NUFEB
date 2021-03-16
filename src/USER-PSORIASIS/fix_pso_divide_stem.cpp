@@ -27,7 +27,6 @@
 #include "domain.h"
 #include "error.h"
 #include "bio.h"
-#include "fix_bio_fluid.h"
 #include "force.h"
 #include "input.h"
 #include "lmptype.h"
@@ -37,6 +36,7 @@
 #include "update.h"
 #include "variable.h"
 #include "modify.h"
+#include "fix_bio_kinetics.h"
 #include "group.h"
 
 using namespace LAMMPS_NS;
@@ -45,9 +45,6 @@ using namespace MathConst;
 
 #define EPSILON 0.001
 #define DELTA 1.005
-
-// enum{PAIR,KSPACE,ATOM};
-// enum{DIAMETER,CHARGE};
 
 /* ---------------------------------------------------------------------- */
 
@@ -58,23 +55,23 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix divide/stem requires atom style bio");
   // check for # of input param
-  if (narg < 9)
+  if (narg < 11)
     error->all(FLERR, "Illegal fix divide/stem command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide/stem command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[4];
-  ivar = new int[4];
+  var = new char*[6];
+  ivar = new int[6];
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 6; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[8]);
+  seed = force->inumeric(FLERR, arg[10]);
 
   // read optional param
   demflag = 0;
@@ -82,7 +79,20 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   //dinika - set ta_mask to -1
   ta_mask = -1;
 
-  int iarg = 9;
+  kinetics = NULL;
+
+  int nfix = modify->nfix;
+  for (int j = 0; j < nfix; j++) {
+    if (strcmp(modify->fix[j]->style, "kinetics") == 0) {
+      kinetics = static_cast<FixKinetics *>(lmp->modify->fix[j]);
+      break;
+    }
+  }
+
+  if (kinetics == NULL)
+	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
+
+  int iarg = 11;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -128,7 +138,7 @@ FixPDivideStem::~FixPDivideStem() {
   delete random;
 
   int i;
-  for (i = 0; i < 5; i++) {
+  for (i = 0; i < 6; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -149,7 +159,7 @@ void FixPDivideStem::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 4; n++) {
+  for (int n = 0; n < 6; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -159,8 +169,18 @@ void FixPDivideStem::init() {
 
   div_dia = input->variable->compute_equal(ivar[0]);
   prob_asym = input->variable->compute_equal(ivar[1]);
-  prob_self = input->variable->compute_equal(ivar[2]);
+  prob_asym_hill = input->variable->compute_equal(ivar[2]);
+  prob_diff = input->variable->compute_equal(ivar[3]);
+  prob_diff_hill = input->variable->compute_equal(ivar[4]);
+  kca = input->variable->compute_equal(ivar[5]);
   //Dinika's edits
+  // initialize nutrient
+  ca = 0;
+  for (int nu = 1; nu <= bio->nnu; nu++) {
+    if (strcmp(bio->nuname[nu], "ca") == 0)
+      ca = nu;
+  }
+
   //modify atom mask
   for (int i = 1; i < group->ngroup; i++) {
     if (strcmp(group->names[i],"TA") == 0) {
@@ -181,8 +201,6 @@ void FixPDivideStem::post_integrate() {
   if (demflag)
     return;
 
-  int nstem = 0;
-  int nbm = 0;
   int nlocal = atom->nlocal;
 
   for (int i = 0; i < nlocal; i++) {
@@ -199,18 +217,23 @@ void FixPDivideStem::post_integrate() {
       int stem_id = bio->find_typeid("stem");
 
       if (atom->radius[i] * 2 >= div_dia) {
+	int pos = kinetics->position(i);
 	double prob = random->uniform();
+	double **nus = kinetics->nus;
 
-	if (prob < prob_self){
-	  parentType = stem_id;
-	  childType = stem_id;
-	  parentMask = atom->mask[i];
-	  childMask = atom->mask[i];
-	} else if (prob < 1 - prob_asym) {
+  	double pa = prob_diff + prob_diff_hill*((nus[ca][pos]) / (kca + nus[ca][pos]));
+  	double pb = prob_asym + prob_asym_hill*((nus[ca][pos]) / (kca + nus[ca][pos]));
+
+	if (prob < pa){
 	  parentType = ta_id;
 	  childType = ta_id;
 	  parentMask = ta_mask;
 	  childMask = ta_mask;
+	} else if (prob < 1 - pb) {
+	  parentType = stem_id;
+	  childType = stem_id;
+	  parentMask = atom->mask[i];
+	  childMask = atom->mask[i];
 	} else {
 	  parentType = stem_id;
 	  childType = ta_id;
@@ -226,8 +249,6 @@ void FixPDivideStem::post_integrate() {
 
 	double* parentCoord = new double[3];
 	double* childCoord = new double[3];
-
-	int r;
 
 	if (parentType == stem_id && childType == ta_id){
 	  parentCoord[0] = atom->x[i][0];

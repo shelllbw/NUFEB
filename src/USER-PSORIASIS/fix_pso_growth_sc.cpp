@@ -56,45 +56,28 @@ FixPGrowthSC::FixPGrowthSC(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/sc requires atom style bio");
 
-  if (narg < 5)
+  if (narg < 3)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/sc command");
-
-  varg = narg-3;
-  var = new char*[varg];
-  ivar = new int[varg];
-
-  for (int i = 0; i < varg; i++) {
-	int n = strlen(&arg[3 + i][2]) + 1;
-	var[i] = new char[n];
-	strcpy(var[i], &arg[3 + i][2]);
-  }
 
   kinetics = NULL;
 
   external_gflag = 1;
 
-  int iarg = 5;
+  int iarg = 3;
   while (iarg < narg){
-	if (strcmp(arg[iarg],"gflag") == 0) {
-	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
-	  if (external_gflag != 0 && external_gflag != 1)
-		error->all(FLERR, "Illegal fix psoriasis/growth/sc command: gflag");
-	  iarg += 2;
-	} else
-	  error->all(FLERR, "Illegal fix psoriasis/growth/sc command");
+    if (strcmp(arg[iarg],"gflag") == 0) {
+      external_gflag = force->inumeric(FLERR, arg[iarg+1]);
+      if (external_gflag != 0 && external_gflag != 1)
+	    error->all(FLERR, "Illegal fix psoriasis/growth/sc command: gflag");
+      iarg += 2;
+    } else
+      error->all(FLERR, "Illegal fix psoriasis/growth/sc command");
   }
 }
 
 /* ---------------------------------------------------------------------- */
 
 FixPGrowthSC::~FixPGrowthSC() {
-  int i;
-  for (i = 0; i < varg; i++) {
-	delete[] var[i];
-  }
-  delete[] var;
-  delete[] ivar;
-
   memory->destroy(species);
 }
 
@@ -114,30 +97,19 @@ void FixPGrowthSC::init() {
   if (!atom->radius_flag)
 	error->all(FLERR, "Fix requires atom attribute diameter");
 
-  for (int n = 0; n < varg; n++) {
-	ivar[n] = input->variable->find(var[n]);
-	if (ivar[n] < 0)
-	  error->all(FLERR, "Variable name for fix psoriasis/growth/sc does not exist");
-	if (!input->variable->equalstyle(ivar[n]))
-	  error->all(FLERR, "Variable for fix psoriasis/growth/sc is invalid style");
-  }
-
   // register fix kinetics with this class
   kinetics = NULL;
 
   int nfix = modify->nfix;
   for (int j = 0; j < nfix; j++) {
-	if (strcmp(modify->fix[j]->style, "kinetics") == 0) {
-	  kinetics = static_cast<FixKinetics *>(lmp->modify->fix[j]);
-	  break;
-	}
+    if (strcmp(modify->fix[j]->style, "kinetics") == 0) {
+      kinetics = static_cast<FixKinetics *>(lmp->modify->fix[j]);
+      break;
+    }
   }
 
   if (kinetics == NULL)
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
-
-  sc_dens = input->variable->compute_equal(ivar[0]);
-  apop = input->variable->compute_equal(ivar[1]);
 
   bio = kinetics->bio;
 
@@ -152,37 +124,9 @@ void FixPGrowthSC::init() {
   else if (bio->yield == NULL)
       error->all(FLERR, "fix_psoriasis/growth/sc requires Yield input");
 
-  nx = kinetics->nx;
-  ny = kinetics->ny;
-  nz = kinetics->nz;
-
   species = memory->create(species, atom->ntypes+1, "sc:species");
 
-  //Get computational domain size
-  if (domain->triclinic == 0) {
-    xlo = domain->boxlo[0];
-    xhi = domain->boxhi[0];
-    ylo = domain->boxlo[1];
-    yhi = domain->boxhi[1];
-    zlo = domain->boxlo[2];
-    zhi = domain->boxhi[2];
-  } else {
-    xlo = domain->boxlo_bound[0];
-    xhi = domain->boxhi_bound[0];
-    ylo = domain->boxlo_bound[1];
-    yhi = domain->boxhi_bound[1];
-    zlo = domain->boxlo_bound[2];
-    zhi = domain->boxhi_bound[2];
-  }
-
-  stepx = (xhi - xlo) / nx;
-  stepy = (yhi - ylo) / ny;
-  stepz = (zhi - zlo) / nz;
-
-  vol = stepx * stepy * stepz;
-
   init_param();
-
 }
 
 /* ---------------------------------------------------------------------- */
@@ -266,7 +210,7 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 	      // Stem cell model
 	if (spec == 1) {
 	  //growth rate
-	  double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid]));
+	  double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (ks[i][ca] / (ks[i][ca] + nus[ca][grid]));
 	  //substrate utilisation
 	  nur[gf][grid] += 1/yield[i] * r1 * xdensity[i][grid];
 

@@ -404,17 +404,22 @@ void FixKinetics::integration() {
 	  energy->growth(diff_dt * devery, grow_flag);
 	} else if (monod != NULL) {
 	  monod->growth(diff_dt * devery, grow_flag);
-	} else if (psosc != NULL) {				//DINIKA MOD
-        psosc->growth(diff_dt * devery, grow_flag);
-    } else if (psotcell != NULL) {
-    	psotcell->growth(diff_dt * devery, grow_flag);
-    } else if (psota != NULL){
-    	psota->growth(diff_dt * devery, grow_flag);
-    } else if (psodiff != NULL){
-    	psodiff->growth(diff_dt * devery, grow_flag);
-    } else if (psopsoriasis != NULL){
-    	psopsoriasis->growth(diff_dt * devery, grow_flag);
-    }
+	}
+	if (psosc != NULL) {
+	  psosc->growth(diff_dt * devery, grow_flag);
+	}
+	if (psotcell != NULL) {
+	  psotcell->growth(diff_dt * devery, grow_flag);
+	}
+	if (psota != NULL){
+	  psota->growth(diff_dt * devery, grow_flag);
+	}
+	if (psodiff != NULL){
+	  psodiff->growth(diff_dt * devery, grow_flag);
+	}
+	if (psopsoriasis != NULL){
+	  psopsoriasis->growth(diff_dt * devery, grow_flag);
+	}
      }
 
       iter++;

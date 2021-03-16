@@ -56,24 +56,24 @@ FixPGrowthDIFF::FixPGrowthDIFF(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/diff requires atom style bio");
 
-  if (narg < 6)
+  if (narg < 4)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/diff command");
 
-  varg = narg-3;
+  varg = 1;
   var = new char*[varg];
   ivar = new int[varg];
 
   for (int i = 0; i < varg; i++) {
-	int n = strlen(&arg[3 + i][2]) + 1;
-	var[i] = new char[n];
-	strcpy(var[i], &arg[3 + i][2]);
+    int n = strlen(&arg[3 + i][2]) + 1;
+    var[i] = new char[n];
+    strcpy(var[i], &arg[3 + i][2]);
   }
 
   kinetics = NULL;
 
   external_gflag = 1;
 
-  int iarg = 6;
+  int iarg = 4;
   while (iarg < narg){
     if (strcmp(arg[iarg],"gflag") == 0) {
       external_gflag = force->inumeric(FLERR, arg[iarg+1]);
@@ -136,9 +136,7 @@ void FixPGrowthDIFF::init() {
   if (kinetics == NULL)
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
-  diff_dens = input->variable->compute_equal(ivar[0]);
-  apop = input->variable->compute_equal(ivar[1]);
-  rate_ca = input->variable->compute_equal(ivar[2]);
+  rate_ca = input->variable->compute_equal(ivar[0]);
 
   bio = kinetics->bio;
 
@@ -153,34 +151,7 @@ void FixPGrowthDIFF::init() {
   else if (bio->yield == NULL)
       error->all(FLERR, "fix_psoriasis/growth/diff requires Yield input");
 
-  nx = kinetics->nx;
-  ny = kinetics->ny;
-  nz = kinetics->nz;
-
   species = memory->create(species, atom->ntypes+1, "diff:species");
-
-  //Get computational domain size
-  if (domain->triclinic == 0) {
-	xlo = domain->boxlo[0];
-	xhi = domain->boxhi[0];
-	ylo = domain->boxlo[1];
-	yhi = domain->boxhi[1];
-	zlo = domain->boxlo[2];
-	zhi = domain->boxhi[2];
-  } else {
-	xlo = domain->boxlo_bound[0];
-	xhi = domain->boxhi_bound[0];
-	ylo = domain->boxlo_bound[1];
-	yhi = domain->boxhi_bound[1];
-	zlo = domain->boxlo_bound[2];
-	zhi = domain->boxhi_bound[2];
-  }
-
-  stepx = (xhi - xlo) / nx;
-  stepy = (yhi - ylo) / ny;
-  stepz = (zhi - zlo) / nz;
-
-  vol = stepx * stepy * stepz;
 
   init_param();
 
@@ -205,22 +176,21 @@ void FixPGrowthDIFF::init_param() {
     char *name = bio->tname[i];
 
     if (strcmp(name, "stem") == 0)
-	  species[i] = 1;
+      species[i] = 1;
     else if (strcmp(name, "ta") == 0)
-	  species[i] = 2;
+      species[i] = 2;
     else if (strcmp(name, "diff") == 0)
-	  species[i] = 3;
+      species[i] = 3;
     else if (strcmp(name, "tcell") == 0)
-	  species[i] = 4;
+      species[i] = 4;
     else if (strcmp(name, "dc") == 0)
-	  species[i] = 5;
+      species[i] = 5;
     else if (strcmp(name, "apop") == 0)
-	    species[i] = 6;
+      species[i] = 6;
     else if (strcmp(name, "bm") == 0)
-	  species[i] = 7;
+      species[i] = 7;
     else
-	  error->all(FLERR, "unknown species in fix_psoriasis/growth/diff");
-
+      error->all(FLERR, "unknown species in fix_psoriasis/growth/diff");
   }
 }
 
@@ -233,22 +203,9 @@ void FixPGrowthDIFF::init_param() {
  todo: place update biomass in here since we are calculating based on cell rather than grid
  ------------------------------------------------------------------------- */
 void FixPGrowthDIFF::growth(double dt, int gflag) {
-  int *mask = atom->mask;
-  int nlocal = atom->nlocal;
-  int *type = atom->type;
   int ntypes = atom->ntypes;
 
-  double *radius = atom->radius;
-  double *rmass = atom->rmass;
-
-  double *mu = bio->mu;
-  double *decay = bio->decay;
-  double *diff_coeff = bio->diff_coeff;
-  double **ks = bio->ks;
-  double *yield = bio->yield;
-
   double **xdensity = kinetics->xdensity;
-  double **nus = kinetics->nus;
   double **nur = kinetics->nur;
 
 
@@ -262,20 +219,12 @@ void FixPGrowthDIFF::growth(double dt, int gflag) {
       int spec = species[i];
 
       if (spec == 3) {
-	//printf("------- start of growth/diff  -------- \n");
-	//decay rate
-	double r8 = decay[i];
-	//apoptosis rate
-	double r9 = r8 * apop;
-	//printf("growrate_diff equation is R8 %e  R9 %e  R10 %e \n", r8, r9, r10);
-	//printf("growth_diff grid %i ca %e \n", grid, nus[ca][grid]);
 	nur[ca][grid] += rate_ca * xdensity[i][grid];
-	growrate_d = - (r8 + r9);
       }
     }
   }
   //update physical attributes
-  if (gflag && external_gflag) update_biomass(growrate_d, dt);
+  //if (gflag && external_gflag) update_biomass(growrate_d, dt);
 }
 
 /* ----------------------------------------------------------------------
@@ -292,10 +241,6 @@ void FixPGrowthDIFF::update_biomass(double growrate, double dt) {
   const double three_quarters_pi = (3.0 / (4.0 * MY_PI));
   const double four_thirds_pi = 4.0 * MY_PI / 3.0;
   const double third = 1.0 / 3.0;
-
-  double ssheight = zhi * 0.73; //smaller domain
-  double sgheight = zhi * 0.85;
-  double scheight = zhi * 0.9;
 
   for (int i = 0; i < nlocal; i++) {
     if (mask[i] & groupbit) {

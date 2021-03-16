@@ -29,7 +29,7 @@ namespace LAMMPS_NS {
 class FixPGrowthSC : public Fix {
  public:
  
-	FixPGrowthSC(class LAMMPS *, int, char **);
+  FixPGrowthSC(class LAMMPS *, int, char **);
   ~FixPGrowthSC();
   int setmask();
   void init();
@@ -38,21 +38,11 @@ class FixPGrowthSC : public Fix {
   int external_gflag;
 
  private:
-  char **var;
-  int *ivar;
-
-  int varg;
   char *itype;
 
   int il22, tnfa, il23, gf, ca;
 
   int *species;                     // species index 0 = unknow, 1 = sc, 2 = ta, 3 = d, 4 = tc, 5 = dc
-
-  double stepx, stepy, stepz;       // grids size
-  double xlo,xhi,ylo,yhi,zlo,zhi;   // computational domain size
-  int nx, ny, nz;
-  double vol;                       // grid volume and gas volume
-  double sc_dens, apop;
 
   class AtomVecBio *avec;
   class FixKinetics *kinetics;

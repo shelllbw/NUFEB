@@ -47,9 +47,6 @@ using namespace MathConst;
 #define EPSILON 0.001
 #define DELTA 1.005
 
-// enum{PAIR,KSPACE,ATOM};
-// enum{DIAMETER,CHARGE};
-
 /* ---------------------------------------------------------------------- */
 
 FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
@@ -59,23 +56,23 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
     error->all(FLERR, "Fix kinetics requires atom style bio");
   // check for # of input param
-  if (narg < 11)
+  if (narg < 12)
     error->all(FLERR, "Illegal fix divide command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[6];
-  ivar = new int[6];
+  var = new char*[7];
+  ivar = new int[7];
 
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 7; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[10]);
+  seed = force->inumeric(FLERR, arg[11]);
 
   // read optional param
   demflag = 0;
@@ -97,7 +94,7 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
 
-  int iarg = 11;
+  int iarg = 12;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
@@ -130,20 +127,6 @@ FixPDivideTa::FixPDivideTa(LAMMPS *lmp, int narg, char **arg) :
     zhi = domain->boxhi_bound[2];
   }
 
-  nx = kinetics->nx;
-  ny = kinetics->ny;
-  nz = kinetics->nz;
-
-  stepx = (xhi - xlo) / nx;
-  stepy = (yhi - ylo) / ny;
-  stepz = (zhi - zlo) / nz;
-
-  vol = stepx * stepy * stepz;
-
-  snxx = kinetics->subn[0] + 2;
-  snyy = kinetics->subn[1] + 2;
-  snzz = kinetics->subn[2] + 2;
-
   // instance of nufeb biology
   bio = avec->bio;
   // force reneighbor list
@@ -157,7 +140,7 @@ FixPDivideTa::~FixPDivideTa() {
   delete random;
 
   int i;
-  for (i = 0; i < 6; i++) {
+  for (i = 0; i < 7; i++) {
     delete[] var[i];
   }
   delete[] var;
@@ -180,7 +163,7 @@ void FixPDivideTa::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 6; n++) {
+  for (int n = 0; n < 7; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -189,17 +172,18 @@ void FixPDivideTa::init() {
   }
 
   div_dia = input->variable->compute_equal(ivar[0]);
-  asym = input->variable->compute_equal(ivar[1]);
-  self = input->variable->compute_equal(ivar[2]);
-  cell_dens = input->variable->compute_equal(ivar[3]);
-  max_division_counter = input->variable->compute_equal(ivar[4]);
-  horiDiv = input->variable->compute_equal(ivar[5]);
+  prob_asym = input->variable->compute_equal(ivar[1]);
+  prob_asym_hill = input->variable->compute_equal(ivar[2]);
+  prob_diff = input->variable->compute_equal(ivar[3]);
+  prob_diff_hill = input->variable->compute_equal(ivar[4]);
+  max_division_counter = input->variable->compute_equal(ivar[5]);
+  kca = input->variable->compute_equal(ivar[6]);
 
   //dinika's edits - adding division counter
   int nlocal = atom->nlocal;
   for (int i = 0; i < nlocal; i++) {
-	if (atom->mask[i] & groupbit) {
-	   avec->d_counter[i] = bio->division_counter[atom->type[i]];
+    if (atom->mask[i] & groupbit) {
+      avec->d_counter[i] = bio->division_counter[atom->type[i]];
     }
   }
   //modify atom mask
@@ -209,6 +193,14 @@ void FixPDivideTa::init() {
       break;
     }
   }
+
+  // initialize nutrient
+  ca = 0;
+  for (int nu = 1; nu <= bio->nnu; nu++) {
+    if (strcmp(bio->nuname[nu], "ca") == 0)
+      ca = nu;
+  }
+
   if (diff_mask < 0) error->all(FLERR, "Cannot get DIFF group.");
 }
 
@@ -242,18 +234,23 @@ void FixPDivideTa::post_integrate() {
       int childDivisionCount = 0;
 
       if (atom->radius[i] * 2 >= div_dia){
+	int pos = kinetics->position(i);
   	double prob = random->uniform();
+	double **nus = kinetics->nus;
 
-  	if (parentDivisionCount < max_division_counter && prob < self){
-  	  parentType = ta_id;
-  	  childType = ta_id;
-  	  parentMask = atom->mask[i];
-  	  childMask = atom->mask[i];
-  	} else if (prob < 1 - asym) {
-  	  parentType = diff_id;
-  	  childType = diff_id;
-  	  parentMask = diff_mask;
-  	  childMask = diff_mask;
+  	double pc = prob_diff + prob_diff_hill*((nus[ca][pos]) / (kca + nus[ca][pos]));
+  	double pd = prob_asym + prob_asym_hill*((nus[ca][pos]) / (kca + nus[ca][pos]));
+
+  	if (prob < pc){
+    	  parentType = diff_id;
+    	  childType = diff_id;
+    	  parentMask = diff_mask;
+    	  childMask = diff_mask;
+  	} else if (parentDivisionCount < max_division_counter && prob < 1 - pd) {
+    	  parentType = ta_id;
+    	  childType = ta_id;
+    	  parentMask = atom->mask[i];
+    	  childMask = atom->mask[i];
   	} else {
   	  parentType = ta_id;
   	  childType = diff_id;
@@ -267,9 +264,6 @@ void FixPDivideTa::post_integrate() {
 	double splitF = 0.4 + (random->uniform() *0.2);
 	double parentMass = atom->rmass[i] * splitF;
 	double childMass = atom->rmass[i] - parentMass;
-
-	double parentOuterMass = avec->outer_mass[i] * splitF;
-	double childOuterMass = avec->outer_mass[i] - parentOuterMass;
 
 	// forces are the same for both parent and child, x, y and z axis
 	double parentfx = atom->f[i][0] * splitF;
@@ -329,12 +323,8 @@ void FixPDivideTa::post_integrate() {
         atom->mask[i] = parentMask;
         avec->d_counter[i] = parentDivisionCount;
 
-   	 //printf("divide_ta PARENT %i : rmass %e, radius %e, outer mass %e, outer radius %e division count %i, type %i \n", i, atom->rmass[i], atom->radius[i], parentOuterMass, avec->outer_radius[i], parentDivisionCount, parentType);
-
-
         //create child
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
-        double childOuterRadius = pow((3.0 / (4.0 * MY_PI)) * ((childMass / density) + (childOuterMass / cell_dens)), (1.0 / 3.0));
         double* coord = new double[3];
 
         if (childType == diff_id) {
@@ -342,25 +332,25 @@ void FixPDivideTa::post_integrate() {
           newY = oldY;
  	  newZ = oldZ + 2*atom->radius[i];
 	} else {
-	  newX = oldX + (childOuterRadius * cos(thetaD));
-	  newY = oldY + (childOuterRadius * sin(thetaD));
+	  newX = oldX + (childRadius * cos(thetaD));
+	  newY = oldY + (childRadius * sin(thetaD));
 	  newZ = oldZ;
 	}
 
-        if (newX - childOuterRadius < xlo) {
-          newX = xlo + childOuterRadius;
-        } else if (newX + childOuterRadius > xhi) {
-          newX = xhi - childOuterRadius;
+        if (newX - childRadius < xlo) {
+          newX = xlo + childRadius;
+        } else if (newX + childRadius > xhi) {
+          newX = xhi - childRadius;
         }
-        if (newY - childOuterRadius < ylo) {
-          newY = ylo + childOuterRadius;
-        } else if (newY + childOuterRadius > yhi) {
-          newY = yhi - childOuterRadius;
+        if (newY - childRadius < ylo) {
+          newY = ylo + childRadius;
+        } else if (newY + childRadius > yhi) {
+          newY = yhi - childRadius;
         }
-        if (newZ - childOuterRadius < zlo) {
-          newZ = zlo + childOuterRadius;
-        } else if (newZ + childOuterRadius > zhi) {
-          newZ = zhi - childOuterRadius;
+        if (newZ - childRadius < zlo) {
+          newZ = zlo + childRadius;
+        } else if (newZ + childRadius > zhi) {
+          newZ = zhi - childRadius;
         }
         //coordinates should be the same as parent
         coord[0] = newX;

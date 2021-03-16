@@ -40,20 +40,13 @@ class FixPGrowthDIFF : public Fix {
  private:
   char **var;
   int *ivar;
-
   int varg;
   char *itype;
 
   int il17, tnfa,ca;
 
   int *species;                     // species index 0 = unknow, 1 = sc, 2 = ta, 3 = d, 4 = tc, 5 = dc
-
-  double stepx, stepy, stepz;       // grids size
-  double xlo,xhi,ylo,yhi,zlo,zhi;   // computational domain size
-  int nx, ny, nz;
-  double vol;                       // grid volume and gas volume
-  double diff_dens, apop, rate_ca;
-  double ca2, ca20;
+  double rate_ca;
 
   class AtomVecBio *avec;
   class FixKinetics *kinetics;

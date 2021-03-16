@@ -44,7 +44,6 @@ class FixPDivideStem : public Fix {
  private:
   char **var;
   int *ivar;
-  double *dvar;
 
   int seed;
   int demflag;
@@ -63,12 +62,14 @@ class FixPDivideStem : public Fix {
   int parentType, childType;
   int ta_mask;
   int parentMask, childMask;
-  double prob_asym, prob_self, ta_dens;
+  double prob_diff, prob_asym, prob_diff_hill, prob_asym_hill;
+  double kca;
+  int ca;
 
   class RanPark *random;
   class AtomVecBio *avec;
   class BIO *bio;
-  class NeighList *list;
+  class FixKinetics *kinetics;
 };
 
 }

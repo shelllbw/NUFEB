@@ -13,8 +13,8 @@ Atoms
 
 Nutrients
 
-   1 gf l 0 0 0 0 0 0 0
-   2 ca l 1.8e-4 1.8e-4 1.8e-4 1.8e-4 1.8e-4 1.8e-4 0
+   1 gf l 1e-6 1e-6 1e-6 1e-6 1e-6 1e-6 1e-6 
+   2 ca l 1e-20 1e-20 1e-20 1e-20 1e-20 1e-20 1e-20
 
 Type Name
 
@@ -25,13 +25,13 @@ Type Name
 
 Diffusion Coeffs
 
-   gf 1e-7
-   ca 1e-7
+   gf 5e-11
+   ca 1e-11
 
  Ks
 
-    stem 5e-7 5e-7
-    ta 5e-7 5e-7
+    stem 2.5e-6 2.5e-6
+    ta 2.5e-6 2.5e-6
     diff 0 0
     bm 0 0
 
@@ -44,21 +44,21 @@ Division Counter
 
  Growth Rate
 
-    stem 7.986e-7
-    ta 7.986e-7
+    stem 1.28e-06
+    ta 3.21e-06
     diff 0
     bm 0
 
  Yield
 
-    stem 5.157
-    ta  5.157
-    diff 5.157
+    stem 2.04
+    ta  5.1
+    diff 0.65
     bm 0
 
   Decay
 
-   stem 3.510e-8
-   ta 4.319e-8
-   diff 5.845e-7
+   stem 0
+   ta 0
+   diff 0
    bm 0

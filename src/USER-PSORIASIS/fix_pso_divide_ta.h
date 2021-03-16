@@ -57,18 +57,14 @@ class FixPDivideTa : public Fix {
   char* type_name;
   int parentType, childType;
   int parentMask, childMask;
-  double asym, self, cell_dens;
-  int nx, ny, nz;
-  double stepx, stepy, stepz;       // grids size
-  int snxx, snyy, snzz;                   // # of local grids in x, y and z
-  double vol;                       // grid volume and gas volume
-  int asymcounter, symcounter, selfcounter;
-  double horiDiv; //horizontal division percentage for
+  double prob_diff, prob_asym, prob_diff_hill, prob_asym_hill;
+  double kca;
+  int ca;
+
 
   class RanPark *random;
   class AtomVecBio *avec;
   class BIO *bio;
-  class FixFluid *nufebFoam;
   class FixKinetics *kinetics;
 };
 

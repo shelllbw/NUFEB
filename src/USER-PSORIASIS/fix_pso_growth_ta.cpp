@@ -56,45 +56,28 @@ FixPGrowthTA::FixPGrowthTA(LAMMPS *lmp, int narg, char **arg) :
   if (!avec)
 	error->all(FLERR, "Fix psoriasis/growth/ta requires atom style bio");
 
-  if (narg < 5)
+  if (narg < 3)
 	error->all(FLERR, "Not enough arguments in fix psoriasis/growth/ta command");
-
-  varg = narg-3;
-  var = new char*[varg];
-  ivar = new int[varg];
-
-  for (int i = 0; i < varg; i++) {
-	int n = strlen(&arg[3 + i][2]) + 1;
-	var[i] = new char[n];
-	strcpy(var[i], &arg[3 + i][2]);
-  }
 
   kinetics = NULL;
 
   external_gflag = 1;
 
-  int iarg = 5;
+  int iarg = 3;
   while (iarg < narg){
-	if (strcmp(arg[iarg],"gflag") == 0) {
-	  external_gflag = force->inumeric(FLERR, arg[iarg+1]);
-	  if (external_gflag != 0 && external_gflag != 1)
-		error->all(FLERR, "Illegal fix psoriasis/growth/ta command: gflag");
-	  iarg += 2;
-	} else
-	  error->all(FLERR, "Illegal fix psoriasis/growth/ta command");
+    if (strcmp(arg[iarg],"gflag") == 0) {
+      external_gflag = force->inumeric(FLERR, arg[iarg+1]);
+      if (external_gflag != 0 && external_gflag != 1)
+	    error->all(FLERR, "Illegal fix psoriasis/growth/ta command: gflag");
+      iarg += 2;
+    } else
+      error->all(FLERR, "Illegal fix psoriasis/growth/ta command");
   }
 }
 
 /* ---------------------------------------------------------------------- */
 
 FixPGrowthTA::~FixPGrowthTA() {
-  int i;
-  for (i = 0; i < varg; i++) {
-	delete[] var[i];
-  }
-  delete[] var;
-  delete[] ivar;
-
   memory->destroy(species);
 }
 
@@ -114,30 +97,19 @@ void FixPGrowthTA::init() {
   if (!atom->radius_flag)
 	error->all(FLERR, "Fix requires atom attribute diameter");
 
-  for (int n = 0; n < varg; n++) {
-	ivar[n] = input->variable->find(var[n]);
-	if (ivar[n] < 0)
-	  error->all(FLERR, "Variable name for fix psoriasis/growth/ta does not exist");
-	if (!input->variable->equalstyle(ivar[n]))
-	  error->all(FLERR, "Variable for fix psoriasis/growth/ta is invalid style");
-  }
-
   // register fix kinetics with this class
   kinetics = NULL;
 
   int nfix = modify->nfix;
   for (int j = 0; j < nfix; j++) {
-	if (strcmp(modify->fix[j]->style, "kinetics") == 0) {
-	  kinetics = static_cast<FixKinetics *>(lmp->modify->fix[j]);
-	  break;
-	}
+    if (strcmp(modify->fix[j]->style, "kinetics") == 0) {
+      kinetics = static_cast<FixKinetics *>(lmp->modify->fix[j]);
+      break;
+    }
   }
 
   if (kinetics == NULL)
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
-
-  ta_dens = input->variable->compute_equal(ivar[0]);
-  apop = input->variable->compute_equal(ivar[1]);
 
   bio = kinetics->bio;
 
@@ -152,34 +124,8 @@ void FixPGrowthTA::init() {
   else if (bio->yield == NULL)
       error->all(FLERR, "fix_psoriasis/growth/ta requires Yield input");
 
-  nx = kinetics->nx;
-  ny = kinetics->ny;
-  nz = kinetics->nz;
 
   species = memory->create(species, atom->ntypes+1, "ta:species");
-
-  //Get computational domain size
-  if (domain->triclinic == 0) {
-	xlo = domain->boxlo[0];
-	xhi = domain->boxhi[0];
-	ylo = domain->boxlo[1];
-	yhi = domain->boxhi[1];
-	zlo = domain->boxlo[2];
-	zhi = domain->boxhi[2];
-  } else {
-	xlo = domain->boxlo_bound[0];
-	xhi = domain->boxhi_bound[0];
-	ylo = domain->boxlo_bound[1];
-	yhi = domain->boxhi_bound[1];
-	zlo = domain->boxlo_bound[2];
-	zhi = domain->boxhi_bound[2];
-  }
-
-  stepx = (xhi - xlo) / nx;
-  stepy = (yhi - ylo) / ny;
-  stepz = (zhi - zlo) / nz;
-
-  vol = stepx * stepy * stepz;
 
   init_param();
 
@@ -188,8 +134,8 @@ void FixPGrowthTA::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthTA::init_param() {
-	//il22, tnfa, gf, ca = 0;
-	gf, ca = 0;
+  //il22, tnfa, gf, ca = 0;
+  gf, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
@@ -197,10 +143,10 @@ void FixPGrowthTA::init_param() {
 //	  il22 = nu;
 //	if (strcmp(bio->nuname[nu], "tnfa") == 0)
 //		tnfa = nu;
-	if (strcmp(bio->nuname[nu], "gf") == 0)
-		gf = nu;
-	if (strcmp(bio->nuname[nu], "ca") == 0)
-		ca = nu;
+    if (strcmp(bio->nuname[nu], "gf") == 0)
+      gf = nu;
+    if (strcmp(bio->nuname[nu], "ca") == 0)
+      ca = nu;
   }
 
 //  if (il22 == 0)
@@ -261,18 +207,18 @@ void FixPGrowthTA::growth(double dt, int gflag) {
     //grid without atom is not considered
     if(!xdensity[0][grid]) continue;
 
-      for (int i = 1; i <= ntypes; i++) {
-	int spec = species[i];
+    for (int i = 1; i <= ntypes; i++) {
+      int spec = species[i];
 
-	// ta cell model
-	if (spec == 2) {
-	  //growth rate
-	  double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid]));
-	  //substrate utilisation
-	  nur[gf][grid] += 1/yield[i] * r1 * xdensity[i][grid];
+      // ta cell model
+      if (spec == 2) {
+	//growth rate
+	double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (ks[i][ca] / (ks[i][ca] + nus[ca][grid]));
+	//substrate utilisation
+	nur[gf][grid] += 1/yield[i] * r1 * xdensity[i][grid];
 
-	  growrate_sc = r1;
-	}
+	growrate_sc = r1;
+      }
     }
   }
   //update physical attributes
