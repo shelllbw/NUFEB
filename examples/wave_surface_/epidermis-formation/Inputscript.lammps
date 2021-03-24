@@ -43,7 +43,7 @@ set type 2 density 150
 set type 2 mass 1.357e-13
 set type 2 diameter 1.2e-5
 
-set type 3 density 150
+set type 3 density 100
 set type 3 mass 1.357e-13
 set type 3 diameter 1.2e-5
 
@@ -54,9 +54,10 @@ group KERATINOCYTES union STEM TA DIFF
 ##############Define DEM Variables&Commands##############
 
 
-pair_style  hybrid gran/hooke/history 0.25 NULL 10 NULL 0.0 1 gran/hooke/history 25 NULL 100 NULL 0.0 1
+pair_style  hybrid gran/hooke/history 0.25 NULL 10 NULL 0.0 1 gran/hooke/history 2.5 NULL 100 NULL 0.0 1 gran/hooke/history 2.5 NULL 100 NULL 0.0 1
 pair_coeff  * * gran/hooke/history 1
 pair_coeff  * 4 gran/hooke/history 2
+pair_coeff  3 * gran/hooke/history 3
 
 neighbor	5e-6 bin
 neigh_modify delay 0 one 5000
@@ -71,14 +72,16 @@ fix fnve all nve/limit 1e-7
 fix fv1 all viscous 1e-4
 
 fix fco all nufeb/adhesion 1e-8 3e-6
-fix_modify fco ah * * 6e-13
-fix_modify fco ah 1 4 1e-11
-fix_modify fco ah 2 4 1e-15
-fix_modify fco ah 3 4 1e-15
-fix_modify fco ah 1 2 8e-13
-fix_modify fco ah 1 3 1e-15
-fix_modify fco ah 2 3 1e-15
-fix_modify fco ah 4 4 1e-12
+fix_modify fco ah 1 1 1e-12
+fix_modify fco ah 2 2 1e-12
+fix_modify fco ah 3 3 5e-13
+fix_modify fco ah 1 4 5e-12
+fix_modify fco ah 2 4 1e-16
+fix_modify fco ah 3 4 1e-16
+fix_modify fco ah 1 2 5e-13
+fix_modify fco ah 1 3 1e-16
+fix_modify fco ah 2 3 1e-16
+fix_modify fco ah 4 4 1e-13
 
 ##############Define IBm Variables##############
 #variables used in fix division
@@ -102,7 +105,7 @@ variable diffT equal 1e-4
 variable layer equal -1
 variable tol equal 1e-6
 
-variable kca equal 1e-6
+variable kca equal 1e-7
 
 #variable used in growth/diff
 variable CaRate equal 1e-7

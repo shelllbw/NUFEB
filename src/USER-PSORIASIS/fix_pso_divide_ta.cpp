@@ -276,6 +276,7 @@ void FixPDivideTa::post_integrate() {
 	double childfz = atom->f[i][2] - parentfz;
 
         double thetaD = random->uniform() * 2 * MY_PI;
+        double thetaD2 = random->uniform() * 2 * MY_PI;
 
         double oldX = atom->x[i][0];
         double oldY = atom->x[i][1];
@@ -290,10 +291,14 @@ void FixPDivideTa::post_integrate() {
         atom->radius[i] = pow(((6 * atom->rmass[i]) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
         avec->outer_radius[i] =  atom->radius[i];
 
-        if (childType == diff_id) {
+        if (parentType == ta_id && childType == diff_id) {
 	  newX = oldX;
 	  newY = oldY;
 	  newZ = oldZ;
+	} else if (parentType == diff_id && childType == diff_id){
+	  newX = oldX - (atom->radius[i] * cos(thetaD));
+	  newY = oldY - (atom->radius[i]* sin(thetaD));
+	  newZ = oldZ + 2*atom->radius[i];
 	} else {
 	  newX = oldX - (atom->radius[i] * cos(thetaD));
 	  newY = oldY - (atom->radius[i]* sin(thetaD));
@@ -327,10 +332,14 @@ void FixPDivideTa::post_integrate() {
         double childRadius = pow(((6 * childMass) / (density * MY_PI)), (1.0 / 3.0)) * 0.5;
         double* coord = new double[3];
 
-        if (childType == diff_id) {
+        if (parentType == ta_id && childType == diff_id) {
           newX = oldX;
           newY = oldY;
- 	  newZ = oldZ + 2*atom->radius[i];
+ 	  newZ = oldZ + 2*atom->radius[i];;
+	} else if (parentType == diff_id && childType == diff_id){
+	  newX = oldX + (childRadius * cos(thetaD));
+	  newY = oldY + (childRadius * sin(thetaD));
+	  newZ = oldZ + 2*atom->radius[i];
 	} else {
 	  newX = oldX + (childRadius * cos(thetaD));
 	  newY = oldY + (childRadius * sin(thetaD));
