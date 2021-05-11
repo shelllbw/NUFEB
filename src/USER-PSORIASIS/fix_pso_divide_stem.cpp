@@ -38,6 +38,7 @@
 #include "modify.h"
 #include "fix_bio_kinetics.h"
 #include "group.h"
+#include "memory.h"
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
@@ -45,41 +46,54 @@ using namespace MathConst;
 
 #define EPSILON 0.001
 #define DELTA 1.005
+#define DT 10
+//#define DT 2
 
 /* ---------------------------------------------------------------------- */
 
 FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
-    Fix(lmp, narg, arg) {
+    Fix(lmp, narg, arg), cell_cycle(NULL) {
   avec = (AtomVecBio *) atom->style_match("bio");
   // create instance of nufeb particle (outermass etc)
   if (!avec)
     error->all(FLERR, "Fix divide/stem requires atom style bio");
   // check for # of input param
-  if (narg < 11)
+  if (narg < 12)
     error->all(FLERR, "Illegal fix divide/stem command: not enough arguments");
   // read first input param
   nevery = force->inumeric(FLERR, arg[3]);
   if (nevery < 0)
     error->all(FLERR, "Illegal fix divide/stem command: nevery is negative");
   // read 2, 3 input param (variable)
-  var = new char*[6];
-  ivar = new int[6];
+  var = new char*[7];
+  ivar = new int[7];
 
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 7; i++) {
     int n = strlen(&arg[4 + i][2]) + 1;
     var[i] = new char[n];
     strcpy(var[i], &arg[4 + i][2]);
   }
   // read last input param
-  seed = force->inumeric(FLERR, arg[10]);
+  seed = force->inumeric(FLERR, arg[11]);
 
   // read optional param
   demflag = 0;
+  spflag = 1;
+  vector_flag = 1;
 
   //dinika - set ta_mask to -1
   ta_mask = -1;
 
   kinetics = NULL;
+  cell_cycle = NULL;
+  tot_stem_cycle = 0;
+  ndiv_cells = 0;
+  turnover1 = NULL;
+  tot_turnover1 = 0;
+  turnover1_cells = 0;
+
+  grow_arrays(atom->nmax);
+  atom->add_callback(0);
 
   int nfix = modify->nfix;
   for (int j = 0; j < nfix; j++) {
@@ -92,15 +106,20 @@ FixPDivideStem::FixPDivideStem(LAMMPS *lmp, int narg, char **arg) :
   if (kinetics == NULL)
 	lmp->error->all(FLERR, "fix kinetics command is required for running IbM simulation");
 
-  int iarg = 11;
+  int iarg = 12;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "demflag") == 0) {
       demflag = force->inumeric(FLERR, arg[iarg + 1]);
       if (demflag != 0 && demflag != 1)
         error->all(FLERR, "Illegal fix divide command: demflag");
       iarg += 2;
+    } else if (strcmp(arg[iarg], "spflag") == 0) {
+	spflag = force->inumeric(FLERR, arg[iarg + 1]);
+	if (spflag != 0 && spflag != 1)
+	  error->all(FLERR, "Illegal fix divide command: spflag");
+	iarg += 2;
     } else
-      error->all(FLERR, "Illegal fix divide command");
+    error->all(FLERR, "Illegal fix divide command");
   }
 
   if (seed <= 0)
@@ -138,11 +157,14 @@ FixPDivideStem::~FixPDivideStem() {
   delete random;
 
   int i;
-  for (i = 0; i < 6; i++) {
+  for (i = 0; i < 7; i++) {
     delete[] var[i];
   }
   delete[] var;
   delete[] ivar;
+
+  memory->destroy(cell_cycle);
+  memory->destroy(turnover1);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -159,7 +181,7 @@ void FixPDivideStem::init() {
   if (!atom->radius_flag)
     error->all(FLERR, "Fix divide requires atom attribute diameter");
 
-  for (int n = 0; n < 6; n++) {
+  for (int n = 0; n < 7; n++) {
     ivar[n] = input->variable->find(var[n]);
     if (ivar[n] < 0)
       error->all(FLERR, "Variable name for fix divide does not exist");
@@ -173,12 +195,16 @@ void FixPDivideStem::init() {
   prob_diff = input->variable->compute_equal(ivar[3]);
   prob_diff_hill = input->variable->compute_equal(ivar[4]);
   kca = input->variable->compute_equal(ivar[5]);
+  kil22 = input->variable->compute_equal(ivar[6]);
   //Dinika's edits
   // initialize nutrient
   ca = 0;
+  il22 = 0;
   for (int nu = 1; nu <= bio->nnu; nu++) {
     if (strcmp(bio->nuname[nu], "ca") == 0)
       ca = nu;
+    else if (strcmp(bio->nuname[nu], "il22") == 0)
+      il22 = nu;
   }
 
   //modify atom mask
@@ -188,6 +214,12 @@ void FixPDivideStem::init() {
       break;
     }
   }
+
+  for (int i = 0; i < atom->nlocal; i++) {
+    cell_cycle[i] = 0;
+    turnover1[i] = 0;
+  }
+
   if (ta_mask < 0) error->all(FLERR, "Cannot get TA group.");
 }
 
@@ -202,6 +234,14 @@ void FixPDivideStem::post_integrate() {
     return;
 
   int nlocal = atom->nlocal;
+  double avgself = 0;
+  tot_stem_cycle = 0;
+  ndiv_cells = 0;
+
+  tot_turnover1 = 0;
+  turnover1_cells = 0;
+
+  int nn = 0;
 
   for (int i = 0; i < nlocal; i++) {
   //this groupbit will allow the input script to set each cell type to divide
@@ -216,13 +256,28 @@ void FixPDivideStem::post_integrate() {
       int ta_id = bio->find_typeid("ta");
       int stem_id = bio->find_typeid("stem");
 
+      // psoriatic state
+      //cell_cycle[i] += 2;
+      // healthy state
+      cell_cycle[i] += DT;
+
       if (atom->radius[i] * 2 >= div_dia) {
 	int pos = kinetics->position(i);
 	double prob = random->uniform();
 	double **nus = kinetics->nus;
 
-  	double pa = prob_diff + prob_diff_hill*((nus[ca][pos]) / (kca + nus[ca][pos]));
-  	double pb = prob_asym + prob_asym_hill*((nus[ca][pos]) / (kca + nus[ca][pos]));
+  	double pa = prob_diff + prob_diff_hill*((nus[ca][pos] / (kca + nus[ca][pos])) - (nus[il22][pos]) / (kil22 + nus[il22][pos]));
+  	double pb = prob_asym + prob_asym_hill*((nus[ca][pos] / (kca + nus[ca][pos])) - (nus[il22][pos]) / (kil22 + nus[il22][pos]));
+
+//  	pa -= pa * (nus[il22][pos]) / (kil22 + nus[il22][pos]);
+//  	pb -= pb * (nus[il22][pos]) / (kil22 + nus[il22][pos]);
+
+  	// calculate average cell cycle
+  	ndiv_cells ++;
+  	tot_stem_cycle += cell_cycle[i];
+
+  	avgself += 1 - pa - 0.5*pb;
+  	nn++;
 
 	if (prob < pa){
 	  parentType = ta_id;
@@ -250,17 +305,29 @@ void FixPDivideStem::post_integrate() {
 	double* parentCoord = new double[3];
 	double* childCoord = new double[3];
 
-	if (parentType == stem_id && childType == ta_id){
-	  parentCoord[0] = atom->x[i][0];
-	  parentCoord[1] = atom->x[i][1];
-	  parentCoord[2] = atom->x[i][2] - (atom->radius[i] - parentRadius);
-	  spatial_regulate_stem_ta(i, parentCoord, childCoord, parentRadius, childRadius);
-	} else if (parentType == stem_id && childType == stem_id) {
-	  spatial_regulate_stem_stem(i, parentCoord, childCoord, parentRadius, childRadius);
-	} else {
-	  spatial_regulate_ta_ta(i, parentCoord, childCoord, parentRadius, childRadius);
-	}
+        double thetaD = random->uniform() * 2 * MY_PI;
+        double phiD = random->uniform() * (MY_PI);
 
+	if (spflag) {
+	  if (parentType == stem_id && childType == ta_id){
+	    parentCoord[0] = atom->x[i][0];
+	    parentCoord[1] = atom->x[i][1];
+	    parentCoord[2] = atom->x[i][2] - (atom->radius[i] - parentRadius);
+	    spatial_regulate_stem_ta(i, parentCoord, childCoord, parentRadius, childRadius);
+	  } else if (parentType == stem_id && childType == stem_id) {
+	    spatial_regulate_stem_stem(i, parentCoord, childCoord, parentRadius, childRadius);
+	  } else {
+	    spatial_regulate_ta_ta(i, parentCoord, childCoord, parentRadius, childRadius);
+	  }
+	} else {
+	  parentCoord[0] = atom->x[i][0] + (atom->radius[i] * cos(thetaD) * sin(phiD) * DELTA);
+	  parentCoord[1] = atom->x[i][1] + (atom->radius[i] * sin(thetaD) * sin(phiD) * DELTA);
+	  parentCoord[2] = atom->x[i][2] + (atom->radius[i] * cos(phiD) * DELTA);
+
+	  childCoord[0] = atom->x[i][0] - (atom->radius[i] * cos(thetaD) * sin(phiD) * DELTA);
+	  childCoord[1] = atom->x[i][1] - (atom->radius[i] * sin(thetaD) * sin(phiD) * DELTA);
+	  childCoord[2] = atom->x[i][2] - (atom->radius[i] * cos(phiD) * DELTA);
+	}
 
 	// forces are the same for both parent and child, x, y and z axis
 	double parentfx = atom->f[i][0] * splitF;
@@ -271,9 +338,6 @@ void FixPDivideStem::post_integrate() {
 
 	double parentfz = atom->f[i][2] * splitF;
 	double childfz = atom->f[i][2] - parentfz;
-
-	double thetaD = random->uniform() * 2 * MY_PI;
-	double phiD = random->uniform() * (MY_PI);
 
 	double oldX = atom->x[i][0];
 	double oldY = atom->x[i][1];
@@ -291,6 +355,8 @@ void FixPDivideStem::post_integrate() {
         atom->x[i][0] = parentCoord[0];
         atom->x[i][1] = parentCoord[1];
         atom->x[i][2] = parentCoord[2];
+
+        cell_cycle[i] = 0;
 
         atom->radius[i] = parentRadius;
 	avec->outer_radius[i] = parentRadius;
@@ -354,10 +420,25 @@ void FixPDivideStem::post_integrate() {
 	atom->radius[n] = childRadius;
 	avec->outer_radius[n] = childRadius;
 
+        cell_cycle[n] = 0;
+        turnover1[n] = turnover1[i];
+
 	modify->create_attribute(n);
 
 	delete[] childCoord;
 	delete[] parentCoord;
+      }
+    }
+  }
+
+  // calculate turnover
+  for (int i = 0; i < nlocal; i++) {
+    if (turnover1[i] >= 0) {
+      turnover1[i] += DT;
+      if (atom->x[i][2] > zhi - 1e-5) {
+	turnover1_cells++;
+	tot_turnover1 += turnover1[i];
+	turnover1[i] = -1;
       }
     }
   }
@@ -586,3 +667,61 @@ void FixPDivideStem::stem_neighbor(int i, std::vector<int> &list, int flag) {
   }
 }
 
+/* ----------------------------------------------------------------------
+   allocate local atom-based arrays
+------------------------------------------------------------------------- */
+
+void FixPDivideStem::grow_arrays(int nmax)
+{
+  memory->grow(cell_cycle,nmax,"fix_pso_divide_stem:cell_cycle");
+  memory->grow(turnover1,nmax,"fix_pso_divide_stem:turnover1");
+}
+
+
+/* ----------------------------------------------------------------------
+   copy values within local atom-based arrays
+------------------------------------------------------------------------- */
+
+void FixPDivideStem::copy_arrays(int i, int j, int /*delflag*/)
+{
+  cell_cycle[j] = cell_cycle[i];
+  turnover1[j] = turnover1[i];
+}
+
+/* ----------------------------------------------------------------------
+   pack values in local atom-based arrays for exchange with another proc
+------------------------------------------------------------------------- */
+
+int FixPDivideStem::pack_exchange(int i, double *buf)
+{
+  buf[0] = cell_cycle[i];
+  buf[1] = turnover1[i];
+  return 2;
+}
+
+/* ----------------------------------------------------------------------
+   unpack values in local atom-based arrays from exchange with another proc
+------------------------------------------------------------------------- */
+
+int FixPDivideStem::unpack_exchange(int nlocal, double *buf)
+{
+  cell_cycle[nlocal] = buf[0];
+  turnover1[nlocal] = buf[1];
+  return 2;
+}
+
+/*------------------------------------------------------------------------- */
+
+double FixPDivideStem::compute_vector(int n)
+{
+  vector[0] = 0;
+  vector[1] = 0;
+
+  // average growth rate
+  if (ndiv_cells > 0)
+    vector[0] = tot_stem_cycle/ndiv_cells;
+  if (turnover1_cells > 0)
+    vector[1] = tot_turnover1/turnover1_cells;
+
+  return vector[n];
+}

@@ -22,8 +22,8 @@ FixStyle(kinetics/diffusion,FixKineticsDiffusion)
 #include "fix.h"
 #include "decomp_grid.h"
 
-const int M2L = 1000;
-const double MIN_NUS = 1e-20;
+const int M2L = 1000;                   // convert from m3 to litre
+const double MIN_NUS = 1e-20;           // minimal concentration
 
 namespace LAMMPS_NS {
 class AtomVecBio;
@@ -47,7 +47,7 @@ public:
 
   double stepx, stepy, stepz;             // grid size in x, y, z axis
 
-  int xbcflag, ybcflag, zbcflag;          // boundary condition flag, 0=PERIODIC-PERIODIC, 1=DIRICH-DIRICH, 2=NEU-DIRICH, 3=NEU-NEU, 4=DIRICH-NEU
+  int xpbcflag, ypbcflag, zpbcflag;          // boundary condition flags for x, y,z. 0=PERIODIC 1=DIRICHLET
   int bulkflag;                           // 1=solve mass balance for bulk liquid
   int shearflag, dragflag, dcflag;        // flags for shear, drag(nufebfoam), and diffusion coefficent
   double dcratio;                         // ratio of diffusion coefficent in biomass region
@@ -60,6 +60,7 @@ public:
   double **nugrid;                        // nutrient concentration in ghost grid [nutrient][grid], unit in mol or kg/m3
   double **xgrid;                         // grid coordinate [gird][3]
   double **nuprev;                        // nutrient concentration in previous diffusion step
+  double **nupenult;			  // nutrient concentration in n-2 step
   double **grid_diff_coeff;               // diffusion coeffs at each grid
   double vol;                             // grid volume
 
@@ -73,10 +74,11 @@ public:
   int snxx_yy_zz;                         // total # of local + ghost grids
 
   double diff_dt;
-  int closed_flag;                        // flag for close system 1 = gradient is negligible (no diffusion)
+  int* nuclose;
+  int closed_system;
 
   double xlo, xhi, ylo, yhi, zlo, zhi, bzhi;
-  double xbcm, xbcp, ybcm, ybcp, zbcm, zbcp; // inlet BC concentrations for each surface
+  double init_nusbc;                     // inlet BC concentrations for dirichlet bc
 
   MPI_Request *requests;
 
@@ -88,16 +90,19 @@ public:
   
   int setmask();
   void init();
-  void closed_diff(double);
+  void init_setting();
+  void init_grid();
+  void closed_system_init();
+  void closed_system_scaleup(double, double);
   int *diffusion(int*, int, double);
   void update_nus();
   void update_grids();
   void update_diff_coeff();
-  void init_grid();
-  void compute_bc(double &, double *, int, double);
+  void compute_bc(double &, double *, int, double, int *);
   void compute_bulk();
   void compute_blayer();
   void compute_flux(double, double &, double *, double, int, int);
+  void check_converge(int *);
 
   int get_index(int);
   void migrate(const Grid<double, 3> &, const Box<int, 3> &, const Box<int, 3> &);

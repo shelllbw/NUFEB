@@ -40,7 +40,7 @@ class FixPGrowthSC : public Fix {
  private:
   char *itype;
 
-  int il22, tnfa, il23, gf, ca;
+  int il22, tnfa, gf, ca;
 
   int *species;                     // species index 0 = unknow, 1 = sc, 2 = ta, 3 = d, 4 = tc, 5 = dc
 

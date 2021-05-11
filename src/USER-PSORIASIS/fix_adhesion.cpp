@@ -147,6 +147,7 @@ void FixAdhesion::compute(int vflag)
   int *ilist = list->ilist;
   int *numneigh = list->numneigh;
   int **firstneigh = list->firstneigh;
+  double ssmax = 0;
 
   for (int i = 0; i < 6; i++)
     virial[i] = 0.0;
@@ -170,11 +171,13 @@ void FixAdhesion::compute(int vflag)
       double rsq = delx * delx + dely * dely + delz * delz;
 
       int jtype = type[j];
+      if ((itype == 4 && (jtype ==1 || jtype ==2)) || (jtype == 4 &&(itype == 1 || itype == 2)))
+	ssmax = smax * 10;
       double radj = radius[j];
       double radsum = radi + radj;
       double ccel = 0;
 
-      if (rsq < (radsum + smax)*(radsum + smax)){
+      if (rsq < (radsum + ssmax)*(radsum + ssmax)){
 	double r = sqrt(rsq);
 	double del = r - radsum;
 	if (del > smin) {
@@ -204,7 +207,7 @@ void FixAdhesion::compute(int vflag)
 	  f[j][1] -= ccely;
 	  f[j][2] -= ccelz;
 	}
-
+	ssmax = smax;
 //	if (evflag) {
 //	  double v[6];
 //	  v[0] = delx*ccelx;

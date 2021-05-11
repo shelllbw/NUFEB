@@ -40,6 +40,9 @@ class FixPDivideStem : public Fix {
   void spatial_regulate_stem_ta(int, double*, double*, double, double);
   void spatial_regulate_ta_ta(int, double*, double*, double, double);
   void stem_neighbor(int, std::vector<int>&, int);
+  double compute_vector(int);
+
+  double *turnover1;   //stem-ta-diff-leave
 
  private:
   char **var;
@@ -50,6 +53,8 @@ class FixPDivideStem : public Fix {
   tagint maxtag_all;
   double xlo,xhi,ylo,yhi,zlo,zhi;
   double div_dia;
+
+  int spflag;
 
   /*
    * Dinika's edits
@@ -63,13 +68,26 @@ class FixPDivideStem : public Fix {
   int ta_mask;
   int parentMask, childMask;
   double prob_diff, prob_asym, prob_diff_hill, prob_asym_hill;
-  double kca;
-  int ca;
+  double kca, kil22;
+  int ca, il22;
+
+  double *cell_cycle;
+  double tot_stem_cycle;
+  double vector[3];
+
+  double tot_turnover1;
+  int turnover1_cells;
+  int ndiv_cells;
 
   class RanPark *random;
   class AtomVecBio *avec;
   class BIO *bio;
   class FixKinetics *kinetics;
+
+  void grow_arrays(int);
+  void copy_arrays(int, int, int);
+  int pack_exchange(int, double *);
+  int unpack_exchange(int, double *);
 };
 
 }

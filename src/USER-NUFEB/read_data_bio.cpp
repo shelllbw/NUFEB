@@ -2190,8 +2190,9 @@ void ReadDataBIO::nutrient_memory(){
     bio->nuname[i] = NULL;
   }
 
-  bio->ini_nus = memory->create(bio->ini_nus,nnus+1,7,"bio:nuConc");
-  bio->nustate = memory->create(bio->nustate, nnus+1, "bio::nuGCoeff");
+  bio->init_nus = memory->create(bio->init_nus,nnus+1,2,"bio:ini_nus");
+  bio->nustate = memory->create(bio->nustate, nnus+1, "bio:nuState");
+  bio->nubc = memory->create(bio->nubc, nnus+1,3, "bio:nubc");
 }
 
 /* ---------------------------------------------------------------------- */

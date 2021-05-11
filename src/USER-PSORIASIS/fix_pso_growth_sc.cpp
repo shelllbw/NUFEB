@@ -132,25 +132,24 @@ void FixPGrowthSC::init() {
 /* ---------------------------------------------------------------------- */
 
 void FixPGrowthSC::init_param() {
-	//il22, tnfa, gf, ca = 0;
-	gf, ca = 0;
+  il22, tnfa, gf, ca = 0;
 
   // initialize nutrient
   for (int nu = 1; nu <= bio->nnu; nu++) {
-//	if (strcmp(bio->nuname[nu], "il22") == 0)
-//	  il22 = nu;
-//	if (strcmp(bio->nuname[nu], "tnfa") == 0)
-//		  tnfa = nu;
+    if (strcmp(bio->nuname[nu], "il22") == 0)
+      il22 = nu;
+    if (strcmp(bio->nuname[nu], "tnfa") == 0)
+      tnfa = nu;
     if (strcmp(bio->nuname[nu], "gf") == 0)
       gf = nu;
     if (strcmp(bio->nuname[nu], "ca") == 0)
       ca = nu;
   }
 
-//  if (il22 == 0)
-//	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il22");
-//  if (tnfa == 0)
-//  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
+  if (il22 == 0)
+	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient il22");
+  if (tnfa == 0)
+  	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient tnfa");
   if (gf == 0)
     	error->all(FLERR, "fix_psoriasis/growth/sc requires nutrient gf");
   if (ca == 0)
@@ -199,7 +198,8 @@ void FixPGrowthSC::growth(double dt, int gflag) {
   double **xdensity = kinetics->xdensity;
 
   double growrate_sc = 0;
-
+  double ave = 0;
+  int nn = 0;
   for (int grid = 0; grid < kinetics->bgrids; grid++) {
     //grid without atom is not considered
     if(!xdensity[0][grid]) continue;
@@ -211,15 +211,22 @@ void FixPGrowthSC::growth(double dt, int gflag) {
 	if (spec == 1) {
 	  //growth rate
 	  double r1 = mu[i] * (nus[gf][grid] / (ks[i][gf] + nus[gf][grid])) * (ks[i][ca] / (ks[i][ca] + nus[ca][grid]));
-	  //substrate utilisation
-	  nur[gf][grid] += 1/yield[i] * r1 * xdensity[i][grid];
+	  double r2 = 9.73 * mu[i] * (nus[il22][grid] / (ks[i][il22] + nus[il22][grid])) * (nus[tnfa][grid] / (ks[i][tnfa] + nus[tnfa][grid]));
+	  ave += r1 + r2;
+	  nn++;
 
-	  growrate_sc = r1;
+	  //substrate utilisation
+	  nur[gf][grid] += 1/yield[i] * (r1 + r2) * xdensity[i][grid];
+	  nur[il22][grid] -= 1/yield[i] * (r1 + r2) * xdensity[i][grid];
+	  nur[tnfa][grid] -= 1/yield[i] * (r1 + r2) * xdensity[i][grid];
+
+	  growrate_sc = r1 + r2;
 	}
     }
   }
+  if (gflag && external_gflag) printf("avg stem growth rate = %e \n", ave/nn);
   //update physical attributes
-    if (gflag && external_gflag) update_biomass(growrate_sc, dt);
+  if (gflag && external_gflag) update_biomass(growrate_sc, dt);
 }
 
 /* ----------------------------------------------------------------------

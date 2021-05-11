@@ -279,7 +279,7 @@ void FixKinetics::init() {
     error->all(FLERR, "fix_kinetics requires # of Nutrients inputs");
   else if (bio->nugibbs_coeff == NULL && energy != NULL)
     error->all(FLERR, "fix_kinetics requires Nutrient Energy inputs");
-  else if (bio->ini_nus == NULL)
+  else if (bio->init_nus == NULL)
     error->all(FLERR, "fix_kinetics requires Nutrients inputs");
   if (energy != NULL || thermo != NULL || ph != NULL){
     if (thermo == NULL)
@@ -347,7 +347,7 @@ void FixKinetics::init_param() {
     }
 
     for (int i = 0; i <= bio->nnu; i++) {
-      if (bio->ini_nus != NULL) nus[i][j] = bio->ini_nus[i][0];
+      if (bio->init_nus != NULL) nus[i][j] = bio->init_nus[i][0];
       nur[i][j] = 0;
       nuconv[i] = 0;
       activity[i][0][j] = 0;
@@ -383,6 +383,7 @@ void FixKinetics::pre_force(int vflag) {
 void FixKinetics::integration() {
   int iter = 0;
   bool converge = false;
+  double bio_dt = update->dt * nevery;
   int nnus = bio->nnu;
 
   grow_flag = 0;
@@ -392,6 +393,9 @@ void FixKinetics::integration() {
   // update grid biomass to calculate diffusion coeff
   if (diffusion != NULL) {
     if (diffusion->dcflag) diffusion->update_diff_coeff();
+
+    diffusion->closed_system_init();
+
     while (!converge) {
       converge = true;
 
@@ -425,24 +429,21 @@ void FixKinetics::integration() {
       iter++;
 
       // solve for diffusion and advection
-      if (diffusion->closed_flag) {
-	diffusion->closed_diff(update->dt * nevery);
-      } else {
-	nuconv = diffusion->diffusion(nuconv, iter, diff_dt);
-      }
+      nuconv = diffusion->diffusion(nuconv, iter, diff_dt);
 
       // check for convergence
-      for (int i = 1; i <= nnus; i++) {
-	if (!nuconv[i]) {
-	  converge = false;
-	  reset_isconv();
-	  break;
-	}
+      for (int i = 1; i <= bio->nnu; i++) {
+        if (!nuconv[i]) {
+  	converge = false;
+  	break;
+        }
       }
 
-      if (niter > 0 && iter >= niter || diffusion->closed_flag)
-	converge = true;
+      if (niter > 0 && iter >= niter)
+        converge = true;
     }
+
+    diffusion->closed_system_scaleup(bio_dt, diff_dt);
 
     if (comm->me == 0 && logfile)
       fprintf(logfile, "number of iterations: %i \n", iter);

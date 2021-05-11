@@ -36,6 +36,7 @@ class FixPDivideTa : public Fix {
   void post_integrate();
   int modify_param(int, char **);
   double uniformP();
+  double compute_vector(int);
 
  private:
   char **var;
@@ -58,14 +59,29 @@ class FixPDivideTa : public Fix {
   int parentType, childType;
   int parentMask, childMask;
   double prob_diff, prob_asym, prob_diff_hill, prob_asym_hill;
-  double kca;
-  int ca;
+  double kca, kil22;
+  int ca, il22;
 
+  double *ta_cell_cycle;
+  double tot_ta_cycle;
+  int ndiv_cells;
+
+  double vector[3];
+
+  double *turnover2;   //stem-ta-diff
+  double tot_turnover2;
+  int turnover2_cells;
 
   class RanPark *random;
   class AtomVecBio *avec;
   class BIO *bio;
   class FixKinetics *kinetics;
+  class FixPDivideStem *fixdiv;
+
+  void grow_arrays(int);
+  void copy_arrays(int, int, int);
+  int pack_exchange(int, double *);
+  int unpack_exchange(int, double *);
 };
 
 }
